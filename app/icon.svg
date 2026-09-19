@@ -1,0 +1,55 @@
+<svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="pg_body_fav" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stopColor="#2A4365" />
+      <stop offset="45%" stopColor="#1A202C" />
+      <stop offset="85%" stopColor="#0B132B" />
+      <stop offset="100%" stopColor="#050B14" />
+    </radialGradient>
+    <radialGradient id="pg_belly_fav" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stopColor="#FFFFFF" />
+      <stop offset="65%" stopColor="#F1F5F9" />
+      <stop offset="100%" stopColor="#CBD5E1" />
+    </radialGradient>
+    <linearGradient id="pg_beak_fav" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stopColor="#FDE047" />
+      <stop offset="40%" stopColor="#F59E0B" />
+      <stop offset="100%" stopColor="#D97706" />
+    </linearGradient>
+    <linearGradient id="pg_headset_fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#38BDF8" />
+      <stop offset="50%" stopColor="#2563EB" />
+      <stop offset="100%" stopColor="#1D4ED8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Feet -->
+  <ellipse cx="38" cy="89" rx="9" ry="4.5" fill="url(#pg_beak_fav)" />
+  <ellipse cx="62" cy="89" rx="9" ry="4.5" fill="url(#pg_beak_fav)" />
+
+  <!-- Body -->
+  <path d="M50 14 C32 14 22 28 22 52 C22 72 32 88 50 88 C68 88 78 72 78 52 C78 28 68 14 50 14 Z" fill="url(#pg_body_fav)" />
+
+  <!-- Wings -->
+  <path d="M23 44 C16 52 14 66 22 74 C26 78 28 72 26 62 Z" fill="#1E293B" />
+  <path d="M77 44 C84 52 86 66 78 74 C74 78 72 72 74 62 Z" fill="#1E293B" />
+
+  <!-- Belly -->
+  <path d="M50 30 C38 30 31 42 31 60 C31 76 38 84 50 84 C62 84 69 76 69 60 C69 42 62 30 50 30 Z" fill="url(#pg_belly_fav)" />
+
+  <!-- Eyes -->
+  <ellipse cx="43" cy="38" rx="4" ry="5.5" fill="#0F172A" />
+  <circle cx="44.2" cy="36.5" r="1.6" fill="#FFFFFF" />
+  <ellipse cx="57" cy="38" rx="4" ry="5.5" fill="#0F172A" />
+  <circle cx="58.2" cy="36.5" r="1.6" fill="#FFFFFF" />
+
+  <!-- Beak -->
+  <path d="M50 42 C45 42 42 47 50 54 C58 47 55 42 50 42 Z" fill="url(#pg_beak_fav)" />
+
+  <!-- Headset -->
+  <path d="M24 38 C24 16 76 16 76 38" stroke="url(#pg_headset_fav)" stroke-width="5" stroke-linecap="round" />
+  <rect x="19" y="35" width="8" height="14" rx="4" fill="url(#pg_headset_fav)" />
+  <rect x="73" y="35" width="8" height="14" rx="4" fill="url(#pg_headset_fav)" />
+  <path d="M23 46 C21 56 36 60 44 55" stroke="#64748B" stroke-width="2" stroke-linecap="round" />
+  <circle cx="44.5" cy="55" r="2.5" fill="#38BDF8" />
+</svg>

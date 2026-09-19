@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Single unified luxury eye-soothing design system */
+:root {
+  --color-primary: #2563EB;
+  --color-primary-dark: #1D4ED8;
+  --color-primary-light: #EFF6FF;
+  --color-surface: #F8FAFC;
+  --color-surface-subtle: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-ink: #0F172A;
+  --color-ink-soft: #64748B;
+  --color-amber-gold: #F59E0B;
+  --color-emerald-live: #10B981;
+}
+
+html[dir="rtl"] body {
+  font-family: "Cairo", sans-serif;
+}
+html[dir="ltr"] body {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Eye-Soothing Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Text Selection Color */
+::selection {
+  background-color: #DBEAFE;
+  color: #1E3A8A;
+}
+
+/* Page Transition Animation */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Floating In-Call Emojis */
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateY(-80px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-170px) scale(1.4);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* ========================================================================= */
+/* LUXURY HOVER & SHELF MICRO-INTERACTIONS (Super-Smooth Physics) */
+/* ========================================================================= */
+
+/* General Card Lift & Ambient Glow */
+.shelf-card,
+.luxury-card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease,
+              background-color 0.28s ease;
+}
+
+.shelf-card:hover,
+.luxury-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08),
+              0 6px 12px -4px rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+/* Golden Passport Stamp Hover */
+.stamp-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+}
+
+.stamp-card:hover {
+  transform: translateY(-3px) scale(1.03) rotate(-0.5deg);
+  box-shadow: 0 14px 28px -6px rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
+/* Interactive Button Hover Physics */
+.btn-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.25);
+}
+.btn-lift:active {
+  transform: translateY(0) scale(0.98);
+}
