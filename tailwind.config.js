@@ -5,18 +5,36 @@ module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
+    "./lib/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        // بدل ما الألوان تبقى قيم ثابتة، بقت بتقرا من المتغيرات
-        // اللي عرّفناها في globals.css - وده اللي بيخلي الوضع الليلي يشتغل تلقائيًا
+        // لوحة الألوان الرسمية الموحدة المستخرجة من شعار النسر (Eagle Crest Design System)
         primary: {
           DEFAULT: "var(--color-primary)",
           dark: "var(--color-primary-dark)",
           light: "var(--color-primary-light)",
         },
-        surface: "var(--color-surface)",
+        crimson: {
+          DEFAULT: "var(--color-crimson)",
+          bright: "var(--color-crimson-bright)",
+          light: "var(--color-crimson-light)",
+        },
+        glacier: {
+          DEFAULT: "var(--color-glacier)",
+          soft: "var(--color-glacier-soft)",
+          light: "var(--color-glacier-light)",
+        },
+        gold: {
+          DEFAULT: "var(--color-amber-gold)",
+          deep: "var(--color-amber-deep)",
+          light: "var(--color-amber-light)",
+        },
+        surface: {
+          DEFAULT: "var(--color-surface)",
+          subtle: "var(--color-surface-subtle)",
+        },
         border: "var(--color-border)",
         ink: {
           DEFAULT: "var(--color-ink)",
@@ -27,7 +45,7 @@ module.exports = {
       },
       fontFamily: {
         arabic: ["Cairo", "sans-serif"],
-        latin: ["Inter", "sans-serif"],
+        latin: ["Plus Jakarta Sans", "Inter", "sans-serif"],
       },
     },
   },

@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { io, Socket } from "socket.io-client";
 import Header from "../components/Header";
-import WorldConnectAnimation from "../components/WorldConnectAnimation";
 import PageTransition from "../components/PageTransition";
-import Button from "../components/Button";
 import Penguin3D from "../components/Penguin3D";
+import LandingHeroView from "../components/home/LandingHeroView";
+import {
+  BlockedUsersModal,
+  BuddyUpgradeModal,
+  PartnerMemoModal,
+  PraiseInfoModal,
+  TribeSelectionModal,
+} from "../components/home/DashboardModals";
 import { getUser, getToken, clearAuth } from "../lib/auth";
-
+import { TRIBES } from "../lib/brand";
+import { canDirectCallBuddy, getPlanById } from "../lib/plans";
 import {
   getDashboardData,
   getBlockedUsers,
@@ -17,43 +25,70 @@ import {
   toggleBuddy,
   joinTribe,
   callBuddy,
+  getApiBaseUrl,
 } from "../services/api";
-import { User, UserDashboardData, BlockedUserItem, RecentPartner } from "../types";
+import {
+  getPartnerMemo,
+  savePartnerMemo,
+  getSecondsUntilNextWave,
+} from "../lib/memos";
+import {
+  User,
+  UserDashboardData,
+  BlockedUserItem,
+  RecentPartner,
+} from "../types";
 
+function formatNextSessionCountdown(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+}
 
-const TRIBES = [
-  { id: 1, label: "Tribe 1", utc: "00:00 - 02:00 UTC", local: "03:00 AM Cairo / Riyadh" },
-  { id: 2, label: "Tribe 2", utc: "02:00 - 04:00 UTC", local: "05:00 AM Cairo / Riyadh" },
-  { id: 3, label: "Tribe 3", utc: "04:00 - 06:00 UTC", local: "07:00 AM Cairo / Riyadh" },
-  { id: 4, label: "Tribe 4", utc: "06:00 - 08:00 UTC", local: "09:00 AM Cairo / Riyadh" },
-  { id: 5, label: "Tribe 5", utc: "08:00 - 10:00 UTC", local: "11:00 AM Cairo / Riyadh" },
-  { id: 6, label: "Tribe 6", utc: "10:00 - 12:00 UTC", local: "01:00 PM Cairo / Riyadh" },
-  { id: 7, label: "Tribe 7", utc: "12:00 - 14:00 UTC", local: "03:00 PM Cairo / Riyadh" },
-  { id: 8, label: "Tribe 8", utc: "14:00 - 16:00 UTC", local: "05:00 PM Cairo / Riyadh" },
-  { id: 9, label: "Tribe 9", utc: "16:00 - 18:00 UTC", local: "07:00 PM Cairo / Riyadh" },
-  { id: 10, label: "Tribe 10", utc: "18:00 - 20:00 UTC", local: "09:00 PM Cairo / Riyadh" },
-  { id: 11, label: "Tribe 11", utc: "20:00 - 22:00 UTC", local: "11:00 PM Cairo / Riyadh" },
-  { id: 12, label: "Tribe 12", utc: "22:00 - 24:00 UTC", local: "01:00 AM Cairo / Riyadh" },
-];
+function formatPartnerDate(isoOrDate: string): string {
+  try {
+    const d = new Date(isoOrDate);
+    if (isNaN(d.getTime())) return isoOrDate;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}.${m}.${day}`;
+  } catch {
+    return isoOrDate;
+  }
+}
 
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [dashboard, setDashboard] = useState<UserDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [partnerFilter, setPartnerFilter] = useState<"all" | "buddies">("all");
+  const [showAllPartners, setShowAllPartners] = useState(false);
+
+  // Modal states
   const [showTribeModal, setShowTribeModal] = useState(false);
+  const [showPraiseInfoModal, setShowPraiseInfoModal] = useState(false);
+  const [upgradeBuddyName, setUpgradeBuddyName] = useState<string | null>(null);
   const [callingBuddyId, setCallingBuddyId] = useState<string | null>(null);
-
-  // Quick memo modal state
-  const [selectedMemoPartner, setSelectedMemoPartner] = useState<RecentPartner | null>(null);
+  const [selectedMemoPartner, setSelectedMemoPartner] =
+    useState<RecentPartner | null>(null);
   const [memoText, setMemoText] = useState("");
-
-  // Blocklist modal state
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<BlockedUserItem[]>([]);
   const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [incomingCall, setIncomingCall] = useState<{
+    callerId: string;
+    callerName: string;
+    callerCountry: string;
+    roomName: string;
+    sessionId: string;
+    topic: string;
+  } | null>(null);
+  const lobbySocketRef = useRef<Socket | null>(null);
 
+  const [nextSessionSeconds, setNextSessionSeconds] = useState(() =>
+    getSecondsUntilNextWave(120)
+  );
 
   useEffect(() => {
     const currentUser = getUser();
@@ -62,17 +97,51 @@ export default function HomePage() {
 
     if (currentUser && token) {
       getDashboardData(token)
-        .then((data) => {
-          setDashboard(data);
-          setLoading(false);
-        })
-        .catch(() => {
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
+        .then((data) => setDashboard(data))
+        .catch(() => {});
+
+      const socket = io(getApiBaseUrl(), {
+        transports: ["websocket", "polling"],
+        auth: { token: `Bearer ${token}` },
+        query: { token },
+      });
+      lobbySocketRef.current = socket;
+
+      socket.on("incoming-buddy-call", (payload: any) => {
+        if (payload?.roomName) {
+          setIncomingCall({
+            callerId: payload.callerId || "",
+            callerName: payload.callerName || "Your Speaking Buddy",
+            callerCountry: payload.callerCountry || "",
+            roomName: payload.roomName,
+            sessionId: payload.sessionId || "",
+            topic: payload.topic || "Free Conversation Practice",
+          });
+        }
+      });
+
+      return () => {
+        socket.disconnect();
+        lobbySocketRef.current = null;
+      };
     }
   }, []);
+
+  useEffect(() => {
+    setNextSessionSeconds(getSecondsUntilNextWave(120));
+    const interval = setInterval(() => {
+      setNextSessionSeconds(getSecondsUntilNextWave(120));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!user) {
+    return <LandingHeroView />;
+  }
+
+  const currentPlan = getPlanById(user.planTier);
+  const aiTokensBalance =
+    user.aiTokensBalance ?? currentPlan.monthlyAiTokens;
 
   function handleLogout() {
     clearAuth();
@@ -89,7 +158,7 @@ export default function HomePage() {
       const list = await getBlockedUsers(token);
       setBlockedUsers(list);
     } catch {
-      // Ignore
+      // Ignore transient load error
     } finally {
       setLoadingBlocked(false);
     }
@@ -100,7 +169,9 @@ export default function HomePage() {
     if (!token) return;
     try {
       await unblockUser(token, blockedId);
-      setBlockedUsers((prev) => prev.filter((b) => b.blockedUser.id !== blockedId));
+      setBlockedUsers((prev) =>
+        prev.filter((b) => b.blockedUser.id !== blockedId)
+      );
       if (dashboard) {
         setDashboard({
           ...dashboard,
@@ -110,9 +181,7 @@ export default function HomePage() {
           },
         });
       }
-    } catch {
-      // Ignore
-    }
+    } catch {}
   }
 
   async function handleToggleBuddy(partnerId: string) {
@@ -126,36 +195,51 @@ export default function HomePage() {
           p.id === partnerId ? { ...p, isBuddy: res.isBuddy } : p
         ),
       });
-    } catch {
-      // Ignore
-    }
+    } catch {}
   }
 
   async function handleJoinTribe(tribeId: number) {
     const token = getToken();
     if (!token || !dashboard) return;
+    const chosenTribe = TRIBES.find((t) => t.id === tribeId);
     try {
       const res = await joinTribe(token, tribeId);
       setDashboard({
         ...dashboard,
         tribe: {
-          ...(dashboard.tribe || { currentActiveTribe: 1, isTribeActive: false }),
+          ...(dashboard.tribe || {
+            currentActiveTribe: 3,
+            isTribeActive: false,
+          }),
           userTribe: res.tribeId,
-          isTribeActive: (dashboard.tribe?.currentActiveTribe ?? 1) === res.tribeId,
+          userTribeName: chosenTribe?.label || `Tribe ${res.tribeId}`,
+          isTribeActive:
+            (dashboard.tribe?.currentActiveTribe ?? 3) === res.tribeId,
         },
       });
       setShowTribeModal(false);
-    } catch {
-      // Ignore
-    }
+    } catch {}
   }
 
-  async function handleCallBuddy(buddyId: string) {
+  async function handlePartnerCallClick(partner: RecentPartner) {
+    if (!canDirectCallBuddy(user?.planTier)) {
+      setUpgradeBuddyName(partner.name);
+      return;
+    }
+
     const token = getToken();
     if (!token) return;
-    setCallingBuddyId(buddyId);
+    setCallingBuddyId(partner.id);
     try {
-      const room = await callBuddy(token, buddyId);
+      const room = await callBuddy(token, partner.id);
+      if (lobbySocketRef.current) {
+        lobbySocketRef.current.emit("ring-buddy", {
+          buddyId: partner.id,
+          roomName: room.roomName,
+          sessionId: room.sessionId,
+          topic: room.topic,
+        });
+      }
       const params = new URLSearchParams({
         url: room.roomUrl,
         sessionId: room.sessionId,
@@ -174,80 +258,15 @@ export default function HomePage() {
 
   function handleOpenMemo(partner: RecentPartner) {
     setSelectedMemoPartner(partner);
-    try {
-      const stored = localStorage.getItem("justspeak_partner_memos");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setMemoText(parsed[partner.id] || "");
-      } else {
-        setMemoText("");
-      }
-    } catch {
-      setMemoText("");
-    }
+    setMemoText(getPartnerMemo(user?.id, partner.id));
   }
 
   function handleSaveMemo() {
     if (!selectedMemoPartner) return;
-    try {
-      const stored = localStorage.getItem("justspeak_partner_memos");
-      const parsed = stored ? JSON.parse(stored) : {};
-      parsed[selectedMemoPartner.id] = memoText.trim();
-      localStorage.setItem("justspeak_partner_memos", JSON.stringify(parsed));
-    } catch {}
+    savePartnerMemo(user?.id, selectedMemoPartner.id, memoText);
     setSelectedMemoPartner(null);
   }
 
-
-
-  // =========================================================================
-  // VIEW 1: Logged-Out Landing Page (Clean 3D Globe Hero, Full Width)
-  // =========================================================================
-  if (!user) {
-    return (
-      <main className="relative min-h-screen flex flex-col bg-surface overflow-hidden">
-        <Header />
-        <WorldConnectAnimation />
-
-        <PageTransition>
-          <section className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 gap-6 max-w-2xl mx-auto py-16">
-            <span className="inline-flex items-center gap-1.5 bg-primary-light text-primary text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Free Daily Session Available
-            </span>
-
-            <h1 className="text-4xl sm:text-6xl font-extrabold text-ink leading-tight tracking-tight">
-              Speak English with <span className="text-primary">confidence</span>
-            </h1>
-
-            <p className="text-base text-ink-soft leading-relaxed max-w-lg">
-              1-on-1, 10-minute video conversations with learners from around the world. No stress, just natural practice.
-            </p>
-
-            <div className="w-full max-w-md flex flex-col sm:flex-row gap-3 mt-4">
-              <Link
-                href="/login"
-                className="flex-1 bg-gradient-to-b from-primary to-primary-dark hover:brightness-110 active:scale-[0.97] transition-all text-white rounded-2xl py-4 text-sm font-bold shadow-xl shadow-primary/30 text-center"
-              >
-                Start Speaking Now
-              </Link>
-
-              <Link
-                href="/signup"
-                className="flex-1 text-center border-2 border-border text-ink bg-white/80 backdrop-blur rounded-2xl py-3.5 text-sm font-semibold hover:border-primary hover:bg-primary-light/40 transition-colors"
-              >
-                Create Account
-              </Link>
-            </div>
-          </section>
-        </PageTransition>
-      </main>
-    );
-  }
-
-  // =========================================================================
-  // VIEW 2: Logged-In Rich Desktop Dashboard (Full-Width Responsive 12-Col Grid)
-  // =========================================================================
   const stats = dashboard?.stats || {
     streakDays: 0,
     totalSessions: 0,
@@ -255,632 +274,555 @@ export default function HomePage() {
     countriesCount: 0,
     lovedCount: 0,
     blockedCount: 0,
-    liveRoomsCount: 48,
+    liveRoomsCount: 0,
   };
 
-  const streakWeek = dashboard?.streakWeek || [1, 2, 3, 4, 5, 6, 7].map((d) => ({
-    dayNumber: d,
-    label: d === 7 ? "Gift 🎁" : `Day ${d}`,
-    completed: false,
-  }));
+  const streakWeek =
+    dashboard?.streakWeek ||
+    [1, 2, 3, 4, 5, 6, 7].map((d) => ({
+      dayNumber: d,
+      label: d === 7 ? "Gift 🎁" : `Day ${d}`,
+      completed: false,
+    }));
 
   const recentPartners = dashboard?.recentPartners || [];
   const filteredPartners =
     partnerFilter === "buddies"
       ? recentPartners.filter((p) => p.isBuddy)
       : recentPartners;
+  const visiblePartners = showAllPartners
+    ? filteredPartners
+    : filteredPartners.slice(0, 5);
 
   const tickets = dashboard?.tickets || {
     ticketsLeft: 5,
     maxTickets: 5,
-    resetsInSeconds: 86400,
+    resetsInSeconds: 81410,
+    bonusTickets: 5,
   };
 
-  function formatResetTime(seconds: number) {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    return `${hrs}h ${mins}m`;
-  }
-
+  const activeTribeName = dashboard?.tribe?.activeTribeName || "Light Tribe";
+  const activeTribeWindow =
+    dashboard?.tribe?.activeTribeWindow || "04:00 - 06:00";
+  const userTribeName = dashboard?.tribe?.userTribeName || activeTribeName;
+  const activeMembersCount = dashboard?.tribe?.activeMembersCount ?? 0;
+  const lovedGain = stats.lovedCount > 0 ? Math.min(2, stats.lovedCount) : 0;
 
   return (
-    <main className="min-h-screen flex flex-col bg-surface pb-24 md:pb-16">
-      <Header />
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 relative">
+      <Header
+        whiteTickets={tickets.ticketsLeft}
+        blueTickets={tickets.bonusTickets ?? 5}
+        resetsInSeconds={tickets.resetsInSeconds}
+      />
 
-      <PageTransition>
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
-
-          {/* User Welcome Top Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-3xl p-5 sm:p-6 shadow-xl shadow-primary/5 border border-border/60">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white font-extrabold text-xl flex items-center justify-center shadow-lg shadow-primary/30 flex-shrink-0 overflow-hidden border border-border">
-                {user.avatarUrl ? (
-                  user.avatarUrl.startsWith("data:") || user.avatarUrl.startsWith("http") ? (
-                    <img src={user.avatarUrl} alt={user.name || "User"} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl select-none">{user.avatarUrl}</span>
-                  )
-                ) : (
-                  <span>{(user.name || (user.email ? user.email.split("@")[0] : (user.phone || "L"))).charAt(0).toUpperCase()}</span>
-                )}
-              </div>
+      {/* Live Incoming Direct Buddy Call Ringing Banner */}
+      {incomingCall && (
+        <div className="bg-gradient-to-r from-[#0B1F3A] via-[#13325B] to-[#0B1F3A] text-white px-4 py-3.5 border-b border-[#F5A623]/40 shadow-2xl z-40">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-2xl bg-[#F5A623] text-[#0B1F3A] flex items-center justify-center text-lg animate-bounce">
+                📞
+              </span>
               <div>
-                <h1 className="text-xl font-bold text-ink flex items-center gap-2" dir="auto">
-                  Welcome back, {user.name || (user.email ? user.email.split("@")[0] : (user.phone || "Learner"))} 👋
-                </h1>
-
-                <p className="text-xs text-ink-soft mt-0.5">
-                  {user.country ? `From ${user.country} • ` : ""}
-                  English Level: <span className="font-bold text-primary">{user.englishLevel || "Intermediate"}</span>
+                <p className="text-xs sm:text-sm font-black">
+                  Incoming Buddy Call from {incomingCall.callerName}!
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  Topic: &ldquo;{incomingCall.topic}&rdquo;
                 </p>
               </div>
             </div>
-
-
-            <div className="flex items-center gap-3">
-              <Link
-                href="/profile"
-                className="text-xs font-semibold text-ink-soft hover:text-ink border border-border px-3.5 py-2 rounded-xl hover:bg-surface transition-all flex items-center gap-1.5"
-              >
-                <span>✏️</span>
-                <span>Edit Profile</span>
-              </Link>
-
+            <div className="flex items-center gap-2.5">
               <button
-                onClick={handleLogout}
-                className="text-xs text-ink-soft/70 hover:text-danger font-medium px-3 py-2 transition-colors"
+                type="button"
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    sessionId: incomingCall.sessionId,
+                    partnerId: incomingCall.callerId,
+                    partnerName: incomingCall.callerName,
+                    partnerCountry: incomingCall.callerCountry,
+                    topic: incomingCall.topic,
+                  });
+                  router.push(
+                    `/room/${incomingCall.roomName}?${params.toString()}`
+                  );
+                }}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
               >
-                Log Out
+                📞 Accept & Join Call
+              </button>
+              <button
+                type="button"
+                onClick={() => setIncomingCall(null)}
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all cursor-pointer"
+              >
+                Dismiss
               </button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Full-Width 12-Column Desktop Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* American Flag Navy & Crimson Active Tribe Ribbon */}
+      <button
+        type="button"
+        onClick={() => setShowTribeModal(true)}
+        className="w-full bg-gradient-to-r from-[#002868] via-[#B91C1C] to-[#002868] border-b border-white/15 py-2.5 px-4 flex items-center justify-center gap-2 text-white hover:brightness-110 transition-all cursor-pointer shadow-xs"
+      >
+        <span className="w-5 h-5 rounded-full bg-white text-[#D91023] text-xs font-black flex items-center justify-center">
+          ★
+        </span>
+        <span className="text-xs sm:text-sm font-extrabold tracking-tight">
+          <span className="text-white underline decoration-[#E11D48]">{activeTribeName}</span> Window (
+          {activeTribeWindow} UTC)
+        </span>
+        <span className="text-[11px] text-rose-100 underline ml-1">
+          Switch Tribe
+        </span>
+      </button>
 
-            {/* ============================================================= */}
-            {/* LEFT MAIN AREA (8 Columns) */}
-            {/* ============================================================= */}
-            <div className="lg:col-span-8 space-y-6">
+      <PageTransition>
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-7 pb-10 flex flex-col gap-6">
+          {/* Top Hero Card: Live 1-on-1 Human Speaking Room Entry (American Flag Navy & Crimson) */}
+          <section className="rounded-[30px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#881337] text-white p-6 sm:p-8 shadow-xl border-2 border-[#E11D48]/35 flex flex-col gap-6 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
 
-              {/* 1. Main Hero Join Card (Episoden Style) */}
-              <div className="shelf-card bg-gradient-to-br from-ink via-[#0d223a] to-[#1e3a8a] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-                {/* Ambient glow */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-primary/25 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 flex items-center justify-between gap-4">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 bg-white/10 text-white/90 text-[11px] font-semibold px-3 py-1 rounded-full border border-white/15">
-                        ✨ Daily 1-on-1 English Routine
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-3 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                        {stats.liveRoomsCount} Rooms Active
-                      </span>
-                    </div>
-
-                    <h2 className="text-2xl sm:text-3xl font-extrabold leading-snug">
-                      Build your English routine with JustSpeak
-                    </h2>
-                    <p className="text-xs sm:text-sm text-white/70 leading-relaxed max-w-xl">
-                      Consistency builds speaking confidence and real fluency. Connect with a speaking partner worldwide for a 7-minute session!
-                    </p>
-                  </div>
-
-                  <div className="hidden md:flex flex-shrink-0">
-                    <Penguin3D variant="headphones" size="xl" withLink={false} />
-                  </div>
-                </div>
-
-
-                {/* Session Details bar */}
-                <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-xs">
-                  <div>
-                    <p className="text-white/60">Daily Passes</p>
-                    <p className="text-sm font-bold text-amber-300 mt-0.5">
-                      🎟️ {tickets.ticketsLeft}/{tickets.maxTickets} Left
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-white/60">Pass Reset In</p>
-                    <p className="text-sm font-bold text-white mt-0.5">{formatResetTime(tickets.resetsInSeconds)}</p>
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <p className="text-white/60">Live Now</p>
-                    <p className="text-sm font-bold text-emerald-300 mt-0.5">{stats.liveRoomsCount} Pairs</p>
-                  </div>
-                </div>
-
-
-                {/* Join CTA Button */}
-                <Link
-                  href="/queue"
-                  className="relative z-10 w-full bg-gradient-to-r from-primary via-blue-500 to-primary-dark hover:brightness-110 active:scale-[0.98] transition-all text-white font-extrabold text-center py-4 rounded-2xl text-base shadow-xl shadow-primary/40 flex items-center justify-center gap-2.5"
-                >
-                  <span className="text-xl">🚀</span>
-                  <span>Join Next Conversation</span>
-                </Link>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-white/10 text-[#9CCDF2] px-3 py-1 rounded-full">
+                  <span className="w-2 h-2 rounded-full bg-[#E11D48] animate-pulse" />
+                  1-on-1 Live Human Practice
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">
+                  Ready for your next 7-minute English call?
+                </h1>
               </div>
 
-              {/* 2. My Speaking Streak Tracker (Screenshot 2) */}
-              <div className="shelf-card bg-white rounded-3xl p-6 sm:p-7 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <h3 className="text-base font-bold text-ink">My Speaking Streak</h3>
-                      <p className="text-xs text-ink-soft">Daily practice builds confidence</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-amber-700 bg-amber-300/40 border border-amber-300 px-3.5 py-1 rounded-full">
-                    {stats.streakDays} {stats.streakDays === 1 ? "day" : "days"} streak
-                  </span>
-                </div>
-
-                {/* 7-Day Circles */}
-                <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-2">
-                  {streakWeek.map((day) => (
-                    <div key={day.dayNumber} className="flex flex-col items-center gap-2">
-                      <div
-                        className={`w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center text-xs font-extrabold transition-all shadow-sm ${
-                          day.completed
-                            ? "bg-amber-400 text-ink shadow-amber-400/30 ring-2 ring-amber-300"
-                            : "border-2 border-dashed border-border text-ink-soft bg-surface/50"
-                        }`}
-                      >
-                        {day.completed ? "✓" : day.dayNumber === 7 ? "🎁" : day.dayNumber}
-                      </div>
-                      <span className="text-[10px] font-semibold text-ink-soft">{day.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 3. Recent Partners & Acquaintances (Screenshot 2 & 3) */}
-              <div className="shelf-card bg-white rounded-3xl p-6 sm:p-7 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">👥</span>
-                    <div>
-                      <h3 className="text-base font-bold text-ink">Recent Conversation Partners</h3>
-                      <p className="text-xs text-ink-soft">Learners you have practiced with</p>
-                    </div>
-                  </div>
-
-                  {/* All vs Buddies Tab (Screenshot 2) */}
-                  <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-border/60">
-                    <button
-                      onClick={() => setPartnerFilter("all")}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                        partnerFilter === "all"
-                          ? "bg-white text-primary shadow-xs"
-                          : "text-ink-soft hover:text-ink"
-                      }`}
-                    >
-                      All ({recentPartners.length})
-                    </button>
-                    <button
-                      onClick={() => setPartnerFilter("buddies")}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                        partnerFilter === "buddies"
-                          ? "bg-white text-primary shadow-xs"
-                          : "text-ink-soft hover:text-ink"
-                      }`}
-                    >
-                      Buddies 🤝 ({recentPartners.filter((p) => p.isBuddy).length})
-                    </button>
-                  </div>
-                </div>
-
-                {filteredPartners.length > 0 ? (
-                  <div className="divide-y divide-border/40">
-                    {filteredPartners.slice(0, 8).map((partner) => (
-                      <div key={partner.id} className="py-3.5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-11 h-11 rounded-2xl bg-primary-light text-primary font-bold text-sm flex items-center justify-center flex-shrink-0">
-                            {partner.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-base">{partner.countryFlag || "🌐"}</span>
-                              <p className="text-sm font-bold text-ink">{partner.name}</p>
-                              {partner.isBuddy && (
-                                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.2 rounded-full">
-                                  Buddy ⭐
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-ink-soft">
-                              {partner.country || "Global"} • Met {partner.sessionCount}{" "}
-                              {partner.sessionCount === 1 ? "time" : "times"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {partner.isBuddy && (
-                            <button
-                              onClick={() => handleCallBuddy(partner.id)}
-                              disabled={callingBuddyId === partner.id}
-                              className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
-                              title="Start a direct 1-on-1 call with your buddy"
-                            >
-                              <span>📞</span>
-                              <span>{callingBuddyId === partner.id ? "Calling..." : "Call"}</span>
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleToggleBuddy(partner.id)}
-                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition-all ${
-                              partner.isBuddy
-                                ? "bg-amber-50 text-amber-700 border-amber-300"
-                                : "text-ink-soft hover:text-primary hover:border-primary border-border"
-                            }`}
-                            title={partner.isBuddy ? "Remove from buddies" : "Add as buddy"}
-                          >
-                            {partner.isBuddy ? "⭐ Buddy" : "+ Add Buddy"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleOpenMemo(partner)}
-                            className="text-xs text-ink-soft hover:text-primary p-2 rounded-xl hover:bg-surface transition-colors"
-                            title="Add or view private memo"
-                          >
-                            📝
-                          </button>
-
-                        </div>
-
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-10 text-center flex flex-col items-center gap-3">
-                    <Penguin3D variant="default" size="lg" withLink={false} />
-                    <p className="text-sm font-bold text-ink">
-
-                      {partnerFilter === "buddies"
-                        ? "No buddies added yet"
-                        : "No conversation history yet"}
-                    </p>
-                    <p className="text-xs text-ink-soft max-w-xs leading-relaxed">
-                      {partnerFilter === "buddies"
-                        ? "Click '+ Add Buddy' next to partners you enjoyed talking with to add them to your buddies list!"
-                        : "Complete your first 1-on-1 session to connect with English speakers around the globe!"}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-
+              <button
+                type="button"
+                onClick={() => setShowTribeModal(true)}
+                className="self-start sm:self-auto inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer"
+              >
+                <span>🛡️ {userTribeName}</span>
+                <span className="text-[#F5A623]">• {activeMembersCount} online</span>
+              </button>
             </div>
 
-            {/* ============================================================= */}
-            {/* RIGHT SIDEBAR AREA (4 Columns) */}
-            {/* ============================================================= */}
-            <div className="lg:col-span-4 space-y-6">
-
-              {/* 1. Global Metrics Grid (4 Stat Cards) */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="shelf-card bg-white rounded-2xl p-4 shadow-sm border border-border/60 flex flex-col gap-1 text-center cursor-default">
-                  <span className="text-xl">🎙️</span>
-                  <p className="text-xl font-extrabold text-ink">{stats.totalSessions}</p>
-                  <p className="text-[11px] text-ink-soft font-medium">Total Sessions</p>
-                </div>
-
-                <div className="shelf-card bg-white rounded-2xl p-4 shadow-sm border border-border/60 flex flex-col gap-1 text-center cursor-default">
-                  <span className="text-xl">⏱️</span>
-                  <p className="text-xl font-extrabold text-ink">{stats.totalMinutes}</p>
-                  <p className="text-[11px] text-ink-soft font-medium">Minutes Spoken</p>
-                </div>
-
-                <div className="shelf-card bg-white rounded-2xl p-4 shadow-sm border border-border/60 flex flex-col gap-1 text-center cursor-default">
-                  <span className="text-xl">🌍</span>
-                  <p className="text-xl font-extrabold text-ink">{stats.countriesCount}</p>
-                  <p className="text-[11px] text-ink-soft font-medium">Countries Met</p>
-                </div>
-
-                <div className="shelf-card bg-white rounded-2xl p-4 shadow-sm border border-border/60 flex flex-col gap-1 text-center cursor-default">
-                  <span className="text-xl">❤️</span>
-                  <p className="text-xl font-extrabold text-ink">{stats.lovedCount}</p>
-                  <p className="text-[11px] text-ink-soft font-medium">Loved by Partners</p>
-                </div>
+            <div className="grid grid-cols-2 gap-4 bg-white/8 border border-white/10 rounded-2xl p-4 text-center relative z-10">
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-xs text-slate-300">Active Rooms</span>
+                <span className="text-lg sm:text-xl font-black text-white">
+                  {stats.liveRoomsCount} live
+                </span>
               </div>
+              <div className="flex flex-col items-center gap-0.5 border-l border-white/10">
+                <span className="text-xs text-slate-300">Next Wave In</span>
+                <span className="text-lg sm:text-xl font-black text-[#FF6B7F] tabular-nums">
+                  {formatNextSessionCountdown(nextSessionSeconds)}
+                </span>
+              </div>
+            </div>
 
-              {/* 2. Tribe 12 Daily Routine Card (Episoden Style) */}
-              <div className="shelf-card bg-gradient-to-br from-ink via-[#0d223a] to-primary-dark text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col gap-4 border border-white/10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">🏛️</span>
-                    <h3 className="text-base font-extrabold text-white">Tribe 12 Routine</h3>
-                  </div>
-                  <span className="text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Tribe {dashboard?.tribe?.currentActiveTribe || 1} Active
-                  </span>
+            <Link
+              href="/queue"
+              className="relative z-10 w-full btn-primary-crest text-white font-black text-center py-4 rounded-2xl text-base sm:text-lg shadow-xl"
+            >
+              Join Live Conversation Now →
+            </Link>
+          </section>
+
+          {/* Dual Feature Row: Standalone AI Topic Studio + Membership Tier */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link
+              href="/ai-studio"
+              className="luxury-card bg-white rounded-[26px] p-5 border border-[#002868]/20 shadow-sm flex items-center justify-between gap-4 group"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF1FC] border border-[#002868]/25 flex items-center justify-center text-2xl flex-shrink-0">
+                  🤖
                 </div>
-
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 border border-white/10 text-xs flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/70">My Assigned Slot:</span>
-                    <span className="font-extrabold text-amber-300">
-                      {dashboard?.tribe?.userTribe
-                        ? `Tribe ${dashboard?.tribe?.userTribe} 🎯`
-                        : "Not Selected"}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-black text-ink group-hover:text-[#D91023] transition-colors">
+                      AI Topic Speaking Studio
+                    </h2>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/35">
+                      ⚡ {aiTokensBalance.toLocaleString()}
                     </span>
                   </div>
-                  {dashboard?.tribe?.isTribeActive && (
-                    <div className="text-[11px] text-emerald-300 font-bold bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 text-center">
-                      ✨ Your Tribe is Active Right Now! Practice now for daily consistency.
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => setShowTribeModal(true)}
-                  className="w-full text-xs font-bold text-ink bg-white hover:bg-surface py-2.5 rounded-xl shadow-sm transition-all text-center flex items-center justify-center gap-1.5 active:scale-95"
-                >
-                  <span>⏰</span>
-                  <span>{dashboard?.tribe?.userTribe ? "Change My Daily Tribe" : "Choose My Daily Tribe"}</span>
-                </button>
-              </div>
-
-              {/* 3. Partner Praise Card (Screenshot 3) */}
-              <div className="shelf-card bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-white rounded-3xl p-6 border border-rose-200 shadow-sm flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl">❤️</span>
-                  <span className="text-xs font-bold text-rose-600 bg-rose-100 px-2.5 py-0.5 rounded-full">
-                    Social Praise
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-ink-soft font-medium">Partners said:</p>
-                  <h4 className="text-sm font-extrabold text-ink mt-0.5">
-                    "I'd love to talk with you again!"
-                  </h4>
-                </div>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-black text-rose-600">{stats.lovedCount}</span>
-                  <span className="text-xs font-semibold text-rose-500">positive compliments</span>
-                </div>
-              </div>
-
-
-              {/* 3. Daily Topic of the Day Card */}
-              <div className="shelf-card bg-white rounded-3xl p-6 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-4">
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                    💡 Topic of the Day
-                  </span>
-                  <Link href="/memos" className="text-[11px] text-primary font-bold hover:underline">
-                    Browse All →
-                  </Link>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-ink leading-relaxed">
-                    "What is the most memorable place you have ever visited and why?"
-                  </h4>
-                  <p className="text-xs text-ink-soft mt-1.5">
-                    Tip: Describe the food, local people, and one unexpected moment that happened!
+                  <p className="text-xs text-ink-soft mt-1 leading-relaxed">
+                    Practice IELTS, job interviews & travel topics independently with our AI model.
                   </p>
                 </div>
               </div>
+              <span className="text-[#D91023] group-hover:translate-x-0.5 transition-transform font-bold">
+                →
+              </span>
+            </Link>
 
-              {/* 4. Never Meet Again / Blocklist Widget */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-border/60 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-danger/10 text-danger flex items-center justify-center text-base">
-                    🚫
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-ink">Never Meet Again</h4>
-                    <p className="text-[11px] text-ink-soft">
-                      {stats.blockedCount} {stats.blockedCount === 1 ? "user" : "users"} blocked
-                    </p>
-                  </div>
+            <Link
+              href="/pricing"
+              className="luxury-card bg-gradient-to-br from-[#FFF0F2] via-white to-[#EAF1FC]/70 rounded-[26px] p-5 border border-[#E11D48]/40 shadow-sm flex items-center justify-between gap-4 group"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl btn-primary-crest text-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                  👑
                 </div>
-
-                <button
-                  onClick={handleOpenBlocked}
-                  className="text-xs font-semibold text-ink-soft hover:text-ink border border-border px-3 py-1.5 rounded-xl hover:bg-surface transition-colors"
-                >
-                  Manage
-                </button>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#D91023]">
+                    Current Plan: {currentPlan.name}
+                  </span>
+                  <h2 className="text-sm sm:text-base font-black text-ink mt-0.5">
+                    Unlock Direct Buddy Calls & 3,500 AI Tokens
+                  </h2>
+                  <p className="text-xs text-ink-soft mt-0.5">
+                    Compare Free, Plus & Elite VIP benefits
+                  </p>
+                </div>
               </div>
+              <span className="text-[#D91023] group-hover:translate-x-0.5 transition-transform font-bold">
+                →
+              </span>
+            </Link>
+          </section>
 
-            </div>
-
-          </div>
-
-        </div>
-      </PageTransition>
-
-      {/* Blocklist Manager Modal */}
-      {showBlockedModal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-border flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          {/* My 7-Day Speaking Streak Card */}
+          <section className="luxury-card bg-white rounded-[28px] p-5 sm:p-6 border border-border shadow-sm flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🚫</span>
-                <h3 className="text-base font-bold text-ink">Blocked Users</h3>
+                <span className="text-lg">🔥</span>
+                <h3 className="text-base sm:text-lg font-black text-ink">
+                  My Speaking Streak
+                </h3>
               </div>
-              <button
-                onClick={() => setShowBlockedModal(false)}
-                className="text-ink-soft hover:text-ink font-bold text-sm p-1"
+              <Link
+                href="/achievements"
+                className="flex items-center gap-1 text-xs sm:text-sm font-extrabold text-glacier hover:text-primary"
               >
-                ✕
-              </button>
+                <span>
+                  {stats.streakDays} {stats.streakDays === 1 ? "day" : "days"}
+                </span>
+                <span>→</span>
+              </Link>
             </div>
 
-            <p className="text-xs text-ink-soft">
-              Users on this list will never be paired with you in future conversation queues.
-            </p>
-
-            {loadingBlocked ? (
-              <div className="py-8 text-center text-xs text-ink-soft">Loading list...</div>
-            ) : blockedUsers.length > 0 ? (
-              <div className="divide-y divide-border/40 max-h-64 overflow-y-auto">
-                {blockedUsers.map((item) => (
+            <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-1">
+              {streakWeek.map((day) => (
+                <div
+                  key={day.dayNumber}
+                  className="flex flex-col items-center gap-1.5"
+                >
                   <div
-                    key={item.id}
-                    className="py-3 flex items-center justify-between gap-3 text-xs"
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-extrabold transition-all ${
+                      day.completed
+                        ? "btn-primary-crest text-white shadow-sm"
+                        : "border-2 border-dashed border-border text-ink-soft bg-surface"
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span>{item.blockedUser.flag}</span>
-                      <div>
-                        <p className="font-bold text-ink">{item.blockedUser.name}</p>
-                        <p className="text-[10px] text-ink-soft">
-                          Blocked on {new Date(item.blockedAt).toLocaleDateString()}
-                        </p>
+                    {day.completed ? (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <polyline
+                          points="20 6 9 17 4 12"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : day.dayNumber === 7 ? (
+                      <span className="text-base opacity-70">🎁</span>
+                    ) : (
+                      <span className="text-xs opacity-60">{day.dayNumber}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Recent Conversation Partners & Direct Buddy Reconnect */}
+          <section className="luxury-card bg-white rounded-[28px] p-5 sm:p-7 border border-border shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-base sm:text-lg font-black text-ink">
+                Recent Speaking Partners
+              </h3>
+
+              <div className="flex items-center gap-1 bg-surface-subtle p-1 rounded-xl border border-border">
+                <button
+                  type="button"
+                  onClick={() => setPartnerFilter("all")}
+                  className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    partnerFilter === "all"
+                      ? "bg-[#0B1F3A] text-white shadow-2xs"
+                      : "text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  All ({recentPartners.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPartnerFilter("buddies")}
+                  className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    partnerFilter === "buddies"
+                      ? "bg-[#0B1F3A] text-white shadow-2xs"
+                      : "text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  Buddies ({recentPartners.filter((p) => p.isBuddy).length})
+                </button>
+              </div>
+            </div>
+
+            {visiblePartners.length > 0 ? (
+              <div className="flex flex-col divide-y divide-border/60">
+                {visiblePartners.map((partner) => {
+                  const canCallDirectly = canDirectCallBuddy(user.planTier);
+                  return (
+                    <div
+                      key={partner.id}
+                      className="py-3.5 flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="relative w-11 h-11 rounded-2xl bg-primary-light text-primary font-black text-base flex items-center justify-center flex-shrink-0 border border-border">
+                          <span>{partner.name.charAt(0).toUpperCase()}</span>
+                          <span
+                            className={`w-3 h-3 rounded-full border-2 border-white absolute -bottom-0.5 -right-0.5 ${
+                              partner.isBuddy ? "bg-emerald-500" : "bg-slate-400"
+                            }`}
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-base leading-none">
+                              {partner.countryFlag || "🌐"}
+                            </span>
+                            <p className="text-sm font-extrabold text-ink truncate">
+                              {partner.name}
+                            </p>
+                          </div>
+                          <p className="text-xs text-ink-soft mt-0.5">
+                            Last met{" "}
+                            <span className="text-ink font-semibold">
+                              {formatPartnerDate(partner.lastMetDate)}
+                            </span>{" "}
+                            •{" "}
+                            <span className="text-glacier font-bold">
+                              {partner.sessionCount}{" "}
+                              {partner.sessionCount === 1 ? "call" : "calls"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {partner.isBuddy && (
+                          <button
+                            type="button"
+                            onClick={() => handlePartnerCallClick(partner)}
+                            disabled={callingBuddyId === partner.id}
+                            className={`text-xs font-extrabold px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+                              canCallDirectly
+                                ? "bg-[#0B1F3A] hover:bg-[#122E54] text-white"
+                                : "bg-[#EDF6FC] hover:bg-[#DCEBFA] text-[#0B1F3A] border border-[#3B82C4]/35"
+                            }`}
+                            title={
+                              canCallDirectly
+                                ? "Call buddy directly"
+                                : "Plus feature: Call this partner again directly"
+                            }
+                          >
+                            <span>{canCallDirectly ? "📞" : "🔒"}</span>
+                            <span>
+                              {callingBuddyId === partner.id
+                                ? "..."
+                                : "Call Again"}
+                            </span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBuddy(partner.id)}
+                          className={`w-9 h-9 rounded-xl border flex items-center justify-center text-xs transition-all cursor-pointer ${
+                            partner.isBuddy
+                              ? "border-[#F5A623] bg-[#FEF7E6] text-[#D97706]"
+                              : "border-border text-ink-soft hover:text-primary hover:border-glacier"
+                          }`}
+                          title={
+                            partner.isBuddy ? "Saved Buddy" : "Add as Buddy"
+                          }
+                        >
+                          ★
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenMemo(partner)}
+                          className="w-9 h-9 rounded-xl border border-border hover:border-primary bg-surface flex items-center justify-center text-primary transition-all cursor-pointer"
+                          title="Private partner memo"
+                        >
+                          📝
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleUnblock(item.blockedUser.id)}
-                      className="text-xs font-semibold text-primary hover:text-primary-dark hover:underline"
-                    >
-                      Unblock
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="py-6 text-center text-xs text-ink-soft">
-                You haven't blocked any users yet.
+              <div className="py-8 text-center flex flex-col items-center gap-2">
+                <Penguin3D variant="default" size="md" withLink={false} />
+                <p className="text-sm font-extrabold text-ink">
+                  {partnerFilter === "buddies"
+                    ? "No buddies saved yet"
+                    : "No speaking sessions yet"}
+                </p>
+                <p className="text-xs text-ink-soft max-w-xs">
+                  Start a 7-minute live conversation above to meet friendly speaking partners around the world!
+                </p>
               </div>
             )}
 
-            <div className="pt-2">
-              <Button variant="secondary" onClick={() => setShowBlockedModal(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tribe 12 Selection Modal */}
-      {showTribeModal && (
-        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-border flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">🏛️</span>
-                <div>
-                  <h3 className="text-lg font-bold text-ink">Choose Your Daily Tribe (1-12)</h3>
-                  <p className="text-xs text-ink-soft">Pick a 2-hour daily routine slot that fits your schedule</p>
-                </div>
-              </div>
+            {filteredPartners.length > 0 && (
               <button
-                onClick={() => setShowTribeModal(false)}
-                className="text-ink-soft hover:text-ink font-bold text-base p-1"
+                type="button"
+                onClick={() => {
+                  if (filteredPartners.length > 5) {
+                    setShowAllPartners((prev) => !prev);
+                  } else {
+                    router.push("/memos");
+                  }
+                }}
+                className="pt-2 w-full flex items-center justify-center gap-1.5 text-xs font-extrabold text-glacier hover:text-primary transition-colors cursor-pointer"
               >
-                ✕
+                <span>
+                  {filteredPartners.length > 5 && showAllPartners
+                    ? "Show less"
+                    : "View full partner notebook →"}
+                </span>
               </button>
-            </div>
+            )}
+          </section>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
-              {TRIBES.map((tr) => {
-                const isSelected = dashboard?.tribe?.userTribe === tr.id;
-                const isLive = (dashboard?.tribe?.currentActiveTribe ?? 1) === tr.id;
-                return (
+          {/* Community Reputation & Blocklist Row */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="luxury-card rounded-[26px] bg-gradient-to-br from-[#EDF6FC] to-white border border-[#3B82C4]/25 p-5 flex items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-extrabold text-glacier uppercase tracking-wider">
+                    Partner Praise
+                  </span>
                   <button
-                    key={tr.id}
-                    onClick={() => handleJoinTribe(tr.id)}
-                    className={`p-3.5 rounded-2xl border-2 text-left flex flex-col gap-1 transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary-light/40 shadow-sm"
-                        : "border-border/70 hover:border-primary/50 hover:bg-surface"
-                    }`}
+                    type="button"
+                    onClick={() => setShowPraiseInfoModal(true)}
+                    className="w-4 h-4 rounded-full border border-glacier/50 text-glacier text-[10px] font-bold flex items-center justify-center cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-ink">{tr.label}</span>
-                      <div className="flex items-center gap-1.5">
-                        {isLive && (
-                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                            Active 🟢
-                          </span>
-                        )}
-                        {isSelected && (
-                          <span className="text-[10px] font-extrabold text-primary bg-primary-light px-2 py-0.5 rounded-full">
-                            Selected ✓
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-primary font-semibold">{tr.local}</p>
-                    <p className="text-[10px] text-ink-soft">{tr.utc}</p>
+                    ?
                   </button>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 flex items-center justify-end gap-2 border-t border-border/50">
-              <Button variant="secondary" onClick={() => setShowTribeModal(false)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Partner Memo Modal */}
-      {selectedMemoPartner && (
-        <div className="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-border flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">📝</span>
-                <div>
-                  <h3 className="text-base font-bold text-ink">
-                    Memo for {selectedMemoPartner.name}
-                  </h3>
-                  <p className="text-xs text-ink-soft">
-                    {selectedMemoPartner.country || "Global"} • Only visible to you
-                  </p>
+                </div>
+                <h3 className="text-base font-black text-ink mt-1">
+                  &ldquo;I&apos;d love to talk again!&rdquo;
+                </h3>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-3xl font-black text-primary">
+                    {stats.lovedCount}
+                  </span>
+                  {lovedGain > 0 && (
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-crimson-light text-crimson">
+                      +{lovedGain} recent
+                    </span>
+                  )}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedMemoPartner(null)}
-                className="text-ink-soft hover:text-ink font-bold text-base p-1"
-              >
-                ✕
-              </button>
+              <span className="text-4xl select-none">😍</span>
             </div>
 
-            <textarea
-              value={memoText}
-              onChange={(e) => setMemoText(e.target.value)}
-              placeholder="e.g. Lives in Tokyo, loves photography, preparing for IELTS speaking exam..."
-              rows={4}
-              maxLength={400}
-              className="w-full text-xs p-3.5 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none leading-relaxed text-ink"
-            />
-
-            <div className="flex items-center justify-between pt-1">
-              <Link
-                href="/memos"
-                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-              >
-                <span>📖</span>
-                <span>Open Full Notebook</span>
-              </Link>
-
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" onClick={() => setSelectedMemoPartner(null)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={handleSaveMemo}>
-                  Save Memo
-                </Button>
+            <button
+              type="button"
+              onClick={handleOpenBlocked}
+              className="luxury-card bg-white rounded-[26px] p-5 border border-border flex items-center justify-between text-left cursor-pointer"
+            >
+              <div>
+                <span className="text-xs font-extrabold text-ink-soft uppercase tracking-wider">
+                  Safety & Privacy
+                </span>
+                <h3 className="text-base font-black text-ink mt-1">
+                  Never meet again ({stats.blockedCount})
+                </h3>
+                <p className="text-xs text-ink-soft mt-1">
+                  Manage excluded speaking partners
+                </p>
               </div>
+              <span className="text-ink-soft font-bold">→</span>
+            </button>
+          </section>
+
+          {/* Clean Footer Links */}
+          <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-ink-soft px-2 pt-2">
+            <div className="flex items-center gap-4 font-semibold">
+              <Link href="/practice" className="hover:text-primary">
+                🎙️ Fluency Vault
+              </Link>
+              <Link href="/ai-studio" className="hover:text-primary">
+                ✨ AI Studio
+              </Link>
+              <Link href="/leaderboard" className="hover:text-primary">
+                🏆 Leaderboard
+              </Link>
+              <Link href="/invite" className="hover:text-primary">
+                🎁 Invite Friends
+              </Link>
             </div>
-          </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-crimson hover:underline font-extrabold cursor-pointer"
+            >
+              Log Out
+            </button>
+          </footer>
         </div>
-      )}
+      </PageTransition>
+
+      <PraiseInfoModal
+        open={showPraiseInfoModal}
+        onClose={() => setShowPraiseInfoModal(false)}
+      />
+
+      <BuddyUpgradeModal
+        partnerName={upgradeBuddyName}
+        onClose={() => setUpgradeBuddyName(null)}
+      />
+
+      <BlockedUsersModal
+        open={showBlockedModal}
+        loading={loadingBlocked}
+        blockedUsers={blockedUsers}
+        onUnblock={handleUnblock}
+        onClose={() => setShowBlockedModal(false)}
+      />
+
+      <TribeSelectionModal
+        open={showTribeModal}
+        selectedTribeId={dashboard?.tribe?.userTribe}
+        activeTribeId={dashboard?.tribe?.currentActiveTribe ?? 3}
+        onSelectTribe={handleJoinTribe}
+        onClose={() => setShowTribeModal(false)}
+      />
+
+      <PartnerMemoModal
+        partner={selectedMemoPartner}
+        memoText={memoText}
+        onChangeText={setMemoText}
+        onSave={handleSaveMemo}
+        onClose={() => setSelectedMemoPartner(null)}
+      />
     </main>
   );
 }

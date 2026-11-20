@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import Penguin3D from "../../components/Penguin3D";
+import BrandWatermark from "../../components/BrandWatermark";
 import { getUser, getToken } from "../../lib/auth";
 import { getLeaderboard } from "../../services/api";
 import { User, LeaderboardData, LeaderboardUser } from "../../types";
@@ -51,18 +52,19 @@ export default function LeaderboardPage() {
   const remainingList = currentList.slice(3);
 
   return (
-    <main className="min-h-screen flex flex-col bg-surface pb-24 md:pb-16">
+    <main className="min-h-screen flex flex-col pb-24 md:pb-16 relative overflow-hidden">
+      <BrandWatermark opacity={0.04} size="xl" />
       <Header />
 
       <PageTransition>
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
           
           {/* Header Hero Banner */}
-          <div className="bg-gradient-to-r from-ink via-[#0d223a] to-[#1e3a8a] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="bg-gradient-to-br from-[#071426] via-[#0B1F3A] to-[#13325B] text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-gold/15 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col gap-2 text-center md:text-left max-w-xl">
-              <span className="inline-flex items-center gap-1.5 bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
+              <span className="inline-flex items-center gap-1.5 bg-gold/20 text-[#F5A623] border border-gold/35 text-xs font-bold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
                 🏆 Global & Tribe Champions
               </span>
               <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">
@@ -81,7 +83,7 @@ export default function LeaderboardPage() {
               <div className="text-left">
                 <p className="text-xs text-white/70">My Global Rank</p>
                 <p className="text-sm font-extrabold text-amber-300">
-                  {user?.name || user?.email.split("@")[0]}
+                  {user?.name || (user?.email ? user.email.split("@")[0] : "Learner")}
                 </p>
               </div>
             </div>

@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "JustSpeak - English Speaking Practice",
   "short_name": "JustSpeak",
   "description": "Instant 1-on-1 English speaking practice with learners worldwide",
@@ -9,9 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

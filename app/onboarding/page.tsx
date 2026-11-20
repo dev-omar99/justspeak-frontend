@@ -112,7 +112,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-surface pb-16">
+    <main className="min-h-screen flex flex-col pb-16">
       <Header />
 
       <PageTransition>

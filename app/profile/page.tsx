@@ -6,9 +6,17 @@ import Link from "next/link";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import Button from "../../components/Button";
+import BrandWatermark from "../../components/BrandWatermark";
 import { getUser, getToken, saveUser, clearAuth } from "../../lib/auth";
-import { getDashboardData, updateProfile, getBlockedUsers, unblockUser } from "../../services/api";
-import { User, BlockedUserItem } from "../../types";
+import {
+  getDashboardData,
+  updateProfile,
+  getBlockedUsers,
+  unblockUser,
+  getBuddies,
+  toggleBuddy,
+} from "../../services/api";
+import { User, BlockedUserItem, BuddyUserItem, RecentPartner } from "../../types";
 
 const ENGLISH_LEVELS = [
   "Beginner",
@@ -49,9 +57,8 @@ const COUNTRIES = [
   "Colombia",
 ];
 
-// Preset 3D/Emoji Avatars for instant choice
 const PRESET_AVATARS = [
-  { label: "Penguin", emoji: "🐧" },
+  { label: "Eagle Crest", emoji: "🦅" },
   { label: "Astronaut", emoji: "🚀" },
   { label: "Explorer", emoji: "🌍" },
   { label: "Scholar", emoji: "🦉" },
@@ -61,19 +68,29 @@ const PRESET_AVATARS = [
   { label: "Artist", emoji: "🎨" },
 ];
 
+type ActiveDrawer =
+  | null
+  | "settings"
+  | "buddies"
+  | "history"
+  | "match-settings"
+  | "never-meet"
+  | "chatbot";
+
 export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [activeDrawer, setActiveDrawer] = useState<ActiveDrawer>(null);
 
-  // form state
+  // Profile form state
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [englishLevel, setEnglishLevel] = useState("Intermediate");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
 
-  // stats
+  // Dashboard stats & lists
   const [stats, setStats] = useState<{
     totalSessions: number;
     totalMinutes: number;
@@ -81,18 +98,33 @@ export default function ProfilePage() {
     streakDays: number;
     lovedCount: number;
     blockedCount: number;
+    contributionPoints?: number;
   } | null>(null);
+  const [recentPartners, setRecentPartners] = useState<RecentPartner[]>([]);
+  const [buddiesList, setBuddiesList] = useState<BuddyUserItem[]>([]);
+  const [blockedList, setBlockedList] = useState<BlockedUserItem[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Blocked users
-  const [blockedList, setBlockedList] = useState<BlockedUserItem[]>([]);
-  const [loadingBlocked, setLoadingBlocked] = useState(false);
-
-  // Sound settings
+  // Sound & Match settings
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [matchSameLevel, setMatchSameLevel] = useState(false);
+  const [matchGlobalPriority, setMatchGlobalPriority] = useState(true);
+  const [subtitlesHelper, setSubtitlesHelper] = useState(true);
+
+  // Chatbot state
+  const [chatMessages, setChatMessages] = useState<
+    { sender: "bot" | "user"; text: string }[]
+  >([
+    {
+      sender: "bot",
+      text: "Hi there! 👋 I'm the JustSpeak Assistant. Ask me about speaking tips, how tickets work, Tribe hours, or practice an icebreaker with me!",
+    },
+  ]);
+  const [chatInput, setChatInput] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -100,6 +132,8 @@ export default function ProfilePage() {
       if (stored !== null) {
         setSoundEnabled(stored !== "false");
       }
+      const sameLvl = localStorage.getItem("justspeak_match_same_level");
+      if (sameLvl !== null) setMatchSameLevel(sameLvl === "true");
     }
   }, []);
 
@@ -110,7 +144,6 @@ export default function ProfilePage() {
       localStorage.setItem("justspeak_sound_enabled", String(next));
     }
   }
-
 
   useEffect(() => {
     const currentUser = getUser();
@@ -135,7 +168,9 @@ export default function ProfilePage() {
           streakDays: data.stats.streakDays,
           lovedCount: data.stats.lovedCount,
           blockedCount: data.stats.blockedCount,
+          contributionPoints: data.stats.contributionPoints,
         });
+        setRecentPartners(data.recentPartners || []);
         if (data.user.name) setName(data.user.name);
         if (data.user.country) setCountry(data.user.country);
         if (data.user.englishLevel) setEnglishLevel(data.user.englishLevel);
@@ -144,7 +179,10 @@ export default function ProfilePage() {
       })
       .catch(() => {});
 
-    // Load blocked
+    getBuddies(token)
+      .then((list) => setBuddiesList(list))
+      .catch(() => {});
+
     setLoadingBlocked(true);
     getBlockedUsers(token)
       .then((list) => setBlockedList(list))
@@ -152,7 +190,7 @@ export default function ProfilePage() {
       .finally(() => setLoadingBlocked(false));
   }, [router]);
 
-  // Handle Photo File Upload with Canvas Compression
+  // Handle Photo File Upload with Canvas Compression (200x200 JPEG)
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -244,6 +282,44 @@ export default function ProfilePage() {
     } catch {}
   }
 
+  async function handleRemoveBuddy(buddyId: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await toggleBuddy(token, buddyId);
+      setBuddiesList((prev) => prev.filter((b) => b.id !== buddyId));
+    } catch {}
+  }
+
+  function handleSendChat(e: React.FormEvent) {
+    e.preventDefault();
+    const q = chatInput.trim();
+    if (!q) return;
+    setChatMessages((prev) => [...prev, { sender: "user", text: q }]);
+    setChatInput("");
+
+    const lower = q.toLowerCase();
+    let reply =
+      "Great question! On JustSpeak, each session lasts 7 minutes face-to-face. Remember to keep your camera on and complete the survey afterwards to earn Contribution Points!";
+    if (lower.includes("ticket") || lower.includes("free")) {
+      reply =
+        "You receive 5 White Tickets every day at midnight for free! You can also earn Blue Bonus Tickets from events, streaks, and inviting friends.";
+    } else if (lower.includes("tribe")) {
+      reply =
+        "Your Tribe groups you with active learners who practice at similar hours. Joining during your Tribe time gives you fast matching and bonus camaraderie!";
+    } else if (lower.includes("topic") || lower.includes("practice")) {
+      reply =
+        "Let's practice! Here's a warm-up topic: 'Has anything made you want to work harder to earn more recently?' Tell me in 2 sentences!";
+    } else if (lower.includes("prime") || lower.includes("invite")) {
+      reply =
+        "When 3 invited friends join their first conversation using your code, you unlock a 10-day Prime membership with unlimited tickets!";
+    }
+
+    setTimeout(() => {
+      setChatMessages((prev) => [...prev, { sender: "bot", text: reply }]);
+    }, 350);
+  }
+
   function handleLogout() {
     clearAuth();
     router.push("/login");
@@ -251,360 +327,923 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const initials = (user.name || (user.email ? user.email.split("@")[0] : (user.phone || "L"))).charAt(0).toUpperCase();
+  const displayName =
+    user.name || (user.email ? user.email.split("@")[0] : user.phone || "Learner");
+  const initials = displayName.charAt(0).toUpperCase();
 
   return (
-    <main className="min-h-screen flex flex-col bg-surface pb-24 md:pb-16">
+    <main className="min-h-screen flex flex-col pb-28 md:pb-16 relative overflow-hidden">
+      <BrandWatermark opacity={0.04} size="xl" />
       <Header />
 
       <PageTransition>
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
-
-          {/* Top Profile Hero Card */}
-          <div className="bg-gradient-to-r from-ink via-[#0d223a] to-[#1e3a8a] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/25 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 flex items-center gap-5">
-              {/* Profile Avatar View */}
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary-dark text-white font-extrabold text-3xl flex items-center justify-center shadow-xl shadow-primary/40 flex-shrink-0 overflow-hidden border-2 border-white/20">
-                {avatarUrl ? (
-                  avatarUrl.startsWith("data:") || avatarUrl.startsWith("http") ? (
-                    <img
-                      src={avatarUrl}
-                      alt={user.name || "User Avatar"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-4xl select-none">{avatarUrl}</span>
-                  )
-                ) : (
-                  <span>{initials}</span>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1 text-center sm:text-left">
-                <div className="flex items-center gap-2 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-extrabold" dir="auto">
-                    {user.name || (user.email ? user.email.split("@")[0] : (user.phone || "Learner"))}
-                  </h1>
-                  <span className="bg-white/10 text-white/90 text-xs font-semibold px-3 py-0.5 rounded-full border border-white/15">
-                    {englishLevel}
-                  </span>
-                </div>
-                <p className="text-xs text-white/70">{user.email || user.phone}</p>
-
-                {user.country && (
-                  <p className="text-xs text-amber-300 font-medium">📍 {user.country}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="relative z-10 flex items-center gap-3">
-              <button
-                onClick={handleLogout}
-                className="text-xs font-bold text-white bg-danger/80 hover:bg-danger px-4 py-2.5 rounded-xl shadow-md transition-all"
+        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col gap-4">
+          {/* Top "My page" Header Row (Screenshot #11) */}
+          <div className="flex items-center justify-between pt-1 pb-2">
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              My page
+            </h1>
+            <button
+              type="button"
+              onClick={() => setActiveDrawer("settings")}
+              aria-label="Open Profile Settings"
+              className="w-10 h-10 rounded-full hover:bg-slate-200/70 flex items-center justify-center text-slate-700 transition-colors"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
               >
-                Log Out
-              </button>
-            </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
           </div>
 
-          {/* 12-Column Desktop Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            {/* Left Area (7 Columns): Edit Profile Form */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-6">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">✏️</span>
-                  <div>
-                    <h2 className="text-lg font-bold text-ink">Personal Profile & Settings</h2>
-                    <p className="text-xs text-ink-soft">Update how speaking partners see you</p>
+          {/* User Identity Row with Golden Shield Badge (Screenshot #11) */}
+          <button
+            type="button"
+            onClick={() => setActiveDrawer("settings")}
+            className="flex items-center justify-between py-2 px-1 text-left group"
+          >
+            <div className="flex items-center gap-3.5">
+              {/* Golden Shield / Tribe Crest + Avatar */}
+              <div className="relative flex items-center gap-2.5">
+                <div className="w-8 h-9 rounded-lg bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 p-0.5 shadow-sm flex items-center justify-center">
+                  <div className="w-full h-full bg-[#1E293B] rounded-[6px] flex flex-col items-center justify-center text-amber-300">
+                    <span className="text-xs leading-none">☀️</span>
                   </div>
                 </div>
 
-                <form onSubmit={handleSave} className="flex flex-col gap-6">
-                  
-                  {/* 1. Avatar Selection & Upload Section */}
-                  <div className="flex flex-col gap-3 p-4 bg-surface rounded-2xl border border-border/60">
-                    <label className="text-xs font-bold text-ink uppercase tracking-wider flex items-center justify-between">
-                      <span>Profile Picture / Avatar</span>
-                      {avatarUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setAvatarUrl("")}
-                          className="text-[11px] text-danger hover:underline font-semibold"
-                        >
-                          Remove Photo
-                        </button>
-                      )}
-                    </label>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      {/* Current Preview */}
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white font-bold text-2xl flex items-center justify-center shadow-md overflow-hidden border border-border flex-shrink-0">
-                        {avatarUrl ? (
-                          avatarUrl.startsWith("data:") || avatarUrl.startsWith("http") ? (
-                            <img
-                              src={avatarUrl}
-                              alt="Preview"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-3xl select-none">{avatarUrl}</span>
-                          )
-                        ) : (
-                          <span>{initials}</span>
-                        )}
-                      </div>
-
-                      {/* Upload Button + Presets */}
-                      <div className="flex-1 flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleImageUpload}
-                            accept="image/*"
-                            className="hidden"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="text-xs font-bold text-ink bg-white hover:bg-surface border border-border px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5"
-                          >
-                            <span>📷</span>
-                            <span>Upload Custom Photo</span>
-                          </button>
-                        </div>
-
-                        {/* Preset Emojis/3D Avatars */}
-                        <div className="flex items-center gap-1.5 pt-1">
-                          <span className="text-[10px] text-ink-soft font-semibold">Or pick:</span>
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {PRESET_AVATARS.map((av) => (
-                              <button
-                                key={av.label}
-                                type="button"
-                                onClick={() => setAvatarUrl(av.emoji)}
-                                className={`w-8 h-8 rounded-xl flex items-center justify-center text-base border transition-all ${
-                                  avatarUrl === av.emoji
-                                    ? "bg-primary-light border-primary scale-110 shadow-xs"
-                                    : "bg-white border-border hover:bg-surface hover:scale-105"
-                                }`}
-                                title={av.label}
-                              >
-                                {av.emoji}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {avatarUrl ? (
+                  <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                    {avatarUrl.startsWith("data:") || avatarUrl.startsWith("http") ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl">{avatarUrl}</span>
+                    )}
                   </div>
+                ) : null}
+              </div>
 
-                  {/* 2. Display Name (Supports Arabic & English) */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-ink uppercase tracking-wider">
-                      Display Name
-                    </label>
-                    <input
-                      type="text"
-                      dir="auto"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Your name or nickname..."
-                      maxLength={60}
-                      className="w-full border border-border rounded-2xl px-4 py-3.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all font-sans"
-                    />
-                  </div>
-
-                  {/* 3. Country */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-ink uppercase tracking-wider">
-                      Your Country
-                    </label>
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full border border-border rounded-2xl px-4 py-3.5 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none cursor-pointer font-sans"
-                    >
-                      <option value="">— Select your country —</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* 4. English Level */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-ink uppercase tracking-wider">
-                      English Speaking Level
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {ENGLISH_LEVELS.map((lvl) => (
-                        <button
-                          key={lvl}
-                          type="button"
-                          onClick={() => setEnglishLevel(lvl)}
-                          className={`py-3 px-3 rounded-2xl border-2 text-xs font-bold transition-all ${
-                            englishLevel === lvl
-                              ? "border-primary bg-primary-light/40 text-primary shadow-sm"
-                              : "border-border/60 text-ink-soft hover:border-border hover:bg-surface"
-                          }`}
-                        >
-                          {lvl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 5. Short Bio & Interests (Supports Arabic & English seamlessly with dir="auto") */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-ink uppercase tracking-wider flex items-center justify-between">
-                      <span>Short Bio & Interests <span className="normal-case font-normal text-ink-soft">(optional)</span></span>
-                      <span className="text-[10px] text-ink-soft font-normal">عربي أو إنجليزي</span>
-                    </label>
-                    <textarea
-                      dir="auto"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell partners about your hobbies, work, or goals (e.g. أهلاً، أحب السفر وممارسة الإنجليزية أو I work in tech and love sports)..."
-                      maxLength={300}
-                      rows={3}
-                      className="w-full border border-border rounded-2xl px-4 py-3 text-sm text-ink bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none font-sans leading-relaxed"
-                    />
-                    <p className="text-[10px] text-ink-soft text-right">{bio.length}/300</p>
-                  </div>
-
-                  {error && (
-                    <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 text-center">
-                      <p className="text-danger text-xs font-medium">{error}</p>
-                    </div>
-                  )}
-
-                  {success && (
-                    <div className="bg-success/10 border border-success/20 rounded-xl p-3 text-center animate-in fade-in duration-200">
-                      <p className="text-success text-xs font-semibold">✓ Profile saved successfully!</p>
-                    </div>
-                  )}
-
-                  <Button type="submit" variant="primary" disabled={saving}>
-                    {saving ? "Saving Changes..." : "💾 Save Changes"}
-                  </Button>
-                </form>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xl font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors"
+                    dir="auto"
+                  >
+                    {displayName}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  {country ? `📍 ${country} • ` : ""}
+                  {englishLevel}
+                </p>
               </div>
             </div>
 
-            {/* Right Area (5 Columns): Praise & Never Meet Again Manager */}
-            <div className="lg:col-span-5 space-y-6">
+            <span className="text-xs font-bold text-blue-600 group-hover:underline">
+              Edit profile ›
+            </span>
+          </button>
 
-              {/* 1. Partner Praise Details (Screenshot 3) */}
-              <div className="bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-white rounded-3xl p-6 sm:p-7 border border-rose-200 shadow-xl shadow-rose-500/5 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl">❤️</span>
-                  <span className="text-xs font-bold text-rose-600 bg-rose-100 px-3 py-1 rounded-full">
-                    Partner Feedback
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-ink-soft font-medium">Partners said:</p>
-                  <h3 className="text-base font-extrabold text-ink mt-0.5">
-                    "I'd love to talk with you again!"
-                  </h3>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-rose-600">{stats?.lovedCount || 0}</span>
-                  <span className="text-xs font-semibold text-rose-500">compliments received</span>
-                </div>
-                <p className="text-xs text-ink-soft leading-relaxed border-t border-rose-200/60 pt-3">
-                  Partners leave compliments when you are friendly, active, and supportive during the conversation.
+          {/* Card 1: My Buddies (Screenshot #11) */}
+          <button
+            type="button"
+            onClick={() => setActiveDrawer("buddies")}
+            className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+          >
+            <div className="flex items-center gap-3.5">
+              <span className="text-blue-600">
+                <svg
+                  className="w-6 h-6"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                </svg>
+              </span>
+              <span className="text-[15px] font-bold text-slate-900">
+                My Buddies
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {buddiesList.length > 0 && (
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
+                  {buddiesList.length}
+                </span>
+              )}
+              <span className="text-slate-400 text-lg font-bold">›</span>
+            </div>
+          </button>
+
+          {/* Card 2: Dark-Navy "Invite and get a 10-day Prime membership!" Banner (Screenshot #11) */}
+          <Link
+            href="/invite"
+            className="w-full bg-gradient-to-r from-[#1E2548] via-[#232D5A] to-[#2B376E] hover:brightness-110 text-white rounded-2xl px-5 py-4 shadow-md flex items-center justify-between gap-4 transition-all relative overflow-hidden"
+          >
+            <div className="flex items-center gap-4">
+              {/* 3D Golden Gift Box Illustration */}
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 flex items-center justify-center shadow-md flex-shrink-0 relative">
+                <span className="text-2xl select-none">🎁</span>
+                <span className="absolute -top-1 -right-1 text-xs">✨</span>
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-slate-200 font-medium">
+                  Invite and get
+                </p>
+                <p className="text-[15px] font-extrabold text-amber-300 leading-snug">
+                  a 10-day Prime membership!
                 </p>
               </div>
+            </div>
+            <span className="text-white/80 text-xl font-bold">›</span>
+          </Link>
 
-              {/* 2. Sound Effects & Audio Preferences */}
-              <div className="bg-white rounded-3xl p-6 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">🔔</span>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-ink">Audio & Sound FX</h3>
-                      <p className="text-xs text-ink-soft">Call chimes and match alerts</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleToggleSound}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      soundEnabled
-                        ? "bg-emerald-500 text-white shadow-xs"
-                        : "bg-surface border border-border text-ink-soft"
-                    }`}
+          {/* Menu Cards Stack (Screenshot #11) */}
+          <div className="flex flex-col gap-3">
+            {/* Match history */}
+            <button
+              type="button"
+              onClick={() => setActiveDrawer("history")}
+              className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <span className="text-blue-600">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.2}
+                    viewBox="0 0 24 24"
                   >
-                    <span>{soundEnabled ? "🔊 Enabled" : "🔇 Muted"}</span>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </span>
+                <span className="text-[15px] font-bold text-slate-900">
+                  Match history
+                </span>
               </div>
+              <div className="flex items-center gap-2">
+                {recentPartners.length > 0 && (
+                  <span className="text-xs font-semibold text-slate-400">
+                    {recentPartners.length}
+                  </span>
+                )}
+                <span className="text-slate-400 text-lg font-bold">›</span>
+              </div>
+            </button>
 
-              {/* 3. Never Meet Again / Blocklist Manager (Screenshot 3) */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-4">
+            {/* My memos */}
+            <Link
+              href="/memos?tab=memos"
+              className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <span className="text-blue-600">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                  </svg>
+                </span>
+                <span className="text-[15px] font-bold text-slate-900">
+                  My memos
+                </span>
+              </div>
+              <span className="text-slate-400 text-lg font-bold">›</span>
+            </Link>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">🚫</span>
-                    <h3 className="text-base font-bold text-ink">Never Meet Again List</h3>
-                  </div>
-                  <span className="text-xs font-bold text-ink-soft bg-border/40 px-2.5 py-0.5 rounded-full">
+            {/* Match settings */}
+            <button
+              type="button"
+              onClick={() => setActiveDrawer("match-settings")}
+              className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <span className="text-blue-600">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                    />
+                  </svg>
+                </span>
+                <span className="text-[15px] font-bold text-slate-900">
+                  Match settings
+                </span>
+              </div>
+              <span className="text-slate-400 text-lg font-bold">›</span>
+            </button>
+
+            {/* Never meet again */}
+            <button
+              type="button"
+              onClick={() => setActiveDrawer("never-meet")}
+              className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <span className="text-blue-600">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
+                  </svg>
+                </span>
+                <span className="text-[15px] font-bold text-slate-900">
+                  Never meet again
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {blockedList.length > 0 && (
+                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
                     {blockedList.length}
                   </span>
-                </div>
-
-                <p className="text-xs text-ink-soft leading-relaxed">
-                  Users on this list will never be paired with you in future conversation queues.
-                </p>
-
-                {loadingBlocked ? (
-                  <div className="py-6 text-center text-xs text-ink-soft">Loading list...</div>
-                ) : blockedList.length > 0 ? (
-                  <div className="divide-y divide-border/40 max-h-56 overflow-y-auto pr-1">
-                    {blockedList.map((item) => (
-                      <div
-                        key={item.id}
-                        className="py-3 flex items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-base">{item.blockedUser.flag}</span>
-                          <div>
-                            <p className="font-bold text-ink">{item.blockedUser.name}</p>
-                            <p className="text-[10px] text-ink-soft">
-                              Blocked on {new Date(item.blockedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleUnblock(item.blockedUser.id)}
-                          className="text-xs font-bold text-primary hover:text-primary-dark hover:underline"
-                        >
-                          Unblock
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-6 text-center text-xs text-ink-soft">
-                    You haven't blocked any users yet.
-                  </div>
                 )}
+                <span className="text-slate-400 text-lg font-bold">›</span>
               </div>
+            </button>
 
-            </div>
-
+            {/* JustSpeak Chatbot */}
+            <button
+              type="button"
+              onClick={() => setActiveDrawer("chatbot")}
+              className="w-full bg-white hover:bg-slate-50/80 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <span className="text-blue-600">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2zm-3 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                  </svg>
+                </span>
+                <span className="text-[15px] font-bold text-slate-900">
+                  JustSpeak Chatbot
+                </span>
+              </div>
+              <span className="text-slate-400 text-lg font-bold">›</span>
+            </button>
           </div>
 
+          {/* Quick Summary Footer Card */}
+          <div className="mt-2 bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center gap-4">
+              <span>
+                Compliments:{" "}
+                <strong className="text-slate-800">
+                  {stats?.lovedCount || 0} ❤️
+                </strong>
+              </span>
+              <span>
+                Sessions:{" "}
+                <strong className="text-slate-800">
+                  {stats?.totalSessions || 0}
+                </strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-bold text-rose-600 hover:underline"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </PageTransition>
+
+      {/* ===================================================================== */}
+      {/* DRAWER 1: Profile & Account Settings (⚙️ Icon)                        */}
+      {/* ===================================================================== */}
+      {activeDrawer === "settings" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto max-h-[90vh] overflow-y-auto flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">
+                  Personal Profile & Settings
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Update how speaking partners see you
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="flex flex-col gap-5">
+              {/* Avatar Selection & Upload */}
+              <div className="flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/70">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                  <span>Profile Picture / Avatar</span>
+                  {avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setAvatarUrl("")}
+                      className="text-[11px] text-rose-600 hover:underline font-semibold"
+                    >
+                      Remove Photo
+                    </button>
+                  )}
+                </label>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-2xl flex items-center justify-center shadow-md overflow-hidden border border-slate-200 flex-shrink-0">
+                    {avatarUrl ? (
+                      avatarUrl.startsWith("data:") ||
+                      avatarUrl.startsWith("http") ? (
+                        <img
+                          src={avatarUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-3xl select-none">{avatarUrl}</span>
+                      )
+                    ) : (
+                      <span>{initials}</span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs font-bold text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+                      >
+                        <span>📷</span>
+                        <span>Upload Custom Photo</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                      <span className="text-[10px] text-slate-500 font-semibold">
+                        Or pick:
+                      </span>
+                      {PRESET_AVATARS.map((av) => (
+                        <button
+                          key={av.label}
+                          type="button"
+                          onClick={() => setAvatarUrl(av.emoji)}
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center text-base border transition-all ${
+                            avatarUrl === av.emoji
+                              ? "bg-blue-50 border-blue-600 scale-110 shadow-xs"
+                              : "bg-white border-slate-200 hover:bg-slate-100"
+                          }`}
+                          title={av.label}
+                        >
+                          {av.emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  dir="auto"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name or nickname..."
+                  maxLength={60}
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600"
+                />
+              </div>
+
+              {/* Country */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Your Country
+                </label>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 cursor-pointer"
+                >
+                  <option value="">— Select your country —</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* English Level */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  English Speaking Level
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {ENGLISH_LEVELS.map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setEnglishLevel(lvl)}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                        englishLevel === lvl
+                          ? "border-blue-600 bg-blue-50 text-blue-600"
+                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Short Bio */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                  <span>Short Bio & Interests</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    {bio.length}/300
+                  </span>
+                </label>
+                <textarea
+                  dir="auto"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell partners about your hobbies, work, or goals..."
+                  maxLength={300}
+                  rows={3}
+                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 resize-none"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center">
+                  <p className="text-rose-600 text-xs font-medium">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                  <p className="text-emerald-700 text-xs font-semibold">
+                    ✓ Profile saved successfully!
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-xs font-bold text-rose-600 hover:bg-rose-50 px-4 py-3 rounded-xl transition-colors"
+                >
+                  Log Out
+                </button>
+                <Button type="submit" variant="primary" disabled={saving}>
+                  {saving ? "Saving..." : "💾 Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DRAWER 2: My Buddies                                                  */}
+      {/* ===================================================================== */}
+      {activeDrawer === "buddies" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-4 max-h-[85vh]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👥</span>
+                <h2 className="text-lg font-extrabold text-slate-900">
+                  My Buddies ({buddiesList.length})
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              Learners you connected with as speaking buddies.
+            </p>
+            {buddiesList.length > 0 ? (
+              <div className="divide-y divide-slate-100 overflow-y-auto pr-1">
+                {buddiesList.map((item) => (
+                  <div
+                    key={item.id}
+                    className="py-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{item.countryFlag || "🌐"}</span>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          {item.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {item.country || "Global"} •{" "}
+                          {item.englishLevel || "Intermediate"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBuddy(item.id)}
+                      className="text-xs font-semibold text-rose-500 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center flex flex-col items-center gap-2">
+                <span className="text-3xl">🤝</span>
+                <p className="text-sm font-bold text-slate-800">
+                  No buddies added yet
+                </p>
+                <p className="text-xs text-slate-500 max-w-xs">
+                  When both you and your partner select &quot;I&apos;d love to
+                  talk again!&quot; after a session, you can connect as buddies.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DRAWER 3: Match History                                               */}
+      {/* ===================================================================== */}
+      {activeDrawer === "history" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-4 max-h-[85vh]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🕒</span>
+                <h2 className="text-lg font-extrabold text-slate-900">
+                  Match history
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            {recentPartners.length > 0 ? (
+              <div className="divide-y divide-slate-100 overflow-y-auto pr-1">
+                {recentPartners.map((p) => (
+                  <div
+                    key={p.id}
+                    className="py-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{p.countryFlag || "🌐"}</span>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          {p.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Met {p.sessionCount}{" "}
+                          {p.sessionCount === 1 ? "time" : "times"} •{" "}
+                          {new Date(p.lastMetDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/memos?tab=memos"
+                      className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl"
+                    >
+                      📄+ Memo
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-xs text-slate-500">
+                No past conversations yet. Join your next room to start speaking!
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DRAWER 4: Match Settings                                              */}
+      {/* ===================================================================== */}
+      {activeDrawer === "match-settings" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-extrabold text-slate-900">
+                Match settings
+              </h2>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    Prioritize different countries
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Match with international speakers first
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMatchGlobalPriority(!matchGlobalPriority)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                    matchGlobalPriority
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {matchGlobalPriority ? "On" : "Off"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    Similar fluency level
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Prefer partners near {englishLevel}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !matchSameLevel;
+                    setMatchSameLevel(next);
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem(
+                        "justspeak_match_same_level",
+                        String(next)
+                      );
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                    matchSameLevel
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {matchSameLevel ? "On" : "Off"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    Audio & Call Sound FX
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Chimes when a partner joins or timer ends
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                    soundEnabled
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {soundEnabled ? "🔊 On" : "🔇 Muted"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    Topic prompt helper
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Show illustrated topic cards during calls
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSubtitlesHelper(!subtitlesHelper)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                    subtitlesHelper
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {subtitlesHelper ? "On" : "Off"}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveDrawer(null)}
+              className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DRAWER 5: Never Meet Again                                            */}
+      {/* ===================================================================== */}
+      {activeDrawer === "never-meet" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-4 max-h-[85vh]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⛔</span>
+                <h2 className="text-lg font-extrabold text-slate-900">
+                  Never meet again ({blockedList.length})
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              Users on this list will never be paired with you in future
+              conversation queues.
+            </p>
+            {loadingBlocked ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                Loading list...
+              </div>
+            ) : blockedList.length > 0 ? (
+              <div className="divide-y divide-slate-100 overflow-y-auto pr-1">
+                {blockedList.map((item) => (
+                  <div
+                    key={item.id}
+                    className="py-3 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">{item.blockedUser.flag}</span>
+                      <div>
+                        <p className="font-bold text-slate-900">
+                          {item.blockedUser.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Added {new Date(item.blockedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleUnblock(item.blockedUser.id)}
+                      className="text-xs font-bold text-blue-600 hover:underline"
+                    >
+                      Unblock
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-slate-500">
+                You haven&apos;t added anyone to Never meet again.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* DRAWER 6: JustSpeak Chatbot                                           */}
+      {/* ===================================================================== */}
+      {activeDrawer === "chatbot" && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-4 h-[500px] max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-lg">
+                  🤖
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    JustSpeak Chatbot
+                  </h2>
+                  <p className="text-[11px] text-emerald-600 font-semibold">
+                    ● Online • English Coach & Support
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDrawer(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {chatMessages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    m.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                      m.sender === "user"
+                        ? "bg-blue-600 text-white rounded-br-xs"
+                        : "bg-slate-100 text-slate-800 rounded-bl-xs"
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendChat} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about tickets, tribes, or practice..."
+                className="flex-1 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs text-slate-900 bg-slate-50 focus:outline-none focus:border-blue-600"
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

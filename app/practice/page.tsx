@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import Button from "../../components/Button";
+import BrandWatermark from "../../components/BrandWatermark";
 
 interface PhraseItem {
   id: string;
@@ -149,18 +150,19 @@ export default function PracticePage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-surface pb-24 md:pb-16">
+    <main className="min-h-screen flex flex-col pb-24 md:pb-16 relative overflow-hidden">
+      <BrandWatermark opacity={0.04} size="xl" />
       <Header />
 
       <PageTransition>
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
           
           {/* Hero Banner */}
-          <div className="bg-gradient-to-r from-ink via-[#0d223a] to-[#1e3a8a] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="bg-gradient-to-br from-[#071426] via-[#0B1F3A] to-[#13325B] text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-glacier/20 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col gap-2 text-center md:text-left max-w-xl">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
+              <span className="inline-flex items-center gap-1.5 bg-white/10 text-[#9CCDF2] border border-white/15 text-xs font-bold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
                 🎙️ Speaking Fluency Vault
               </span>
               <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">

@@ -1,5 +1,6 @@
 export type LevelFeedback = 'HIGHER' | 'SAME' | 'LOWER';
 export type PartnerRating = 'LIKED' | 'NEUTRAL' | 'BLOCKED';
+export type PlanTierId = 'FREE' | 'PLUS' | 'ELITE';
 
 export interface User {
   id: string;
@@ -13,6 +14,8 @@ export interface User {
   avatarUrl?: string | null;
   tribeId?: number | null;
   isAdmin?: boolean;
+  planTier?: PlanTierId;
+  aiTokensBalance?: number;
   createdAt?: string;
 }
 
@@ -92,6 +95,7 @@ export interface SubmitFeedbackPayload {
   partnerId: string;
   levelFeedback: LevelFeedback;
   partnerRating: PartnerRating;
+  compliments?: string[];
 }
 
 export interface UpdateProfilePayload {
@@ -99,6 +103,7 @@ export interface UpdateProfilePayload {
   country?: string;
   englishLevel?: string;
   bio?: string;
+  avatarUrl?: string;
 }
 
 export interface RecentPartner {
@@ -127,26 +132,37 @@ export interface UserStats {
   blockedCount: number;
   buddiesCount?: number;
   liveRoomsCount: number;
+  contributionPoints?: number;
 }
 
 export interface UserDashboardData {
   user: {
     id: string;
-    email: string;
+    email: string | null;
+    phone?: string | null;
+    countryCode?: string | null;
     name: string | null;
     country: string | null;
     englishLevel: string | null;
     bio?: string | null;
     avatarUrl?: string | null;
+    tribeId?: number | null;
+    planTier?: PlanTierId;
+    aiTokensBalance?: number;
   };
   tickets?: {
     ticketsLeft: number;
     maxTickets: number;
     resetsInSeconds: number;
+    bonusTickets?: number;
   };
   tribe?: {
     userTribe: number | null;
+    userTribeName?: string;
     currentActiveTribe: number;
+    activeTribeName?: string;
+    activeTribeWindow?: string;
+    activeMembersCount?: number;
     isTribeActive: boolean;
   };
   stats: UserStats;
@@ -155,12 +171,21 @@ export interface UserDashboardData {
   recentPartners: RecentPartner[];
 }
 
+export interface BuddyUserItem {
+  id: string;
+  name: string;
+  country: string | null;
+  countryFlag?: string;
+  englishLevel?: string | null;
+  addedAt?: string;
+}
+
 export interface BlockedUserItem {
   id: string;
   blockedUser: {
     id: string;
     name: string;
-    email: string;
+    email: string | null;
     country: string | null;
     flag: string;
   };
@@ -169,12 +194,14 @@ export interface BlockedUserItem {
 
 export interface AdminUser {
   id: string;
-  email: string;
+  email: string | null;
   name: string | null;
   country: string | null;
   isAdmin: boolean;
   createdAt: string;
   sessionsCount?: number;
+  planTier?: PlanTierId;
+  aiTokensBalance?: number;
 }
 
 export interface AdminStats {
@@ -182,14 +209,6 @@ export interface AdminStats {
   totalSessions: number;
   totalFeedbacks: number;
   totalBlocks: number;
-}
-
-export interface UpdateProfilePayload {
-  name?: string;
-  country?: string;
-  englishLevel?: string;
-  bio?: string;
-  avatarUrl?: string;
 }
 
 export interface LeaderboardUser {

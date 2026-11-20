@@ -7,27 +7,55 @@ import {
   AdminUser,
   AdminStats,
   UserDashboardData,
+  BuddyUserItem,
   BlockedUserItem,
   UpdateProfilePayload,
   LeaderboardData,
 } from "../types";
+import { clearAuth } from "../lib/auth";
 
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+export function getApiBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (
+    configured &&
+    !configured.includes("localhost") &&
+    !configured.includes("127.0.0.1")
+  ) {
+    return configured.replace(/\/$/, "");
+  }
+  if (typeof window !== "undefined" && window.location) {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol || "http:";
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
+    ) {
+      return `${protocol}//${hostname}:4000`;
+    }
+    if (configured) {
+      return configured.replace(/\/$/, "");
+    }
+    return `${protocol}//${hostname}:4000`;
+  }
+  return configured || "http://localhost:4000";
+}
 
 class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || "";
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const base = this.baseUrl || getApiBaseUrl();
+    const url = `${base}${endpoint}`;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
@@ -42,6 +70,18 @@ class ApiClient {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        const isRoomPage =
+          typeof window !== "undefined" &&
+          window.location.pathname.startsWith("/room");
+        if (response.status === 401 && headers.Authorization && !isRoomPage) {
+          clearAuth();
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.startsWith("/login")
+          ) {
+            window.location.href = "/login";
+          }
+        }
         const errorMessage =
           (data && data.message) ||
           `Request failed with status ${response.status}`;
@@ -98,16 +138,28 @@ class ApiClient {
   }
 
   async googleAuth(payload: {
-    credential?: string;
-    email?: string;
-    name?: string;
-    avatarUrl?: string;
+    credential: string;
     country?: string;
   }): Promise<AuthResponse & { message?: string }> {
     return this.request<AuthResponse & { message?: string }>("/auth/google", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  }
+
+  async resetPassword(payload: {
+    identifier: string;
+    code: string;
+    newPassword: string;
+    countryCode?: string;
+  }): Promise<AuthResponse & { success?: boolean; message?: string }> {
+    return this.request<AuthResponse & { success?: boolean; message?: string }>(
+      "/auth/reset-password",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
   }
 
 
@@ -133,6 +185,20 @@ class ApiClient {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
+  }
+
+  async recoverTicket(
+    token: string,
+    sessionId: string
+  ): Promise<{ success: boolean; ticketsLeft: number }> {
+    return this.request<{ success: boolean; ticketsLeft: number }>(
+      "/rooms/recover-ticket",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ sessionId }),
+      }
+    );
   }
 
   // Admin methods
@@ -227,8 +293,8 @@ class ApiClient {
     });
   }
 
-  async getBuddies(token: string): Promise<any[]> {
-    return this.request<any[]>("/users/buddies", {
+  async getBuddies(token: string): Promise<BuddyUserItem[]> {
+    return this.request<BuddyUserItem[]>("/users/buddies", {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -249,9 +315,73 @@ class ApiClient {
       body: JSON.stringify({ buddyId, topic }),
     });
   }
+
+  async upgradeSubscription(
+    token: string,
+    planTier: "FREE" | "PLUS" | "ELITE",
+    billingCycle: "monthly" | "annual" = "monthly"
+  ): Promise<{ success: boolean; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }> {
+    return this.request<{ success: boolean; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }>(
+      "/users/subscription",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ planTier, billingCycle }),
+      }
+    );
+  }
+
+  async consumeAiTokens(
+    token: string,
+    amount: number,
+    topicId?: string
+  ): Promise<{ success: boolean; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }> {
+    return this.request<{ success: boolean; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }>(
+      "/users/ai-tokens/consume",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount, topicId }),
+      }
+    );
+  }
+
+  async sendAiStudioTurn(
+    token: string,
+    payload: {
+      topicTitle: string;
+      category?: string;
+      userMessage: string;
+      turnIndex?: number;
+    }
+  ): Promise<{ reply: string; tip: string; fluencyScore: number; wordCount: number }> {
+    return this.request<{ reply: string; tip: string; fluencyScore: number; wordCount: number }>(
+      "/users/ai-studio/turn",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async updateAdminUserSubscription(
+    token: string,
+    userId: string,
+    payload: { planTier?: "FREE" | "PLUS" | "ELITE"; aiTokensBalance?: number; addTokens?: number }
+  ): Promise<{ success: boolean; userId: string; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }> {
+    return this.request<{ success: boolean; userId: string; planTier: "FREE" | "PLUS" | "ELITE"; aiTokensBalance: number }>(
+      `/admin/users/${userId}/subscription`,
+      {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      }
+    );
+  }
 }
 
-export const api = new ApiClient(API_BASE_URL);
+export const api = new ApiClient();
 
 export const signup = (payload: SignupPayload) => api.signup(payload);
 export const login = (payload: LoginPayload) => api.login(payload);
@@ -266,15 +396,20 @@ export const verifyOtp = (payload: {
   countryCode?: string;
 }) => api.verifyOtp(payload);
 export const googleLogin = (payload: {
-  credential?: string;
-  email?: string;
-  name?: string;
-  avatarUrl?: string;
+  credential: string;
   country?: string;
 }) => api.googleAuth(payload);
+export const resetPassword = (payload: {
+  identifier: string;
+  code: string;
+  newPassword: string;
+  countryCode?: string;
+}) => api.resetPassword(payload);
 export const joinQueue = (token: string, differentCountryOnly?: boolean) =>
   api.joinQueue(token, differentCountryOnly);
 export const leaveQueue = (token: string) => api.leaveQueue(token);
+export const recoverTicket = (token: string, sessionId: string) =>
+  api.recoverTicket(token, sessionId);
 export const createRoom = (token: string) => api.createRoom(token);
 
 
@@ -307,3 +442,19 @@ export const getBuddies = (token: string) => api.getBuddies(token);
 export const joinTribe = (token: string, tribeId: number) => api.joinTribe(token, tribeId);
 export const callBuddy = (token: string, buddyId: string, topic?: string) =>
   api.callBuddy(token, buddyId, topic);
+export const upgradeSubscription = (
+  token: string,
+  planTier: "FREE" | "PLUS" | "ELITE",
+  billingCycle?: "monthly" | "annual"
+) => api.upgradeSubscription(token, planTier, billingCycle);
+export const consumeAiTokens = (token: string, amount: number, topicId?: string) =>
+  api.consumeAiTokens(token, amount, topicId);
+export const sendAiStudioTurn = (
+  token: string,
+  payload: { topicTitle: string; category?: string; userMessage: string; turnIndex?: number }
+) => api.sendAiStudioTurn(token, payload);
+export const updateAdminUserSubscription = (
+  token: string,
+  userId: string,
+  payload: { planTier?: "FREE" | "PLUS" | "ELITE"; aiTokensBalance?: number; addTokens?: number }
+) => api.updateAdminUserSubscription(token, userId, payload);
