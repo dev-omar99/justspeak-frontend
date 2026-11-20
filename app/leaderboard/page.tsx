@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
                   {/* #2 Silver */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative">
-                      <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl bg-slate-100 border-2 border-slate-300 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 border-2 border-slate-300 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
                         {topThree[1].avatarUrl ? (
                           <img src={topThree[1].avatarUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -173,14 +173,14 @@ export default function LeaderboardPage() {
                   {/* #1 Gold (Highest Podium) */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative">
-                      <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-3xl bg-amber-50 border-3 border-amber-400 text-ink font-bold text-2xl flex items-center justify-center shadow-xl shadow-amber-400/20 overflow-hidden ring-4 ring-amber-400/30">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-amber-50 border-4 border-amber-400 text-ink font-bold text-2xl flex items-center justify-center shadow-xl shadow-amber-400/20 overflow-hidden ring-4 ring-amber-400/30">
                         {topThree[0].avatarUrl ? (
-                          <img src={topThree[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={topThree[0].avatarUrl} alt="" className="w-full h-full object-cover rounded-3xl" />
                         ) : (
                           <span>👑</span>
                         )}
                       </div>
-                      <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-amber-400 text-ink font-black text-xs px-2.5 py-0.5 rounded-full shadow-md">
+                      <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-amber-400 text-ink font-black text-xs px-2.5 py-0.5 rounded-full shadow-md whitespace-nowrap">
                         #1 GOLD
                       </span>
                     </div>
@@ -194,7 +194,7 @@ export default function LeaderboardPage() {
                         ? `${topThree[0].streakDays} Days 🔥`
                         : `${topThree[0].lovedCount} Praises ❤️`}
                     </p>
-                    <div className="w-full h-32 bg-gradient-to-t from-amber-300/40 via-amber-200/50 to-amber-100 rounded-t-2xl border-t-3 border-amber-400 flex items-center justify-center font-black text-amber-600 text-2xl shadow-inner">
+                    <div className="w-full h-32 bg-gradient-to-t from-amber-300/40 via-amber-200/50 to-amber-100 rounded-t-2xl border-t-4 border-amber-400 flex items-center justify-center font-black text-amber-600 text-2xl shadow-inner">
                       🥇 1
                     </div>
                   </div>
@@ -202,7 +202,7 @@ export default function LeaderboardPage() {
                   {/* #3 Bronze */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative">
-                      <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl bg-amber-50 border-2 border-amber-600/40 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-50 border-2 border-amber-600/40 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
                         {topThree[2].avatarUrl ? (
                           <img src={topThree[2].avatarUrl} alt="" className="w-full h-full object-cover" />
                         ) : (

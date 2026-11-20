@@ -468,7 +468,7 @@ export default function SignupPage() {
                     <select
                       value={selectedCountry.name}
                       onChange={(e) => handleCountryChange(e.target.value)}
-                      className="w-full h-12 text-sm font-semibold text-white bg-[#0B1528] border border-slate-700 rounded-2xl px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all pr-10 cursor-pointer"
+                      className="w-full h-12 text-sm font-semibold text-white bg-[#0B1528] border border-slate-700 rounded-2xl px-4 focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all pr-10 cursor-pointer"
                     >
                       {COUNTRIES.map((c) => (
                         <option key={c.code} value={c.name} className="bg-[#0B1528] text-white">
@@ -476,9 +476,6 @@ export default function SignupPage() {
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400 text-xs">
-                      ▼
-                    </div>
                   </div>
                 </div>
 
@@ -635,7 +632,7 @@ export default function SignupPage() {
                     <select
                       value={selectedCountry.name}
                       onChange={(e) => handleCountryChange(e.target.value)}
-                      className="w-full h-12 text-sm font-semibold text-white bg-[#0B1528] border border-slate-700 rounded-2xl px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all pr-10 cursor-pointer"
+                      className="w-full h-12 text-sm font-semibold text-white bg-[#0B1528] border border-slate-700 rounded-2xl px-4 focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all pr-10 cursor-pointer"
                     >
                       {COUNTRIES.map((c) => (
                         <option key={c.code} value={c.name} className="bg-[#0B1528] text-white">
@@ -643,9 +640,6 @@ export default function SignupPage() {
                         </option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400 text-xs">
-                      ▼
-                    </div>
                   </div>
                 </div>
 
