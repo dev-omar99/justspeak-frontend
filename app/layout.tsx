@@ -97,6 +97,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
+  verification: {
+    google: "cgGNxHk2ikzr0qE8dAp875EbO-l-2xRLoopzgwFQeGs",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
