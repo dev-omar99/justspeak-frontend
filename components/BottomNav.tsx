@@ -35,8 +35,14 @@ export default function BottomNav() {
       match: (p: string) => p === "/",
     },
     {
+      href: "/learn",
+      label: "Academy",
+      icon: "🎓",
+      match: (p: string) => p.startsWith("/learn") || p.startsWith("/placement-test"),
+    },
+    {
       href: "/ai-studio",
-      label: "AI Studio",
+      label: "AI Coach",
       icon: "✨",
       match: (p: string) => p.startsWith("/ai-studio"),
     },
@@ -45,12 +51,6 @@ export default function BottomNav() {
       label: "Fluency",
       icon: "🎙️",
       match: (p: string) => p.startsWith("/practice") || p.startsWith("/memos"),
-    },
-    {
-      href: "/pricing",
-      label: "Plans",
-      icon: "👑",
-      match: (p: string) => p.startsWith("/pricing"),
     },
     {
       href: "/profile",
