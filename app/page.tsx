@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import PageTransition from "../components/PageTransition";
 import Penguin3D from "../components/Penguin3D";
 import LandingHeroView from "../components/home/LandingHeroView";
+import AcademyQuickStrip from "../components/home/AcademyQuickStrip";
 import {
   BlockedUsersModal,
   BuddyUpgradeModal,
@@ -431,6 +432,9 @@ export default function HomePage() {
               Join Live Conversation Now →
             </Link>
           </section>
+
+          {/* Compact CEFR Academy Daily Quick Strip */}
+          <AcademyQuickStrip />
 
           {/* Dual Feature Row: Standalone AI Topic Studio + Membership Tier */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">

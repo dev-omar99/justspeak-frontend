@@ -9,6 +9,7 @@ import BrandWatermark from "../../components/BrandWatermark";
 import { submitFeedback, getDashboardData } from "../../services/api";
 import { getToken, getUser } from "../../lib/auth";
 import { getPartnerMemo, savePartnerMemo } from "../../lib/memos";
+import { getAcademyProgress, saveAcademyProgress } from "../../lib/academy";
 import { LevelFeedback, PartnerRating, RecentPartner } from "../../types";
 
 const COMPLIMENT_OPTIONS = [
@@ -136,6 +137,22 @@ function FeedbackContent() {
         partnerRating: rating,
         compliments: selectedCompliments,
       });
+
+      // Automatically sync completed live speaking session with CEFR Academy progress
+      try {
+        const academy = getAcademyProgress();
+        const nextDaily = academy.dailyCompletedTaskIds.includes("speak")
+          ? academy.dailyCompletedTaskIds
+          : [...academy.dailyCompletedTaskIds, "speak"];
+        saveAcademyProgress({
+          ...academy,
+          dailyCompletedTaskIds: nextDaily,
+          scores: {
+            ...academy.scores,
+            fluency: Math.min(100, academy.scores.fluency + 2),
+          },
+        });
+      } catch {}
 
       // Prepend current partner if rated LIKED, or remove if rated NEUTRAL/BLOCKED
       if (rating === "LIKED" && partnerId) {
