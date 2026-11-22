@@ -255,77 +255,59 @@ export default function AcademyHubPage() {
                   <Link
                     key={lesson.id}
                     href={`/learn/lesson/${lesson.id}`}
-                    className={`bg-white rounded-[24px] p-5 sm:p-6 border-2 transition-all shadow-2xs hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                    className={`bg-white rounded-[24px] p-6 sm:p-7 border transition-all shadow-2xs hover:shadow-md hover:-translate-y-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 group ${
                       isCompleted
                         ? "border-[#10B981]/50"
                         : "border-border hover:border-[#002868]/45"
                     }`}
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4 sm:gap-5">
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black shrink-0 ${
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 ${
                           isCompleted
-                            ? "bg-[#ECFDF5] text-[#059669] border border-[#10B981]/40"
-                            : "bg-[#EAF1FC] text-[#002868] border border-[#002868]/20"
+                            ? "bg-[#ECFDF5] text-[#059669] border border-[#10B981]/35"
+                            : "bg-[#EAF1FC] text-[#002868] border border-[#002868]/15"
                         }`}
                       >
-                        {isCompleted ? "✓" : `0${lesson.unitNumber}`}
+                        {isCompleted ? "✓" : lesson.unitNumber}
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[11px] font-black text-[#002868] uppercase tracking-wider">
-                            {lesson.sourceRef}
+                        {/* Tertiary quiet meta */}
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                          <span className="text-[#002868] font-extrabold">
+                            Unit {lesson.unitNumber}
                           </span>
-                          <span className="text-[11px] font-semibold text-ink-soft">
-                            • ⏱️ {lesson.durationMins} min
+                          <span>•</span>
+                          <span>{lesson.durationMins} min</span>
+                          <span>•</span>
+                          <span>
+                            {savedCount}/{lesson.vocabulary.length}{" "}
+                            {isArabic ? "كلمات محفوظة" : "words saved"}
                           </span>
-                          {isCompleted && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46]">
-                              Completed ✓
-                            </span>
-                          )}
                         </div>
-                        <h3 className="text-base sm:text-lg font-black text-ink group-hover:text-[#002868] transition-colors">
-                          {lesson.title}{" "}
-                          <span className="text-xs sm:text-sm font-bold text-ink-soft">
-                            — {lesson.titleAr}
-                          </span>
+
+                        {/* Primary Hero Title */}
+                        <h3 className="text-lg sm:text-xl font-black text-ink group-hover:text-[#002868] transition-colors leading-snug">
+                          {isArabic ? lesson.titleAr : lesson.title}
                         </h3>
-                        <p className="text-xs text-ink-soft leading-relaxed max-w-2xl">
+
+                        {/* Secondary Context */}
+                        <p className="text-sm text-ink-soft leading-relaxed max-w-xl">
                           {isArabic ? lesson.objectiveAr : lesson.objective}
                         </p>
-
-                        {/* 5-step pills */}
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink">
-                            📚 {savedCount}/{lesson.vocabulary.length} Words
-                          </span>
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
-                            🎧 Listen
-                          </span>
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
-                            📖 Read
-                          </span>
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
-                            🗣️ Shadow
-                          </span>
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-[#FFF0F2] border border-[#E11D48]/25 text-[#D91023]">
-                            🎙️ Live Call
-                          </span>
-                        </div>
                       </div>
                     </div>
 
                     <span
-                      className={`px-5 py-3 rounded-xl text-xs font-black whitespace-nowrap text-center shrink-0 transition-all ${
+                      className={`px-6 py-3.5 rounded-2xl text-sm font-black whitespace-nowrap text-center shrink-0 transition-all ${
                         isCompleted
                           ? "bg-surface text-ink border border-border group-hover:bg-[#EAF1FC]"
                           : "btn-primary-crest text-white shadow-sm"
                       }`}
                     >
                       {isCompleted
-                        ? isArabic ? "مراجعة الدرس →" : "Review Lesson →"
+                        ? isArabic ? "مراجعة الدرس →" : "Review →"
                         : isArabic ? "ابدأ الدرس →" : "Start Lesson →"}
                     </span>
                   </Link>

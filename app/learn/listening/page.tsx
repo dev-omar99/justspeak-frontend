@@ -115,7 +115,7 @@ export default function ListeningAudiobooksPage() {
           </div>
 
           {/* Story Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {LISTENING_STORIES.map((story) => {
               const active = story.id === selectedStory.id;
               const done = progress?.completedListeningIds.includes(story.id);
@@ -128,20 +128,20 @@ export default function ListeningAudiobooksPage() {
                     setSelectedStory(story);
                     setSelectedAnswer(null);
                   }}
-                  className={`text-left p-4 rounded-[22px] border-2 transition-all cursor-pointer flex flex-col gap-2 shadow-2xs ${
+                  className={`text-left p-5 rounded-[22px] border-2 transition-all cursor-pointer flex flex-col gap-2.5 shadow-2xs ${
                     active
                       ? "bg-[#EAF1FC] border-[#002868]"
                       : "bg-white border-border hover:border-[#002868]/40"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl">{story.coverEmoji}</span>
-                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#002868] text-white">
+                    <span className="text-3xl">{story.coverEmoji}</span>
+                    <span className="text-xs font-extrabold text-[#002868]">
                       {story.level} • {story.durationLabel} {done ? "✓" : ""}
                     </span>
                   </div>
-                  <h3 className="text-sm font-black text-ink">{story.title}</h3>
-                  <p className="text-[11px] text-ink-soft">{story.author}</p>
+                  <h3 className="text-base font-black text-ink leading-snug">{story.title}</h3>
+                  <p className="text-xs text-ink-soft font-medium">{story.author}</p>
                 </button>
               );
             })}

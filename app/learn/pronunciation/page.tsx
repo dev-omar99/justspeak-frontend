@@ -335,21 +335,21 @@ export default function PronunciationLabPage() {
                 return (
                   <div
                     key={tt.id}
-                    className="bg-white border border-border rounded-[22px] p-5 flex flex-col justify-between gap-4 shadow-2xs"
+                    className="bg-white border border-border rounded-[24px] p-6 flex flex-col justify-between gap-4 shadow-2xs"
                   >
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#EAF1FC] text-[#002868]">
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#002868] font-extrabold">
                           Sound: {tt.targetSound}
                         </span>
-                        <span className="text-[11px] font-extrabold text-[#D91023]">
+                        <span className="text-[#D91023] font-extrabold">
                           {tt.difficulty}
                         </span>
                       </div>
-                      <p className="text-base font-black text-ink leading-snug">
+                      <p className="text-lg font-black text-ink leading-snug">
                         &ldquo;{tt.text}&rdquo;
                       </p>
-                      <p className="text-xs text-ink-soft">💡 {tt.tipAr}</p>
+                      <p className="text-sm text-ink-soft">💡 {tt.tipAr}</p>
                     </div>
 
                     {evalResult && isThisTarget && (

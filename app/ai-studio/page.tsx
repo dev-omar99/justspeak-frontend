@@ -617,68 +617,39 @@ export default function AiStudioPage() {
                 })}
               </div>
 
-              {/* Clean White Editorial Scenarios Grid (All Open to Practice!) */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Clean, Spacious Editorial Scenarios Grid */}
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {filteredTopics.map((topic) => (
                   <div
                     key={topic.id}
-                    className="bg-white rounded-[24px] p-6 border border-border hover:border-[#002868]/45 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-4 group"
+                    className="bg-white rounded-[24px] p-6 sm:p-7 border border-border hover:border-[#002868]/45 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col justify-between gap-5 group"
                   >
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl p-2.5 rounded-2xl bg-surface border border-border">
-                            {topic.icon}
-                          </span>
-                          <div>
-                            <h3 className="text-base font-black text-ink group-hover:text-[#002868] transition-colors">
-                              {topic.title}
-                            </h3>
-                            <span className="text-[11px] font-bold text-ink-soft">
-                              {topic.category} • {topic.level}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] border border-[#10B981]/30 shrink-0">
-                          Open Access
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-3xl w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center shrink-0">
+                          {topic.icon}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400">
+                          {topic.category} • {topic.level}
                         </span>
                       </div>
 
-                      <p className="text-xs text-ink-soft leading-relaxed">{topic.summary}</p>
+                      <h3 className="text-lg sm:text-xl font-black text-ink group-hover:text-[#002868] transition-colors leading-snug">
+                        {topic.title}
+                      </h3>
 
-                      <div className="bg-surface rounded-2xl p-3.5 border border-border/80">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#002868]">
-                          Opening Coach Question
-                        </span>
-                        <p className="text-xs font-semibold text-ink italic mt-1">
-                          &ldquo;{topic.samplePrompt}&rdquo;
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
-                        {topic.skillsFocused.map((skill) => (
-                          <span
-                            key={skill}
-                            className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-[#EAF1FC] text-[#002868]"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                      <p className="text-sm text-ink-soft leading-relaxed">
+                        {topic.summary}
+                      </p>
                     </div>
 
-                    <div className="pt-3 border-t border-border/70 flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-bold text-ink-soft">
-                        ✍️ Live Grammar + Native Rewrite
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleStartTopic(topic)}
-                        className="px-5 py-2.5 rounded-xl btn-primary-crest text-white text-xs font-black shadow-xs cursor-pointer"
-                      >
-                        🎙️ {isArabic ? "ابدأ الجلسة الآن" : "Start Coaching →"}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStartTopic(topic)}
+                      className="w-full py-3.5 rounded-2xl btn-primary-crest text-white text-sm font-black shadow-xs cursor-pointer"
+                    >
+                      🎙️ {isArabic ? "ابدأ جلسة التدريب الصوتي →" : "Start Voice Coaching →"}
+                    </button>
                   </div>
                 ))}
               </section>

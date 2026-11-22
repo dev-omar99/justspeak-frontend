@@ -212,7 +212,7 @@ export default function VocabularyVaultPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {displayedWords.map((item) => {
                 const isSaved = learnedIds.includes(item.id);
                 const flipped = !!flippedIds[item.id];
@@ -224,33 +224,57 @@ export default function VocabularyVaultPage() {
                         setFlippedIds((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
                       }
                     }}
-                    className={`bg-white rounded-[22px] p-5 border transition-all shadow-2xs hover:border-[#002868]/40 flex flex-col justify-between gap-4 ${
-                      isSaved ? "border-[#10B981]/40" : "border-border"
+                    className={`bg-white rounded-[24px] p-6 sm:p-7 border transition-all shadow-2xs hover:border-[#002868]/40 flex flex-col justify-between gap-5 ${
+                      isSaved ? "border-[#10B981]/45" : "border-border"
                     } ${flashcardMode ? "cursor-pointer" : ""}`}
                   >
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="flex items-baseline gap-2">
-                            <h3 className="text-xl font-black text-ink">{item.word}</h3>
-                            <span className="text-xs font-semibold text-ink-soft italic">
-                              ({item.pos})
-                            </span>
+                          <h3 className="text-2xl sm:text-3xl font-black text-ink tracking-tight leading-none">
+                            {item.word}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-slate-400">
+                            <span className="font-mono text-[#1D4ED8]">{item.ipa}</span>
+                            <span>•</span>
+                            <span className="italic">{item.pos}</span>
+                            <span>•</span>
+                            <span className="font-black text-[#002868]">{item.level}</span>
                           </div>
-                          <span className="text-xs font-mono text-[#1D4ED8]">{item.ipa}</span>
                         </div>
-                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#EAF1FC] text-[#002868]">
-                          {item.level}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speakWord(item.word, "en-US");
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
+                            title="US Pronunciation"
+                          >
+                            🇺🇸
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speakWord(item.word, "en-GB");
+                            }}
+                            className="px-2.5 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
+                            title="UK Pronunciation"
+                          >
+                            🇬🇧
+                          </button>
+                        </div>
                       </div>
 
                       {!flashcardMode || flipped ? (
                         <>
-                          <div className="text-sm font-extrabold text-[#D91023]">
+                          <div className="text-base sm:text-lg font-extrabold text-[#D91023]">
                             {item.meaningAr}
                           </div>
-                          <p className="text-xs text-ink-soft leading-relaxed">{item.meaningEn}</p>
-                          <div className="bg-surface border border-border/70 rounded-xl p-3 text-xs text-ink italic flex items-center justify-between gap-2">
+                          <p className="text-sm text-ink-soft leading-relaxed">{item.meaningEn}</p>
+                          <div className="bg-surface border border-border/70 rounded-2xl p-3.5 text-sm text-ink font-medium flex items-center justify-between gap-3">
                             <span>&ldquo;{item.example}&rdquo;</span>
                             <button
                               type="button"
@@ -258,60 +282,35 @@ export default function VocabularyVaultPage() {
                                 e.stopPropagation();
                                 speakWord(item.example, "en-US");
                               }}
-                              className="text-[#002868] hover:text-[#D91023] shrink-0 cursor-pointer"
+                              className="text-base text-[#002868] hover:text-[#D91023] shrink-0 cursor-pointer"
                             >
                               🔊
                             </button>
                           </div>
                         </>
                       ) : (
-                        <div className="py-6 text-center text-xs font-bold text-ink-soft bg-surface rounded-xl border border-dashed border-border">
+                        <div className="py-8 text-center text-sm font-bold text-ink-soft bg-surface rounded-2xl border border-dashed border-border">
                           👆 {isArabic ? "اضغط لإظهار المعنى والمثال" : "Tap to reveal meaning & example"}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-border/70 gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            speakWord(item.word, "en-US");
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
-                        >
-                          🇺🇸 US
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            speakWord(item.word, "en-GB");
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
-                        >
-                          🇬🇧 UK
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSaved(item.id);
-                        }}
-                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                          isSaved
-                            ? "bg-surface hover:bg-[#FFF0F2] text-ink-soft hover:text-[#D91023] border border-border"
-                            : "bg-[#002868] hover:bg-[#061533] text-white shadow-2xs"
-                        }`}
-                      >
-                        {isSaved
-                          ? isArabic ? "↩ أعدها للتعلم" : "↩ Move to Learn"
-                          : isArabic ? "✓ حفظتها (نقل للمحفوظة)" : "✓ Mark Saved"}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSaved(item.id);
+                      }}
+                      className={`w-full py-3 rounded-xl text-sm font-black transition-all cursor-pointer ${
+                        isSaved
+                          ? "bg-surface hover:bg-[#FFF0F2] text-ink-soft hover:text-[#D91023] border border-border"
+                          : "bg-[#002868] hover:bg-[#061533] text-white shadow-2xs"
+                      }`}
+                    >
+                      {isSaved
+                        ? isArabic ? "↩ أعدها للتعلم" : "↩ Move Back to Learn"
+                        : isArabic ? "✓ حفظتها (نقل للمحفوظة)" : "✓ Mark as Saved"}
+                    </button>
                   </div>
                 );
               })}
