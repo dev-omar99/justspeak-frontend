@@ -98,7 +98,10 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   verification: {
-    google: "cgGNxHk2ikzr0qE8dAp875EbO-l-2xRLoopzgwFQeGs",
+    google: [
+      "y4E7tL4EfWk6-d8afNg8Mnh5ZvjKrL5oSr9AIJW9b7U",
+      "cgGNxHk2ikzr0qE8dAp875EbO-l-2xRLoopzgwFQeGs",
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -149,6 +152,7 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr">
       <head>
+        <meta name="google-site-verification" content="y4E7tL4EfWk6-d8afNg8Mnh5ZvjKrL5oSr9AIJW9b7U" />
         <meta name="google-site-verification" content="cgGNxHk2ikzr0qE8dAp875EbO-l-2xRLoopzgwFQeGs" />
         <script
           type="application/ld+json"
