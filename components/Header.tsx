@@ -274,16 +274,16 @@ export default function Header({
                 </Link>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <Link
                   href="/login"
-                  className="text-xs sm:text-sm font-extrabold text-ink hover:text-glacier px-3.5 py-2.5 rounded-xl hover:bg-surface-subtle transition-all"
+                  className="text-xs sm:text-sm font-extrabold text-ink hover:text-glacier px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl hover:bg-surface-subtle transition-all whitespace-nowrap"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  className="text-xs sm:text-sm font-black text-white btn-primary-crest px-4 sm:px-5 py-2.5 rounded-xl shadow-md"
+                  className="text-xs sm:text-sm font-black text-white btn-primary-crest px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-md whitespace-nowrap"
                 >
                   Start Free →
                 </Link>

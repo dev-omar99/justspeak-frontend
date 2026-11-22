@@ -252,7 +252,7 @@ export default function AiStudioPage() {
             <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col gap-2.5 max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 bg-white/12 border border-white/25 text-white text-xs font-extrabold px-3.5 py-1 rounded-full w-max">
+              <span className="inline-flex items-center gap-1.5 bg-white/12 border border-white/25 text-white text-[11px] sm:text-xs font-extrabold px-3 py-1 rounded-full max-w-full">
                 🤖 Standalone AI Speaking Partner • Separate from Human Calls
               </span>
               <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">

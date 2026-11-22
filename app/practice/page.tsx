@@ -194,7 +194,7 @@ export default function PracticePage() {
               className="w-full sm:max-w-md bg-white border border-border/80 text-xs text-ink rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-xs"
             />
 
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
