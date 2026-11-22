@@ -17,6 +17,8 @@ import {
 } from "../../../../lib/academy-lessons";
 import { VocabItem } from "../../../../lib/academy-content";
 import InteractiveLessonDrill from "../../../../components/academy/InteractiveLessonDrill";
+import NovelIllustration from "../../../../components/academy/NovelIllustration";
+import { getChapterForLesson } from "../../../../lib/academy-novels";
 
 type StepNum = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -51,7 +53,8 @@ export default function GuidedLessonPage() {
   // Step 1: Vocabulary active vs saved tab
   const [vocabTab, setVocabTab] = useState<"learn" | "saved">("learn");
 
-  // Step 2: Listening state
+  // Step 2: Listening state (Novel Chapter + Everyday Dialogue)
+  const [listenMode, setListenMode] = useState<"novel" | "dialogue">("novel");
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeLineIdx, setActiveLineIdx] = useState(-1);
   const [audioRate, setAudioRate] = useState(0.95);
@@ -145,19 +148,30 @@ export default function GuidedLessonPage() {
     setActiveLineIdx(-1);
   }
 
-  function playDialogueFrom(startIdx: number) {
+  const { novel: lessonNovel, chapter: lessonChapter } = getChapterForLesson(
+    lesson.level,
+    lesson.unitNumber
+  );
+
+  function playDialogueFrom(startIdx: number, modeOverride?: "novel" | "dialogue") {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     setIsPlayingAudio(true);
 
+    const activeMode = modeOverride || listenMode;
+    const linesToPlay =
+      activeMode === "novel"
+        ? lessonChapter.segments.map((s) => s.text)
+        : lesson!.listening.lines.map((l) => l.text);
+
     const playNext = (idx: number) => {
-      if (!lesson || idx >= lesson.listening.lines.length) {
+      if (idx >= linesToPlay.length) {
         setIsPlayingAudio(false);
         setActiveLineIdx(-1);
         return;
       }
       setActiveLineIdx(idx);
-      const u = new SpeechSynthesisUtterance(lesson.listening.lines[idx].text);
+      const u = new SpeechSynthesisUtterance(linesToPlay[idx]);
       u.lang = "en-US";
       u.rate = audioRate;
       u.onend = () => playNext(idx + 1);
@@ -500,19 +514,41 @@ export default function GuidedLessonPage() {
           )}
 
           {/* =============================================================== */}
-          {/* STEP 2: LISTENING DIALOGUE                                      */}
+          {/* STEP 2: SERIALIZED ILLUSTRATED NOVEL CHAPTER + DIALOGUE         */}
           {/* =============================================================== */}
           {step === 2 && (
             <section className="bg-white border border-border rounded-[24px] p-6 sm:p-8 shadow-xs flex flex-col gap-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-                <div>
-                  <span className="text-[11px] font-black text-[#D91023] uppercase tracking-wider">
-                    Step 2 • Listening Comprehension
-                  </span>
-                  <h2 className="text-xl font-black text-ink mt-0.5">
-                    🎧 {lesson.listening.title}
-                  </h2>
-                  <p className="text-xs text-ink-soft mt-1">{lesson.listening.context}</p>
+              {/* Switcher: Level Novel Chapter vs Everyday Dialogue */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="inline-flex bg-surface border border-border rounded-xl p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopDialogue();
+                      setListenMode("novel");
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-black cursor-pointer transition-all ${
+                      listenMode === "novel"
+                        ? "bg-[#002868] text-white"
+                        : "text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    📖 {isArabic ? `رواية المستوى — فصل ${lessonChapter.chapterNumber}` : `Novel Ch. ${lessonChapter.chapterNumber}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopDialogue();
+                      setListenMode("dialogue");
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-black cursor-pointer transition-all ${
+                      listenMode === "dialogue"
+                        ? "bg-[#002868] text-white"
+                        : "text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    💬 {isArabic ? "حوار الدرس" : "Lesson Dialogue"}
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -522,10 +558,10 @@ export default function GuidedLessonPage() {
                     className={`px-5 py-2.5 rounded-xl text-xs font-black cursor-pointer shadow-xs ${
                       isPlayingAudio
                         ? "bg-[#D91023] text-white"
-                        : "bg-[#002868] hover:bg-[#061533] text-white"
+                        : "btn-primary-crest text-white"
                     }`}
                   >
-                    {isPlayingAudio ? "⏹️ Stop" : "▶ Play Dialogue"}
+                    {isPlayingAudio ? "⏹️ Stop" : "▶ Play Audio"}
                   </button>
                   <select
                     value={audioRate}
@@ -538,6 +574,23 @@ export default function GuidedLessonPage() {
                   </select>
                 </div>
               </div>
+
+              {/* Illustrated Novel Banner when in Novel Mode */}
+              {listenMode === "novel" ? (
+                <NovelIllustration
+                  level={lessonNovel.level}
+                  chapterNumber={lessonChapter.chapterNumber}
+                  novelTitle={lessonNovel.title}
+                  chapterTitle={lessonChapter.title}
+                />
+              ) : (
+                <div className="border-b border-border pb-4">
+                  <h2 className="text-xl font-black text-ink">
+                    💬 {lesson.listening.title}
+                  </h2>
+                  <p className="text-sm text-ink-soft mt-1">{lesson.listening.context}</p>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button
@@ -560,35 +613,63 @@ export default function GuidedLessonPage() {
 
               {showTranscript ? (
                 <div className="flex flex-col gap-3">
-                  {lesson.listening.lines.map((line, idx) => {
-                    const active = idx === activeLineIdx;
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => playDialogueFrom(idx)}
-                        className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1 ${
-                          active
-                            ? "bg-[#EAF1FC] border-[#002868] shadow-xs"
-                            : "bg-surface border-border hover:border-[#002868]/40"
-                        }`}
-                      >
-                        <span className="text-[11px] font-black text-[#002868] uppercase">
-                          {active && "🔊 "} {line.speaker}
-                        </span>
-                        <p className="text-sm sm:text-base font-bold text-ink leading-relaxed">
-                          {line.text}
-                        </p>
-                        {showArabic && (
-                          <p className="text-xs text-ink-soft font-semibold">{line.translationAr}</p>
-                        )}
-                      </button>
-                    );
-                  })}
+                  {listenMode === "novel"
+                    ? lessonChapter.segments.map((seg, idx) => {
+                        const active = idx === activeLineIdx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => playDialogueFrom(idx, "novel")}
+                            className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                              active
+                                ? "bg-[#EAF1FC] border-[#002868] shadow-2xs"
+                                : "bg-surface border-border hover:border-[#002868]/40"
+                            }`}
+                          >
+                            <p className="text-base font-bold text-ink leading-relaxed">
+                              {active && <span className="text-[#D91023] mr-2">🔊</span>}
+                              {seg.text}
+                            </p>
+                            {showArabic && (
+                              <p className="text-sm text-ink-soft font-semibold">
+                                {seg.translationAr}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })
+                    : lesson.listening.lines.map((line, idx) => {
+                        const active = idx === activeLineIdx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => playDialogueFrom(idx, "dialogue")}
+                            className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1 ${
+                              active
+                                ? "bg-[#EAF1FC] border-[#002868] shadow-2xs"
+                                : "bg-surface border-border hover:border-[#002868]/40"
+                            }`}
+                          >
+                            <span className="text-xs font-black text-[#002868] uppercase">
+                              {active && "🔊 "} {line.speaker}
+                            </span>
+                            <p className="text-base font-bold text-ink leading-relaxed">
+                              {line.text}
+                            </p>
+                            {showArabic && (
+                              <p className="text-sm text-ink-soft font-semibold">
+                                {line.translationAr}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })}
                 </div>
               ) : (
                 <div className="py-10 text-center bg-surface rounded-2xl border border-dashed border-border text-sm font-bold text-ink-soft">
-                  🎧 Pure Listening Mode — focus on catching the lesson words by ear!
+                  🎧 Pure Listening Mode — focus on following the story by ear!
                 </div>
               )}
 
