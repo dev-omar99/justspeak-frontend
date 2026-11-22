@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
@@ -21,6 +21,8 @@ interface AiTurnMessage {
   role: "ai" | "user";
   text: string;
   tip?: string;
+  fluencyScore?: number;
+  wordCount?: number;
 }
 
 const FOLLOW_UP_QUESTIONS: Record<string, string[]> = {
@@ -50,25 +52,32 @@ function buildAiCoachReply(
   topic: AiPracticeTopic,
   userText: string,
   turnIndex: number
-): { reply: string; tip: string } {
+): { reply: string; tip: string; fluencyScore: number; wordCount: number } {
   const words = userText.trim().split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
   const pool =
     FOLLOW_UP_QUESTIONS[topic.category] ||
     FOLLOW_UP_QUESTIONS["Daily Life & Travel"];
   const nextQuestion = pool[turnIndex % pool.length];
 
   let tip =
-    "Great clarity! Try expanding with a concrete example ('For instance, last month...') to boost your lexical resource score.";
-  if (words.length < 8) {
+    "Great clarity! Try expanding with a concrete example ('For instance, last month...') to boost your lexical depth.";
+  let fluencyScore = 88;
+
+  if (wordCount < 8) {
     tip =
-      "Tip: Try speaking in 2–3 full sentences using connectors like 'Because of this' or 'In my experience' for stronger fluency.";
-  } else if (words.length >= 18) {
+      "Fluency Tip: Try speaking in 2–3 full sentences using connectors like 'Because of this' or 'In my experience' for stronger flow.";
+    fluencyScore = 76;
+  } else if (wordCount >= 18) {
     tip =
-      "Excellent sentence length and flow! Your pacing and vocabulary depth sound natural and confident.";
+      "Native Flow: Excellent pacing and vocabulary depth! Your sentence structure sounds natural and confident.";
+    fluencyScore = 96;
+  } else {
+    fluencyScore = 90;
   }
 
   const reply = `That's a thoughtful point on "${topic.title}". Building on what you shared—${nextQuestion}`;
-  return { reply, tip };
+  return { reply, tip, fluencyScore, wordCount };
 }
 
 export default function AiStudioPage() {
@@ -85,6 +94,10 @@ export default function AiStudioPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeakingAi, setIsSpeakingAi] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [speechRate, setSpeechRate] = useState<number>(1.0);
+  const [trialClaimedNotice, setTrialClaimedNotice] = useState<string | null>(null);
+
+  const speechRecognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const user = getUser();
@@ -95,7 +108,23 @@ export default function AiStudioPage() {
     }
   }, []);
 
-  function speakText(text: string) {
+  // Claim 100 Free Trial Tokens for Instant Voice Coach Testing
+  function handleClaimTrialTokens() {
+    const user = getUser();
+    const newBal = aiTokens + 100;
+    const newTier = userTier === "FREE" ? "PLUS" : userTier;
+    saveUserSubscription(user?.id, newTier, newBal);
+    setUserTier(newTier);
+    setAiTokens(newBal);
+    setTrialClaimedNotice("🎉 100 Free Trial Tokens Claimed! Launch any Voice Coach scenario below.");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
+    setTimeout(() => setTrialClaimedNotice(null), 6000);
+  }
+
+  // High-Quality Text-to-Speech (TTS)
+  function speakText(text: string, customRate?: number) {
     if (
       typeof window === "undefined" ||
       !("speechSynthesis" in window) ||
@@ -107,12 +136,30 @@ export default function AiStudioPage() {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
-      utterance.rate = 0.98;
+      utterance.rate = customRate ?? speechRate;
+
+      // Select natural English voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const naturalVoice = voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Google") ||
+            v.name.includes("Natural") ||
+            v.name.includes("Samantha") ||
+            v.name.includes("Jenny"))
+      ) || voices.find((v) => v.lang.startsWith("en"));
+
+      if (naturalVoice) {
+        utterance.voice = naturalVoice;
+      }
+
       utterance.onstart = () => setIsSpeakingAi(true);
       utterance.onend = () => setIsSpeakingAi(false);
       utterance.onerror = () => setIsSpeakingAi(false);
       window.speechSynthesis.speak(utterance);
-    } catch {}
+    } catch {
+      setIsSpeakingAi(false);
+    }
   }
 
   const filteredTopics = AI_PRACTICE_TOPICS.filter(
@@ -143,12 +190,16 @@ export default function AiStudioPage() {
 
     saveUserSubscription(user?.id, userTier, nextBalance);
     setAiTokens(nextBalance);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
 
     const openingMsg: AiTurnMessage = {
       id: "opening-1",
       role: "ai",
       text: topic.samplePrompt,
       tip: `Focus skills: ${topic.skillsFocused.join(" • ")}`,
+      fluencyScore: 100,
     };
     setMessages([openingMsg]);
     setUserInput("");
@@ -156,23 +207,32 @@ export default function AiStudioPage() {
     speakText(topic.samplePrompt);
   }
 
-  async function handleSendUserResponse(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!activePreviewTopic || !userInput.trim()) return;
+  async function handleSendUserResponse(overrideText?: string) {
+    const textToSend = (overrideText || userInput).trim();
+    if (!activePreviewTopic || !textToSend) return;
 
-    const cleanText = userInput.trim();
+    // Stop listening if currently speech-recording
+    if (speechRecognitionRef.current && isListening) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+    }
+
+    const userWords = textToSend.split(/\s+/).filter(Boolean).length;
     const userTurn: AiTurnMessage = {
       id: `u-${Date.now()}`,
       role: "user",
-      text: cleanText,
+      text: textToSend,
+      wordCount: userWords,
     };
 
     setMessages((prev) => [...prev, userTurn]);
     setUserInput("");
 
-    let { reply, tip } = buildAiCoachReply(
+    let { reply, tip, fluencyScore } = buildAiCoachReply(
       activePreviewTopic,
-      cleanText,
+      textToSend,
       messages.length
     );
 
@@ -182,12 +242,15 @@ export default function AiStudioPage() {
         const serverTurn = await sendAiStudioTurn(token, {
           topicTitle: activePreviewTopic.title,
           category: activePreviewTopic.category,
-          userMessage: cleanText,
+          userMessage: textToSend,
           turnIndex: messages.length,
         });
         if (serverTurn && serverTurn.reply) {
           reply = serverTurn.reply;
           tip = serverTurn.tip || tip;
+          if (typeof serverTurn.fluencyScore === "number") {
+            fluencyScore = serverTurn.fluencyScore;
+          }
         }
       } catch {}
     }
@@ -197,25 +260,33 @@ export default function AiStudioPage() {
       role: "ai",
       text: reply,
       tip,
+      fluencyScore,
     };
 
     setMessages((prev) => [...prev, aiTurn]);
     speakText(reply);
   }
 
+  // Interactive Voice Microphone Handler (Web Speech API)
   function toggleSpeechRecognition() {
     if (typeof window === "undefined") return;
     const SpeechRec =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
+
     if (!SpeechRec) {
       alert(
-        "Voice speech-to-text is supported in Chrome/Edge/Safari. You can also type your English response below!"
+        "Microphone speech recognition is available in Chrome, Edge, and Safari. You can also type your English response directly below!"
       );
       return;
     }
 
     if (isListening) {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch {}
+      }
       setIsListening(false);
       return;
     }
@@ -223,18 +294,41 @@ export default function AiStudioPage() {
     try {
       const recognition = new SpeechRec();
       recognition.lang = "en-US";
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
+      speechRecognitionRef.current = recognition;
+
       setIsListening(true);
 
+      // Stop any AI voice playing while user speaks
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+
       recognition.onresult = (event: any) => {
-        const transcript = event.results?.[0]?.[0]?.transcript || "";
-        if (transcript) {
-          setUserInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        let interim = "";
+        let final = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        const text = final || interim;
+        if (text) {
+          setUserInput(text);
         }
       };
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = () => setIsListening(false);
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
       recognition.start();
     } catch {
       setIsListening(false);
@@ -242,55 +336,92 @@ export default function AiStudioPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 relative">
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 relative bg-[#070D1B]">
       <Header />
 
       <PageTransition>
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
-          {/* AI Studio Hero Banner */}
-          <section className="rounded-[32px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#881337] text-white p-6 sm:p-10 shadow-2xl border-2 border-[#E11D48]/35 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
+          
+          {/* Trial Claimed Notice Alert */}
+          {trialClaimedNotice && (
+            <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-lg animate-in fade-in">
+              <span>{trialClaimedNotice}</span>
+              <button
+                onClick={() => setTrialClaimedNotice(null)}
+                className="text-white hover:text-emerald-100 font-black px-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
-            <div className="relative z-10 flex flex-col gap-2.5 max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 bg-white/12 border border-white/25 text-white text-[11px] sm:text-xs font-extrabold px-3 py-1 rounded-full max-w-full">
-                🤖 Standalone AI Speaking Partner • Separate from Human Calls
-              </span>
-              <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">
-                AI Topic Speaking Studio
+          {/* AI Studio Hero Banner */}
+          <section className="rounded-[32px] bg-gradient-to-br from-[#0A1628] via-[#0E2038] to-[#1E1B4B] text-white p-6 sm:p-10 shadow-2xl border border-blue-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col gap-3 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] sm:text-xs font-black px-3 py-1 rounded-full">
+                  🎙️ Real-Time Voice AI Coach • Speech-to-Speech
+                </span>
+                <span className="text-[11px] font-bold text-slate-400">
+                  Powered by Web Speech Engine
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight text-white">
+                Voice AI Speaking Coach
               </h1>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                Practice diverse real-world topics, job interviews, and IELTS speaking scenarios 24/7 with our dedicated AI model using your monthly AI Token balance.
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Practice realistic 1-on-1 English conversations with instant spoken voice feedback. Improve your pronunciation, grammar, and fluency score in real time.
               </p>
+
+              {/* Free Trial Claim Button if low on tokens */}
+              {aiTokens < 20 && (
+                <div className="pt-1 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleClaimTrialTokens}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>🎁</span>
+                    <span>Claim 100 Free Tokens (تجربة مجانية)</span>
+                  </button>
+                  <span className="text-[11px] text-slate-400 hidden sm:inline">
+                    No card required • Instant activation
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Live AI Token Balance Card */}
-            <div className="relative z-10 bg-white/12 backdrop-blur-md border border-white/20 rounded-3xl p-5 flex flex-col gap-3 min-w-[240px] w-full lg:w-auto">
+            <div className="relative z-10 bg-[#0B1528]/80 backdrop-blur-md border border-slate-700/80 rounded-3xl p-5 flex flex-col gap-3 min-w-[240px] w-full lg:w-auto shadow-xl">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-bold text-slate-200">
-                  Your AI Token Balance
+                <span className="text-xs font-bold text-slate-300">
+                  Your AI Tokens
                 </span>
-                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#E11D48] text-white">
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-blue-600 text-white">
                   {userTier}
                 </span>
               </div>
               <div className="text-3xl font-black text-white flex items-center gap-1.5">
-                <span className="text-[#FF4D6D]">⚡</span>
+                <span className="text-amber-400">⚡</span>
                 <span>{aiTokens.toLocaleString()}</span>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="text-xs font-semibold text-slate-400">
                   tokens
                 </span>
               </div>
               <Link
                 href="/pricing"
-                className="w-full py-2.5 rounded-xl btn-primary-crest text-white text-xs font-black text-center shadow-md transition-all"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black text-center shadow-md transition-all active:scale-95"
               >
-                {aiTokens > 0 ? "Get 3,500 Elite Tokens →" : "Unlock AI Tokens →"}
+                {aiTokens > 0 ? "Upgrade for 3,500 Tokens →" : "Unlock Full Access →"}
               </Link>
             </div>
           </section>
 
           {/* Category Filter Capsules */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {AI_TOPIC_CATEGORIES.map((category) => {
               const active = selectedCategory === category;
               return (
@@ -298,10 +429,10 @@ export default function AiStudioPage() {
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-4 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
                     active
-                      ? "bg-[#0B1F3A] text-white shadow-md"
-                      : "bg-white text-ink-soft hover:text-ink border border-border"
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                      : "bg-[#0E1A30] text-slate-300 hover:text-white border border-slate-700/80"
                   }`}
                 >
                   {category}
@@ -321,44 +452,44 @@ export default function AiStudioPage() {
               return (
                 <div
                   key={topic.id}
-                  className="luxury-card bg-white rounded-3xl p-6 border border-border shadow-sm flex flex-col justify-between gap-5"
+                  className="bg-[#0E1A30]/90 backdrop-blur-md rounded-3xl p-6 border border-slate-700/60 shadow-xl hover:border-blue-500/40 transition-all flex flex-col justify-between gap-4 group"
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-2xl">
+                        <span className="text-3xl p-2.5 rounded-2xl bg-blue-950/60 border border-blue-500/20 group-hover:scale-105 transition-transform">
                           {topic.icon}
-                        </div>
+                        </span>
                         <div>
-                          <span className="text-[11px] font-extrabold text-glacier">
+                          <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
+                            {topic.title}
+                          </h3>
+                          <span className="text-[11px] font-semibold text-slate-400">
                             {topic.category} • {topic.level}
                           </span>
-                          <h2 className="text-base font-black text-ink mt-0.5">
-                            {topic.title}
-                          </h2>
                         </div>
                       </div>
 
                       <span
-                        className={`text-[11px] font-black px-2.5 py-1 rounded-full whitespace-nowrap ${
+                        className={`text-[10px] font-black px-2.5 py-0.5 rounded-full shrink-0 ${
                           isEliteTrack
-                            ? "bg-[#FEF7E6] text-[#B45309] border border-[#F5A623]/50"
-                            : "bg-[#EDF6FC] text-[#2264A3] border border-[#3B82C4]/30"
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                            : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
                         }`}
                       >
-                        {isEliteTrack ? "👑 Elite" : "⚡ Plus+"}
+                        {topic.requiredTier}
                       </span>
                     </div>
 
-                    <p className="text-xs text-ink-soft leading-relaxed">
+                    <p className="text-xs text-slate-300 leading-relaxed">
                       {topic.summary}
                     </p>
 
-                    <div className="bg-surface rounded-2xl p-3.5 border border-border/80">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-ink-soft">
-                        Opening AI Prompt
+                    <div className="bg-[#070D1B] rounded-2xl p-3.5 border border-slate-800">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        Opening AI Question
                       </span>
-                      <p className="text-xs font-semibold text-ink italic mt-1">
+                      <p className="text-xs font-medium text-slate-200 italic mt-1">
                         &ldquo;{topic.samplePrompt}&rdquo;
                       </p>
                     </div>
@@ -367,7 +498,7 @@ export default function AiStudioPage() {
                       {topic.skillsFocused.map((skill) => (
                         <span
                           key={skill}
-                          className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface-subtle text-ink-soft"
+                          className="text-[10px] font-semibold px-2.5 py-0.5 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/50"
                         >
                           {skill}
                         </span>
@@ -375,21 +506,22 @@ export default function AiStudioPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-border/70 gap-3">
-                    <span className="text-xs font-extrabold text-[#B45309]">
-                      ⚡ {topic.tokenCostPerSession} Tokens / session
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-800 gap-3">
+                    <span className="text-xs font-extrabold text-amber-400 flex items-center gap-1">
+                      <span>⚡</span>
+                      <span>{topic.tokenCostPerSession} Tokens / session</span>
                     </span>
 
                     <button
                       type="button"
                       onClick={() => handleLaunchTopic(topic)}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-md active:scale-95 ${
                         isUnlocked
-                          ? "btn-primary-crest text-white shadow-sm"
-                          : "bg-[#0B1F3A] hover:bg-[#122E54] text-white"
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/30"
+                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
                       }`}
                     >
-                      <span>{isUnlocked ? "🎙️ Start AI Session" : "🔒 Unlock with Tokens"}</span>
+                      <span>{isUnlocked ? "🎙️ Start Voice Session" : "🔒 Unlock with Tokens"}</span>
                     </button>
                   </div>
                 </div>
@@ -402,61 +534,62 @@ export default function AiStudioPage() {
       {/* Paid Plan / Token Gate Modal */}
       {lockedModalTopic && (
         <div
-          className="fixed inset-0 z-50 bg-[#071426]/70 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#070D1B]/80 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setLockedModalTopic(null)}
         >
           <div
-            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-border flex flex-col gap-4"
+            className="bg-[#0F192E] rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-700 text-white flex flex-col gap-4 animate-in fade-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <span className="text-2xl">{lockedModalTopic.icon}</span>
-              <span className="text-[11px] font-black px-3 py-1 rounded-full bg-[#FEF7E6] text-[#B45309] border border-[#F5A623]/40">
-                Requires {lockedModalTopic.requiredTier} Plan Tokens
+              <span className="text-3xl">{lockedModalTopic.icon}</span>
+              <span className="text-[11px] font-black px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Requires {lockedModalTopic.requiredTier} Tokens
               </span>
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-ink">
+              <h3 className="text-lg font-black text-white">
                 Unlock &ldquo;{lockedModalTopic.title}&rdquo;
               </h3>
-              <p className="text-xs text-ink-soft leading-relaxed mt-1.5">
-                AI Topic Speaking Studio is available exclusively to paid members using monthly AI Tokens:
+              <p className="text-xs text-slate-300 leading-relaxed mt-1.5">
+                Get monthly AI Tokens to practice voice roleplays with your AI coach anytime:
               </p>
-              <ul className="mt-3 flex flex-col gap-2 text-xs text-ink">
-                <li className="flex items-center justify-between bg-surface p-2.5 rounded-xl border border-border">
-                  <span className="font-bold">⚡ JustSpeak Plus</span>
-                  <span className="font-black text-glacier">500 AI Tokens / mo</span>
+              <ul className="mt-3 flex flex-col gap-2 text-xs">
+                <li className="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                  <span className="font-bold text-white">⚡ JustSpeak Plus</span>
+                  <span className="font-black text-blue-400">500 AI Tokens / mo</span>
                 </li>
-                <li className="flex items-center justify-between bg-[#FEF7E6]/70 p-2.5 rounded-xl border border-[#F5A623]/50">
-                  <span className="font-bold">👑 JustSpeak Elite</span>
-                  <span className="font-black text-[#B45309]">3,500 AI Tokens / mo (7x!)</span>
+                <li className="flex items-center justify-between bg-amber-500/10 p-3 rounded-xl border border-amber-500/30">
+                  <span className="font-bold text-amber-200">👑 JustSpeak Elite</span>
+                  <span className="font-black text-amber-400">3,500 AI Tokens / mo (7x!)</span>
                 </li>
               </ul>
             </div>
 
             <div className="flex gap-2.5 pt-2">
-              <Button
-                variant="secondary"
-                onClick={() => setLockedModalTopic(null)}
+              <button
+                type="button"
+                onClick={handleClaimTrialTokens}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all"
               >
-                Close
-              </Button>
+                Claim Free Tokens 🎁
+              </button>
               <Link
                 href="/pricing"
-                className="w-full h-12 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center bg-gradient-to-r from-[#F5A623] to-[#D97706] text-[#0B1F3A] shadow-md"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-black text-center shadow-md transition-all"
               >
-                View Token Plans →
+                View Plans →
               </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* Live Interactive AI Topic Speaking Studio Modal */}
+      {/* Full-Screen Interactive Voice AI Speaking Coach Modal */}
       {activePreviewTopic && (
         <div
-          className="fixed inset-0 z-50 bg-[#071426]/80 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#050A15]/90 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
           onClick={() => {
             if (typeof window !== "undefined" && "speechSynthesis" in window) {
               window.speechSynthesis.cancel();
@@ -465,71 +598,130 @@ export default function AiStudioPage() {
           }}
         >
           <div
-            className="bg-white rounded-[30px] p-5 sm:p-7 max-w-2xl w-full max-h-[90vh] shadow-2xl border border-border flex flex-col gap-4"
+            className="bg-[#0D1728] rounded-[32px] p-4 sm:p-6 max-w-2xl w-full max-h-[92vh] shadow-2xl border border-blue-500/30 text-white flex flex-col gap-4 relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{activePreviewTopic.icon}</span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-black text-ink">
-                      {activePreviewTopic.title}
-                    </h3>
-                    {isSpeakingAi && (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 animate-pulse">
-                        🔊 AI Speaking...
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] font-bold text-ink-soft">
-                    {activePreviewTopic.category} •{" "}
-                    <span className="text-[#B45309]">
-                      ⚡ {aiTokens.toLocaleString()} AI Tokens remaining
+            {/* Top Bar */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl p-2 rounded-xl bg-blue-950 border border-blue-500/30 shrink-0">
+                  {activePreviewTopic.icon}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-black text-white truncate">
+                    {activePreviewTopic.title}
+                  </h3>
+                  <p className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                    <span>{activePreviewTopic.category}</span>
+                    <span>•</span>
+                    <span className="text-amber-400 font-bold">
+                      ⚡ {aiTokens.toLocaleString()} tokens left
                     </span>
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Voice Speed & Sound Controls */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <select
+                  value={speechRate}
+                  onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                  className="bg-slate-800 text-slate-200 text-[11px] font-bold px-2 py-1.5 rounded-xl border border-slate-700 focus:outline-none"
+                  title="AI Voice Speed"
+                >
+                  <option value={0.85}>0.85x (Slow)</option>
+                  <option value={1.0}>1.0x (Normal)</option>
+                  <option value={1.15}>1.15x (Fast)</option>
+                </select>
+
                 <button
                   type="button"
                   onClick={() => {
                     const next = !voiceEnabled;
                     setVoiceEnabled(next);
-                    if (
-                      !next &&
-                      typeof window !== "undefined" &&
-                      "speechSynthesis" in window
-                    ) {
+                    if (!next && typeof window !== "undefined" && "speechSynthesis" in window) {
                       window.speechSynthesis.cancel();
                     }
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-surface border border-border text-xs font-bold text-ink cursor-pointer"
+                  className={`p-2 rounded-xl border text-xs font-bold transition-colors ${
+                    voiceEnabled
+                      ? "bg-blue-600/20 border-blue-500/40 text-blue-300"
+                      : "bg-slate-800 border-slate-700 text-slate-400"
+                  }`}
+                  title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
                 >
-                  {voiceEnabled ? "🔊 Voice On" : "🔇 Muted"}
+                  {voiceEnabled ? "🔊" : "🔇"}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
-                    if (
-                      typeof window !== "undefined" &&
-                      "speechSynthesis" in window
-                    ) {
+                    if (typeof window !== "undefined" && "speechSynthesis" in window) {
                       window.speechSynthesis.cancel();
                     }
                     setActivePreviewTopic(null);
                   }}
-                  className="w-8 h-8 rounded-xl bg-surface hover:bg-surface-subtle text-ink font-black text-xs flex items-center justify-center cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-black text-xs flex items-center justify-center transition-colors"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* Conversation Stream */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[48vh]">
+            {/* Central Animated Voice AI Orb / Soundwave Area */}
+            <div className="flex flex-col items-center justify-center py-4 px-2 bg-gradient-to-b from-[#0B1528] to-[#070D1B] rounded-2xl border border-slate-800 relative overflow-hidden">
+              {/* Visual Orb */}
+              <div className="relative flex items-center justify-center my-2">
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isSpeakingAi
+                      ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 shadow-xl shadow-cyan-500/50 scale-110 animate-pulse"
+                      : isListening
+                      ? "bg-gradient-to-r from-rose-500 to-amber-500 shadow-xl shadow-rose-500/50 scale-110 animate-ping"
+                      : "bg-gradient-to-r from-blue-700 to-indigo-800 shadow-lg shadow-blue-900/40"
+                  }`}
+                >
+                  <span className="text-3xl select-none">
+                    {isListening ? "🎙️" : isSpeakingAi ? "🗣️" : "🤖"}
+                  </span>
+                </div>
+
+                {/* Animated Equalizer Waves when speaking */}
+                {isSpeakingAi && (
+                  <div className="absolute -bottom-4 flex items-center gap-1">
+                    {[16, 24, 32, 20, 28, 14, 22].map((h, i) => (
+                      <span
+                        key={i}
+                        className="w-1 bg-cyan-400 rounded-full animate-pulse"
+                        style={{
+                          height: `${h}px`,
+                          animationDelay: `${i * 120}ms`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Status Indicator */}
+              <div className="mt-3 text-center">
+                <p className="text-xs font-bold text-slate-200">
+                  {isListening
+                    ? "Listening to you... Speak in English now!"
+                    : isSpeakingAi
+                    ? "AI Coach is speaking (en-US)..."
+                    : "Tap the microphone below to reply with your voice!"}
+                </p>
+                {userInput && isListening && (
+                  <p className="text-xs text-blue-300 mt-1 italic font-medium max-w-md px-2 truncate">
+                    &ldquo;{userInput}&rdquo;
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Conversation Stream & Fluency Feedback */}
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 max-h-[36vh] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -538,30 +730,51 @@ export default function AiStudioPage() {
                   }`}
                 >
                   <div
-                    className={`max-w-[88%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
+                    className={`max-w-[90%] sm:max-w-[85%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-[#0B1F3A] text-white rounded-br-xs"
-                        : "bg-surface border border-border text-ink rounded-bl-xs"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-xs shadow-md"
+                        : "bg-[#111E33] border border-slate-700/80 text-slate-100 rounded-bl-xs shadow-md"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3 mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-wider opacity-75">
-                        {msg.role === "user" ? "You" : "🤖 JustSpeak AI Coach"}
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">
+                        {msg.role === "user" ? "You (Spoken)" : "🤖 AI English Coach"}
                       </span>
                       {msg.role === "ai" && (
                         <button
                           type="button"
                           onClick={() => speakText(msg.text)}
-                          className="text-[11px] font-bold text-glacier hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1 cursor-pointer"
                         >
-                          🔊 Replay
+                          <span>🔊</span>
+                          <span>Replay</span>
                         </button>
                       )}
+                      {msg.role === "user" && msg.wordCount && (
+                        <span className="text-[10px] font-bold text-blue-200">
+                          {msg.wordCount} words spoken
+                        </span>
+                      )}
                     </div>
-                    <p>{msg.text}</p>
+
+                    <p className="font-medium">{msg.text}</p>
+
+                    {/* Fluency Score & Coaching Tip */}
                     {msg.tip && (
-                      <div className="mt-2.5 pt-2 border-t border-border/70 text-[11px] font-semibold text-[#B45309]">
-                        💡 {msg.tip}
+                      <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex flex-col gap-1.5 text-[11px]">
+                        {typeof msg.fluencyScore === "number" && (
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black text-[10px] border border-emerald-500/30">
+                              ⭐ Fluency: {msg.fluencyScore}/100
+                            </span>
+                            <span className="text-slate-400 text-[10px]">
+                              {msg.fluencyScore >= 92 ? "Native Flow" : "Conversational"}
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-amber-300 font-semibold leading-relaxed">
+                          💡 {msg.tip}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -569,40 +782,53 @@ export default function AiStudioPage() {
               ))}
             </div>
 
-            {/* Microphone & Text Input Controls */}
-            <form
-              onSubmit={handleSendUserResponse}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-3 border-t border-border"
-            >
-              <button
-                type="button"
-                onClick={toggleSpeechRecognition}
-                className={`px-4 py-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                  isListening
-                    ? "bg-rose-600 text-white animate-pulse shadow-md"
-                    : "bg-[#EDF6FC] hover:bg-[#DBEEFA] text-[#0B1F3A] border border-[#3B82C4]/40"
-                }`}
-              >
-                <span>🎙️</span>
-                <span>{isListening ? "Listening..." : "Speak in English"}</span>
-              </button>
+            {/* Primary Voice Recording & Response Controls */}
+            <div className="pt-3 border-t border-slate-800 flex flex-col gap-2.5">
+              
+              {/* Primary Voice Microphone Big CTA */}
+              <div className="flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all shadow-xl cursor-pointer active:scale-95 ${
+                    isListening
+                      ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/40 animate-pulse"
+                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-600/30"
+                  }`}
+                >
+                  <span className="text-lg">{isListening ? "⏹️" : "🎙️"}</span>
+                  <span>
+                    {isListening
+                      ? "Stop & Send Spoken Response"
+                      : "Tap to Speak (تحدث بالمايك)"}
+                  </span>
+                </button>
+              </div>
 
-              <input
-                type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Speak with mic or type your English response here..."
-                className="flex-1 h-11 rounded-2xl border border-border px-4 text-xs sm:text-sm text-ink focus:outline-none focus:border-glacier"
-              />
-
-              <button
-                type="submit"
-                disabled={!userInput.trim()}
-                className="px-5 py-3 rounded-2xl btn-primary-crest text-white text-xs font-black disabled:opacity-40 cursor-pointer shrink-0"
+              {/* Text Input Fallback Bar */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendUserResponse();
+                }}
+                className="flex items-center gap-2"
               >
-                Send Reply →
-              </button>
-            </form>
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Or review/type your English sentence here..."
+                  className="flex-1 h-11 rounded-2xl bg-[#070D1B] border border-slate-700 px-4 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-500"
+                />
+                <button
+                  type="submit"
+                  disabled={!userInput.trim()}
+                  className="px-4 h-11 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold disabled:opacity-40 transition-all shrink-0 cursor-pointer"
+                >
+                  Send →
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

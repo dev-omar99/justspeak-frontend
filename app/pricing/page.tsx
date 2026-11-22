@@ -79,6 +79,9 @@ export default function PricingPage() {
     }
 
     saveUserSubscription(user?.id, checkoutPlan.id, newTokens);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
     setCurrentTier(checkoutPlan.id);
     setAiTokens(newTokens);
     setActivatingPlan(false);
@@ -359,6 +362,38 @@ export default function PricingPage() {
                     ? checkoutPlan.annualPriceUsd
                     : checkoutPlan.monthlyPriceUsd}
                 </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Instant 1-Click Demo Activation Button */}
+              <button
+                type="button"
+                onClick={handleCompleteActivation}
+                disabled={activatingPlan}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-600 hover:brightness-110 text-white font-black text-xs sm:text-sm shadow-xl shadow-blue-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {activatingPlan ? (
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>⚡</span>
+                    <span>تفعيل باقة {checkoutPlan.name} فوراً (Demo Activation)</span>
+                    <span>→</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 justify-center">
+                <span>🛡️ وضع التجربة الفوري: يُفعّل جميع ميزات الباقة ورصيد التوكن مجاناً بدون بطاقة</span>
+              </div>
+
+              <div className="flex items-center gap-3 my-1">
+                <div className="h-px bg-border flex-1" />
+                <span className="text-[10px] font-extrabold text-ink-soft uppercase tracking-wider">
+                  أو تجربة واجهة الدفع (Simulated Gateway)
+                </span>
+                <div className="h-px bg-border flex-1" />
               </div>
             </div>
 
