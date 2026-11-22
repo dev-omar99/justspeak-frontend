@@ -354,8 +354,18 @@ class ApiClient {
       userMessage: string;
       turnIndex?: number;
     }
-  ): Promise<{ reply: string; tip: string; fluencyScore: number; wordCount: number }> {
-    return this.request<{ reply: string; tip: string; fluencyScore: number; wordCount: number }>(
+  ): Promise<{
+    reply: string;
+    tip: string;
+    fluencyScore: number;
+    grammarScore?: number;
+    vocabScore?: number;
+    corrections?: string[];
+    nativeUpgrade?: string;
+    suggestedPhrases?: string[];
+    wordCount: number;
+  }> {
+    return this.request(
       "/users/ai-studio/turn",
       {
         method: "POST",

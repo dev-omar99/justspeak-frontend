@@ -27,8 +27,7 @@ interface NavItem {
 const AUTHENTICATED_LINKS: readonly NavItem[] = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/learn", label: "Academy", icon: "🎓", accent: "glacier" },
-  { href: "/practice", label: "Fluency", icon: "🎙️" },
-  { href: "/ai-studio", label: "AI Studio", icon: "✨", accent: "glacier" },
+  { href: "/ai-studio", label: "AI Coach", icon: "✨", accent: "glacier" },
   { href: "/leaderboard", label: "Ranks", icon: "🏆" },
   { href: "/pricing", label: "Plans", icon: "👑", accent: "gold" },
 ];
@@ -36,8 +35,7 @@ const AUTHENTICATED_LINKS: readonly NavItem[] = [
 const PUBLIC_LINKS: readonly NavItem[] = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/learn", label: "Academy", icon: "🎓", accent: "glacier" },
-  { href: "/practice", label: "Fluency Vault", icon: "🎙️" },
-  { href: "/ai-studio", label: "AI Studio", icon: "✨", accent: "glacier" },
+  { href: "/ai-studio", label: "AI Coach", icon: "✨", accent: "glacier" },
   { href: "/pricing", label: "Plans & Pricing", icon: "👑", accent: "gold" },
 ];
 

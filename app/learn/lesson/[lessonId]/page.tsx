@@ -12,12 +12,13 @@ import {
   saveAcademyProgress,
 } from "../../../../lib/academy";
 import {
+  ALL_STRUCTURED_LESSONS,
   getLessonById,
-  STRUCTURED_LESSONS,
 } from "../../../../lib/academy-lessons";
 import { VocabItem } from "../../../../lib/academy-content";
+import InteractiveLessonDrill from "../../../../components/academy/InteractiveLessonDrill";
 
-type StepNum = 1 | 2 | 3 | 4 | 5;
+type StepNum = 1 | 2 | 3 | 4 | 5 | 6;
 
 function scoreSpoken(target: string, spoken: string) {
   const clean = (s: string) =>
@@ -45,6 +46,7 @@ export default function GuidedLessonPage() {
   const lesson = getLessonById(params?.lessonId || "");
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
   const [step, setStep] = useState<StepNum>(1);
+  const [lessonXp, setLessonXp] = useState<number>(0);
 
   // Step 1: Vocabulary active vs saved tab
   const [vocabTab, setVocabTab] = useState<"learn" | "saved">("learn");
@@ -241,8 +243,9 @@ export default function GuidedLessonPage() {
 
   function goToStep(next: StepNum) {
     stopDialogue();
-    if (next === 5) {
+    if (next === 6) {
       markLessonComplete();
+      setLessonXp((x) => x + 30);
     }
     setStep(next);
     if (typeof window !== "undefined") {
@@ -250,7 +253,7 @@ export default function GuidedLessonPage() {
     }
   }
 
-  const nextLesson = STRUCTURED_LESSONS.find(
+  const nextLesson = ALL_STRUCTURED_LESSONS.find(
     (l) => l.level === lesson.level && l.unitNumber === lesson.unitNumber + 1
   );
 
@@ -258,8 +261,9 @@ export default function GuidedLessonPage() {
     { num: 1, label: "Words", labelAr: "الكلمات" },
     { num: 2, label: "Listen", labelAr: "استمع" },
     { num: 3, label: "Read", labelAr: "اقرأ" },
-    { num: 4, label: "Shadow", labelAr: "النطق" },
-    { num: 5, label: "Speak Live", labelAr: "تحدّث" },
+    { num: 4, label: "Practice", labelAr: "تحديات" },
+    { num: 5, label: "Shadow", labelAr: "النطق" },
+    { num: 6, label: "Speak Live", labelAr: "تحدّث" },
   ];
 
   return (
@@ -282,9 +286,16 @@ export default function GuidedLessonPage() {
                   {lesson.sourceRef}
                 </span>
               </div>
-              <span className="text-xs font-bold text-ink-soft">
-                ⏱️ {lesson.durationMins} min
-              </span>
+              <div className="flex items-center gap-2">
+                {lessonXp > 0 && (
+                  <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] border border-[#10B981]/30">
+                    ⚡ +{lessonXp} XP
+                  </span>
+                )}
+                <span className="text-xs font-bold text-ink-soft">
+                  ⏱️ {lesson.durationMins} min
+                </span>
+              </div>
             </div>
 
             <div>
@@ -299,8 +310,8 @@ export default function GuidedLessonPage() {
               </p>
             </div>
 
-            {/* Crisp 5-Step Progress Stepper */}
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pt-1">
+            {/* Crisp 6-Step Progress Stepper */}
+            <div className="grid grid-cols-6 gap-1 sm:gap-2 pt-1">
               {stepsMeta.map((s) => {
                 const isActive = step === s.num;
                 const isDone = step > s.num;
@@ -714,7 +725,7 @@ export default function GuidedLessonPage() {
                     onClick={() => goToStep(4)}
                     className="px-6 py-3 rounded-2xl btn-primary-crest text-white text-xs sm:text-sm font-black cursor-pointer"
                   >
-                    {isArabic ? "التالي: النطق والشادوينج →" : "Continue to Step 4: Shadow →"}
+                    {isArabic ? "التالي: تحديات تفاعلية 🎮 →" : "Continue to Step 4: Practice 🎮 →"}
                   </button>
                 </div>
               </article>
@@ -754,13 +765,26 @@ export default function GuidedLessonPage() {
           )}
 
           {/* =============================================================== */}
-          {/* STEP 4: PRONUNCIATION & SHADOWING DRILL                         */}
+          {/* STEP 4: DUOLINGO-STYLE INTERACTIVE PRACTICE DRILL               */}
           {/* =============================================================== */}
           {step === 4 && (
+            <InteractiveLessonDrill
+              lesson={lesson}
+              isArabic={isArabic}
+              onEarnXp={(amt) => setLessonXp((x) => x + amt)}
+              onBack={() => goToStep(3)}
+              onContinue={() => goToStep(5)}
+            />
+          )}
+
+          {/* =============================================================== */}
+          {/* STEP 5: PRONUNCIATION & SHADOWING DRILL                         */}
+          {/* =============================================================== */}
+          {step === 5 && (
             <section className="bg-white border border-border rounded-[24px] p-6 sm:p-8 shadow-xs flex flex-col gap-5">
               <div>
                 <span className="text-[11px] font-black text-[#D91023] uppercase tracking-wider">
-                  Step 4 • Pronunciation & Shadowing
+                  Step 5 • Pronunciation & Shadowing
                 </span>
                 <h2 className="text-xl font-black text-ink mt-0.5">
                   🗣️ {lesson.pronunciation.focusSound}
@@ -852,14 +876,14 @@ export default function GuidedLessonPage() {
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <button
                   type="button"
-                  onClick={() => goToStep(3)}
+                  onClick={() => goToStep(4)}
                   className="px-4 py-2.5 rounded-xl bg-surface border border-border text-xs font-bold text-ink cursor-pointer"
                 >
                   ← {isArabic ? "السابق" : "Back"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => goToStep(5)}
+                  onClick={() => goToStep(6)}
                   className="px-6 py-3 rounded-2xl btn-primary-crest text-white text-xs sm:text-sm font-black cursor-pointer"
                 >
                   {isArabic ? "الخطوة الأخيرة: التحدث الحي →" : "Finish Lesson & Speak Live →"}
@@ -869,9 +893,9 @@ export default function GuidedLessonPage() {
           )}
 
           {/* =============================================================== */}
-          {/* STEP 5: LESSON COMPLETE + LIVE PARTNER SPEAKING MISSION         */}
+          {/* STEP 6: LESSON COMPLETE + LIVE PARTNER SPEAKING MISSION         */}
           {/* =============================================================== */}
-          {step === 5 && (
+          {step === 6 && (
             <section className="bg-white border-2 border-[#002868]/20 rounded-[28px] p-6 sm:p-9 shadow-md flex flex-col items-center text-center gap-5">
               <span className="text-5xl">🏆</span>
               <div>

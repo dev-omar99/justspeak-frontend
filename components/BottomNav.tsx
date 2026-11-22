@@ -47,10 +47,10 @@ export default function BottomNav() {
       match: (p: string) => p.startsWith("/ai-studio"),
     },
     {
-      href: "/practice",
-      label: "Fluency",
-      icon: "🎙️",
-      match: (p: string) => p.startsWith("/practice") || p.startsWith("/memos"),
+      href: "/leaderboard",
+      label: "Ranks",
+      icon: "🏆",
+      match: (p: string) => p.startsWith("/leaderboard"),
     },
     {
       href: "/profile",

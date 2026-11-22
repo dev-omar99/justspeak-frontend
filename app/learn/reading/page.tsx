@@ -14,7 +14,7 @@ import {
 } from "../../../lib/academy";
 import {
   ALL_CURRICULUM_VOCAB,
-  STRUCTURED_LESSONS,
+  ALL_STRUCTURED_LESSONS as STRUCTURED_LESSONS,
 } from "../../../lib/academy-lessons";
 import { VocabItem } from "../../../lib/academy-content";
 

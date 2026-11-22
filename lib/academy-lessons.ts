@@ -683,15 +683,24 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
   },
 ];
 
-// Helper: Aggregate ALL 72+ curated curriculum words for the Vocabulary Vault!
-export const ALL_CURRICULUM_VOCAB: VocabItem[] = STRUCTURED_LESSONS.flatMap(
+import { EXTENDED_STRUCTURED_LESSONS } from "./academy-lessons-extended";
+
+export const ALL_STRUCTURED_LESSONS: StructuredLesson[] = [
+  ...STRUCTURED_LESSONS,
+  ...EXTENDED_STRUCTURED_LESSONS,
+].sort((a, b) => a.unitNumber - b.unitNumber);
+
+// Helper: Aggregate ALL 180 curated Oxford/CEFR curriculum words!
+export const ALL_CURRICULUM_VOCAB: VocabItem[] = ALL_STRUCTURED_LESSONS.flatMap(
   (lesson) => lesson.vocabulary
 );
 
 export function getLessonsByLevel(level: CefrLevel): StructuredLesson[] {
-  return STRUCTURED_LESSONS.filter((l) => l.level === level);
+  return ALL_STRUCTURED_LESSONS.filter((l) => l.level === level).sort(
+    (a, b) => a.unitNumber - b.unitNumber
+  );
 }
 
 export function getLessonById(id: string): StructuredLesson | undefined {
-  return STRUCTURED_LESSONS.find((l) => l.id === id);
+  return ALL_STRUCTURED_LESSONS.find((l) => l.id === id);
 }
