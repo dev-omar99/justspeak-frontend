@@ -238,31 +238,31 @@ export default function ShadowingStudioPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-[#070D1B] text-white">
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header showBackButton />
       <PageTransition>
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <Link href="/learn" className="text-xs font-bold text-blue-400 hover:text-blue-300">
-                ← {isArabic ? "العودة للأكاديمية" : "Back to Academy"}
+              <Link href="/learn" className="text-xs font-extrabold text-ink-soft hover:text-[#002868]">
+                ← {isArabic ? "العودة لمسار الدروس" : "Back to Academy"}
               </Link>
-              <h1 className="text-2xl sm:text-3xl font-black mt-1">
+              <h1 className="text-2xl sm:text-3xl font-black text-ink mt-1">
                 🎬 {isArabic ? "استوديو الشادوينج التفاعلي (Auto-Pause)" : "Movie Auto-Pause Shadowing Studio"}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-ink-soft mt-1">
                 {isArabic
                   ? "اضغط تشغيل الجملة — سيتوقف الفيديو تلقائياً في نهاية جملة الممثل لتقلد نفس النطق والإيقاع بالمايكروفون!"
                   : "Hit Play Line — the video pauses automatically at the exact end of the actor's sentence so you can shadow it live."}
               </p>
             </div>
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#0E1A30] border border-slate-700 text-xs font-black cursor-pointer shrink-0">
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-border text-xs font-black text-ink cursor-pointer shrink-0 shadow-2xs">
               <input
                 type="checkbox"
                 checked={autoPause}
                 onChange={(e) => setAutoPause(e.target.checked)}
-                className="accent-blue-500 w-4 h-4"
+                className="accent-[#002868] w-4 h-4"
               />
               <span>⏸️ Auto-Pause Per Line</span>
             </label>
@@ -283,13 +283,13 @@ export default function ShadowingStudioPage() {
                     setShadowScore(null);
                     setSpokenText("");
                   }}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap border cursor-pointer transition-all flex items-center gap-2 ${
+                  className={`px-4 py-2.5 rounded-xl text-xs font-black whitespace-nowrap border cursor-pointer transition-all flex items-center gap-2 ${
                     active
-                      ? "bg-indigo-600 text-white border-indigo-400 shadow-lg"
-                      : "bg-[#0E1A30] text-slate-300 border-slate-700 hover:border-indigo-500"
+                      ? "bg-[#002868] text-white border-[#002868] shadow-xs"
+                      : "bg-white text-ink border-border hover:border-[#002868]"
                   }`}
                 >
-                  <span className="px-1.5 py-0.5 rounded bg-black/30 text-[10px]">
+                  <span className="px-1.5 py-0.5 rounded bg-black/15 text-[10px]">
                     {clip.level}
                   </span>
                   <span>{clip.title}</span>
@@ -302,15 +302,15 @@ export default function ShadowingStudioPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
             {/* Video + Active Line Controls */}
             <div className="lg:col-span-3 flex flex-col gap-4">
-              <div className="rounded-3xl overflow-hidden bg-black border border-slate-700/80 shadow-2xl aspect-video relative">
+              <div className="rounded-[24px] overflow-hidden bg-black border border-border shadow-md aspect-video relative">
                 <div id="justspeak-yt-player" className="w-full h-full" />
                 {isPausedForUser && (
-                  <div className="absolute bottom-3 left-3 right-3 bg-indigo-600/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl text-xs font-black flex items-center justify-between shadow-xl animate-in fade-in">
+                  <div className="absolute bottom-3 left-3 right-3 bg-[#002868]/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl text-xs font-black flex items-center justify-between shadow-xl">
                     <span>⏸️ Auto-Paused! Your turn to shadow this line 🎙️</span>
                     <button
                       type="button"
                       onClick={startShadowingMic}
-                      className="px-3 py-1 rounded-xl bg-white text-indigo-900 font-black cursor-pointer"
+                      className="px-3 py-1 rounded-xl bg-[#D91023] text-white font-black cursor-pointer"
                     >
                       Speak Now
                     </button>
@@ -319,9 +319,9 @@ export default function ShadowingStudioPage() {
               </div>
 
               {/* Active Line Box */}
-              <div className="bg-[#0E1A30]/95 border border-indigo-500/40 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col gap-4">
+              <div className="bg-white border border-border rounded-[24px] p-5 sm:p-6 shadow-xs flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-xs font-black text-indigo-300">
+                  <span className="text-xs font-black text-[#002868]">
                     Line {lineIndex + 1} / {selectedClip.lines.length} • {currentLine.speaker}
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -330,10 +330,10 @@ export default function ShadowingStudioPage() {
                         key={rate}
                         type="button"
                         onClick={() => setPlaybackRate(rate)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-black cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-black cursor-pointer border ${
                           playbackRate === rate
-                            ? "bg-indigo-600 text-white"
-                            : "bg-slate-800 text-slate-300"
+                            ? "bg-[#002868] text-white border-[#002868]"
+                            : "bg-surface text-ink-soft border-border"
                         }`}
                       >
                         {rate === 0.75 ? "🐢 0.75x" : "⚡ 1.0x"}
@@ -342,18 +342,18 @@ export default function ShadowingStudioPage() {
                     <button
                       type="button"
                       onClick={() => setShowTranslation((v) => !v)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-surface border border-border text-ink text-[11px] font-bold cursor-pointer"
                     >
                       {showTranslation ? "إخفاء الترجمة" : "إظهار الترجمة"}
                     </button>
                   </div>
                 </div>
 
-                <p className="text-lg sm:text-xl font-black text-white leading-snug">
+                <p className="text-lg sm:text-xl font-black text-ink leading-snug">
                   &ldquo;{currentLine.text}&rdquo;
                 </p>
                 {showTranslation && (
-                  <p className="text-xs sm:text-sm text-amber-300 font-semibold">
+                  <p className="text-xs sm:text-sm text-[#D91023] font-bold">
                     {currentLine.translationAr}
                   </p>
                 )}
@@ -363,7 +363,7 @@ export default function ShadowingStudioPage() {
                   <button
                     type="button"
                     onClick={() => playCurrentLine(lineIndex)}
-                    className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg cursor-pointer"
+                    className="px-5 py-3 rounded-xl bg-[#002868] hover:bg-[#061533] text-white text-xs font-black shadow-xs cursor-pointer"
                   >
                     ▶ {isArabic ? "شغّل الجملة (توقف تلقائي)" : "Play Line (Auto-Pause)"}
                   </button>
@@ -371,8 +371,7 @@ export default function ShadowingStudioPage() {
                   <button
                     type="button"
                     onClick={() => speakFallbackLine(currentLine.text)}
-                    className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer"
-                    title="Listen with built-in voice"
+                    className="px-4 py-3 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-ink text-xs font-bold cursor-pointer"
                   >
                     🔊 Voice Only
                   </button>
@@ -380,10 +379,10 @@ export default function ShadowingStudioPage() {
                   <button
                     type="button"
                     onClick={startShadowingMic}
-                    className={`px-5 py-3 rounded-2xl text-xs font-black shadow-lg cursor-pointer transition-all ${
+                    className={`px-5 py-3 rounded-xl text-xs font-black shadow-xs cursor-pointer transition-all ${
                       isRecording
-                        ? "bg-rose-600 text-white animate-pulse"
-                        : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+                        ? "bg-[#D91023] text-white animate-pulse"
+                        : "btn-primary-crest text-white"
                     }`}
                   >
                     {isRecording ? "⏹️ Listening..." : "🎙️ Shadow This Line"}
@@ -392,16 +391,16 @@ export default function ShadowingStudioPage() {
 
                 {/* Shadowing Evaluation Feedback */}
                 {shadowScore && (
-                  <div className="bg-[#070D1B] border border-slate-700 rounded-2xl p-4 flex flex-col gap-2">
+                  <div className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-300 font-bold">
-                        Your Shadow: <em className="text-white">&ldquo;{spokenText}&rdquo;</em>
+                      <span className="text-xs text-ink-soft font-bold">
+                        Your Shadow: <em className="text-ink">&ldquo;{spokenText}&rdquo;</em>
                       </span>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-black ${
                           shadowScore.score >= 80
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : "bg-amber-500/20 text-amber-300"
+                            ? "bg-[#ECFDF5] text-[#065F46]"
+                            : "bg-[#FFF0F2] text-[#D91023]"
                         }`}
                       >
                         Match: {shadowScore.score}%
@@ -413,8 +412,8 @@ export default function ShadowingStudioPage() {
                           key={i}
                           className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
                             wr.matched
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-rose-500/20 text-rose-300"
+                              ? "bg-[#ECFDF5] text-[#065F46]"
+                              : "bg-[#FFF0F2] text-[#D91023]"
                           }`}
                         >
                           {wr.word}
@@ -425,7 +424,7 @@ export default function ShadowingStudioPage() {
                 )}
 
                 {/* Prev / Next Line */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-between pt-3 border-t border-border">
                   <button
                     type="button"
                     disabled={lineIndex === 0}
@@ -434,7 +433,7 @@ export default function ShadowingStudioPage() {
                       setLineIndex(prev);
                       playCurrentLine(prev);
                     }}
-                    className="px-4 py-2 rounded-xl bg-slate-800 disabled:opacity-40 text-xs font-bold cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-surface border border-border text-ink disabled:opacity-40 text-xs font-bold cursor-pointer"
                   >
                     ← Previous Line
                   </button>
@@ -446,7 +445,7 @@ export default function ShadowingStudioPage() {
                       setLineIndex(next);
                       playCurrentLine(next);
                     }}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-xs font-black cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#002868] hover:bg-[#061533] text-white disabled:opacity-40 text-xs font-black cursor-pointer"
                   >
                     Next Line →
                   </button>
@@ -455,8 +454,8 @@ export default function ShadowingStudioPage() {
             </div>
 
             {/* Transcript Line List Sidebar */}
-            <aside className="lg:col-span-2 bg-[#0E1A30]/95 border border-slate-700/80 rounded-3xl p-5 flex flex-col gap-3 shadow-xl">
-              <h3 className="text-xs font-black uppercase tracking-wider text-indigo-300">
+            <aside className="lg:col-span-2 bg-white border border-border rounded-[24px] p-5 flex flex-col gap-3 shadow-xs">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#002868]">
                 📜 {isArabic ? "جمل المشهد (اضغط أي جملة للتشغيل)" : "Scene Script (Click any line)"}
               </h3>
               <div className="flex flex-col gap-2">
@@ -472,11 +471,11 @@ export default function ShadowingStudioPage() {
                       }}
                       className={`text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1 ${
                         active
-                          ? "bg-indigo-600/25 border-indigo-400 text-white"
-                          : "bg-[#070D1B] border-slate-800 text-slate-300 hover:border-indigo-500/50"
+                          ? "bg-[#EAF1FC] border-[#002868] text-ink"
+                          : "bg-surface border-border text-ink hover:border-[#002868]/40"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-[10px] font-black text-slate-400">
+                      <div className="flex items-center justify-between text-[10px] font-black text-ink-soft">
                         <span>
                           #{idx + 1} • {l.speaker}
                         </span>

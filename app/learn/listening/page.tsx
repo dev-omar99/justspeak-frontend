@@ -96,26 +96,26 @@ export default function ListeningAudiobooksPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-[#070D1B] text-white">
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header showBackButton />
       <PageTransition>
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
           <div>
-            <Link href="/learn" className="text-xs font-bold text-blue-400 hover:text-blue-300">
-              ← {isArabic ? "العودة للأكاديمية" : "Back to Academy"}
+            <Link href="/learn" className="text-xs font-extrabold text-ink-soft hover:text-[#002868]">
+              ← {isArabic ? "العودة لمسار الدروس" : "Back to Academy"}
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-black mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-ink mt-1">
               🎧 {isArabic ? "الروايات المسموعة والاستماع المتدرج" : "Graded Audiobooks & Listening"}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-ink-soft mt-1">
               {isArabic
-                ? "استمع إلى روايات كلاسيكية وقصص متدرجة (Project Gutenberg / LibriVox) مع تتبع النص جملة بجملة."
-                : "Listen to graded classic novels (Project Gutenberg / LibriVox) with sentence-by-sentence highlighted transcripts."}
+                ? "استمع إلى روايات كلاسيكية وقصص متدرجة (Project Gutenberg / LibriVox) لكل مستوى من A1 إلى C2 مع تتبع النص."
+                : "Listen to graded classic novels (Project Gutenberg / LibriVox) across A1–C2 with highlighted transcripts."}
             </p>
           </div>
 
           {/* Story Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {LISTENING_STORIES.map((story) => {
               const active = story.id === selectedStory.id;
               const done = progress?.completedListeningIds.includes(story.id);
@@ -128,38 +128,38 @@ export default function ListeningAudiobooksPage() {
                     setSelectedStory(story);
                     setSelectedAnswer(null);
                   }}
-                  className={`text-left p-4 rounded-3xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                  className={`text-left p-4 rounded-[22px] border-2 transition-all cursor-pointer flex flex-col gap-2 shadow-2xs ${
                     active
-                      ? "bg-cyan-950/50 border-cyan-400 shadow-lg"
-                      : "bg-[#0E1A30] border-slate-700/80 hover:border-cyan-500/50"
+                      ? "bg-[#EAF1FC] border-[#002868]"
+                      : "bg-white border-border hover:border-[#002868]/40"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-2xl">{story.coverEmoji}</span>
-                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#002868] text-white">
                       {story.level} • {story.durationLabel} {done ? "✓" : ""}
                     </span>
                   </div>
-                  <h3 className="text-sm font-black text-white">{story.title}</h3>
-                  <p className="text-[11px] text-slate-400">{story.author}</p>
+                  <h3 className="text-sm font-black text-ink">{story.title}</h3>
+                  <p className="text-[11px] text-ink-soft">{story.author}</p>
                 </button>
               );
             })}
           </div>
 
           {/* Audiobook Player Card */}
-          <section className="bg-[#0E1A30]/95 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <section className="bg-white border border-border rounded-[24px] p-6 sm:p-8 shadow-xs flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
               <div className="flex items-center gap-4">
-                <span className="text-4xl p-3 rounded-2xl bg-[#070D1B] border border-slate-800">
+                <span className="text-4xl p-3 rounded-2xl bg-surface border border-border">
                   {selectedStory.coverEmoji}
                 </span>
                 <div>
-                  <span className="text-[11px] font-black text-cyan-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-black text-[#D91023] uppercase tracking-wider">
                     {selectedStory.sourceLabel}
                   </span>
-                  <h2 className="text-xl font-black text-white">{selectedStory.title}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">{selectedStory.summary}</p>
+                  <h2 className="text-xl font-black text-ink">{selectedStory.title}</h2>
+                  <p className="text-xs text-ink-soft mt-0.5">{selectedStory.summary}</p>
                 </div>
               </div>
 
@@ -167,10 +167,10 @@ export default function ListeningAudiobooksPage() {
                 <button
                   type="button"
                   onClick={() => (isPlaying ? stopAudio() : playFromSegment(0))}
-                  className={`px-5 py-3 rounded-2xl text-xs font-black shadow-lg cursor-pointer ${
+                  className={`px-5 py-3 rounded-xl text-xs font-black shadow-xs cursor-pointer ${
                     isPlaying
-                      ? "bg-rose-600 hover:bg-rose-500 text-white"
-                      : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+                      ? "bg-[#D91023] text-white"
+                      : "bg-[#002868] hover:bg-[#061533] text-white"
                   }`}
                 >
                   {isPlaying ? "⏹️ Stop Audio" : "▶ Play Chapter"}
@@ -178,7 +178,7 @@ export default function ListeningAudiobooksPage() {
                 <select
                   value={rate}
                   onChange={(e) => setRate(parseFloat(e.target.value))}
-                  className="bg-[#070D1B] border border-slate-700 text-white text-xs font-bold px-3 py-3 rounded-2xl"
+                  className="bg-surface border border-border text-ink text-xs font-bold px-3 py-3 rounded-xl"
                 >
                   <option value={0.75}>0.75x Slow</option>
                   <option value={0.95}>1.0x Normal</option>
@@ -192,7 +192,7 @@ export default function ListeningAudiobooksPage() {
               <button
                 type="button"
                 onClick={() => setShowTranscript((v) => !v)}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
               >
                 {showTranscript
                   ? isArabic ? "🙈 إخفاء النص (لتدريب الأذن)" : "🙈 Hide Transcript (Pure Listening)"
@@ -202,7 +202,7 @@ export default function ListeningAudiobooksPage() {
                 <button
                   type="button"
                   onClick={() => setShowArabic((v) => !v)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-[#002868] cursor-pointer"
                 >
                   {showArabic ? "إخفاء الترجمة العربية" : "إظهار الترجمة العربية"}
                 </button>
@@ -221,43 +221,43 @@ export default function ListeningAudiobooksPage() {
                       onClick={() => playFromSegment(idx)}
                       className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
                         isCurrent
-                          ? "bg-cyan-500/15 border-cyan-400 text-white shadow-md"
-                          : "bg-[#070D1B] border-slate-800 text-slate-300 hover:border-slate-600"
+                          ? "bg-[#EAF1FC] border-[#002868] text-ink shadow-2xs"
+                          : "bg-surface border-border text-ink hover:border-[#002868]/40"
                       }`}
                     >
-                      <p className="text-sm sm:text-base font-semibold leading-relaxed">
-                        {isCurrent && <span className="text-cyan-400 mr-1.5">🔊</span>}
+                      <p className="text-sm sm:text-base font-bold leading-relaxed">
+                        {isCurrent && <span className="text-[#D91023] mr-1.5">🔊</span>}
                         {seg.text}
                       </p>
                       {showArabic && (
-                        <p className="text-xs text-amber-300 font-medium">{seg.translationAr}</p>
+                        <p className="text-xs text-ink-soft font-semibold">{seg.translationAr}</p>
                       )}
                     </button>
                   );
                 })}
               </div>
             ) : (
-              <div className="py-10 text-center bg-[#070D1B] rounded-2xl border border-dashed border-slate-700 text-sm text-slate-400 font-bold">
+              <div className="py-10 text-center bg-surface rounded-2xl border border-dashed border-border text-sm text-ink-soft font-bold">
                 🎧 {isArabic ? "وضع الاستماع الصافي مفعّل — ركّز على الصوت فقط!" : "Pure Listening Mode active — focus on the audio!"}
               </div>
             )}
 
             {/* Comprehension Check */}
-            <div className="pt-5 border-t border-slate-800 flex flex-col gap-3">
-              <h3 className="text-sm font-black text-cyan-300">
+            <div className="pt-5 border-t border-border flex flex-col gap-3">
+              <h3 className="text-sm font-black text-[#002868]">
                 🧠 {isArabic ? "سؤال فهم المسموع" : "Listening Check"}
               </h3>
-              <p className="text-sm font-bold text-white">
+              <p className="text-sm font-extrabold text-ink">
                 {selectedStory.comprehensionQuestion.question}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {selectedStory.comprehensionQuestion.options.map((opt, idx) => {
                   const chosen = selectedAnswer === idx;
                   const correct = idx === selectedStory.comprehensionQuestion.correctIndex;
-                  let style = "bg-[#070D1B] border-slate-700 text-slate-300 hover:border-cyan-500";
+                  let style = "bg-surface border-border text-ink hover:border-[#002868]";
                   if (selectedAnswer !== null) {
-                    if (correct) style = "bg-emerald-500/20 border-emerald-400 text-emerald-200";
-                    else if (chosen) style = "bg-rose-500/20 border-rose-400 text-rose-200";
+                    if (correct) style = "bg-[#ECFDF5] border-[#10B981] text-[#065F46]";
+                    else if (chosen) style = "bg-[#FFF0F2] border-[#D91023] text-[#9F1239]";
                   }
                   return (
                     <button

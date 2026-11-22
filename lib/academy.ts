@@ -324,6 +324,7 @@ export interface AcademyProgress {
   placementCompleted: boolean;
   dailySpeakingGoalMins: number;
   learnedWordIds: string[];
+  completedLessonIds: string[];
   completedReadingIds: string[];
   completedListeningIds: string[];
   completedShadowingIds: string[];
@@ -350,6 +351,7 @@ export function getDefaultAcademyProgress(): AcademyProgress {
     placementCompleted: false,
     dailySpeakingGoalMins: 21,
     learnedWordIds: [],
+    completedLessonIds: [],
     completedReadingIds: [],
     completedListeningIds: [],
     completedShadowingIds: [],

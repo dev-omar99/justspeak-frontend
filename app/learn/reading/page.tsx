@@ -7,19 +7,19 @@ import PageTransition from "../../../components/PageTransition";
 import { useI18n } from "../../../lib/i18n";
 import {
   AcademyProgress,
+  CEFR_ORDER,
   CefrLevel,
   getAcademyProgress,
   saveAcademyProgress,
 } from "../../../lib/academy";
 import {
-  READING_PASSAGES,
-  ReadingPassage,
-  VOCAB_ITEMS,
-  VocabItem,
-} from "../../../lib/academy-content";
+  ALL_CURRICULUM_VOCAB,
+  STRUCTURED_LESSONS,
+} from "../../../lib/academy-lessons";
+import { VocabItem } from "../../../lib/academy-content";
 
 const VOCAB_BY_WORD: Record<string, VocabItem> = {};
-for (const v of VOCAB_ITEMS) {
+for (const v of ALL_CURRICULUM_VOCAB) {
   VOCAB_BY_WORD[v.word.toLowerCase()] = v;
 }
 
@@ -28,7 +28,8 @@ export default function GradedReadingPage() {
   const isArabic = lang === "ar";
 
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
-  const [selectedPassage, setSelectedPassage] = useState<ReadingPassage>(READING_PASSAGES[2]);
+  const [selectedLevel, setSelectedLevel] = useState<CefrLevel>("B1");
+  const [selectedLessonId, setSelectedLessonId] = useState<string>(STRUCTURED_LESSONS[4].id);
   const [activeWord, setActiveWord] = useState<VocabItem | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -36,9 +37,14 @@ export default function GradedReadingPage() {
   useEffect(() => {
     const p = getAcademyProgress();
     setProgress(p);
-    const matching = READING_PASSAGES.find((r) => r.level === p.cefrLevel);
-    if (matching) setSelectedPassage(matching);
+    setSelectedLevel(p.cefrLevel);
+    const firstForLevel = STRUCTURED_LESSONS.find((l) => l.level === p.cefrLevel);
+    if (firstForLevel) setSelectedLessonId(firstForLevel.id);
   }, []);
+
+  const levelLessons = STRUCTURED_LESSONS.filter((l) => l.level === selectedLevel);
+  const currentLesson =
+    STRUCTURED_LESSONS.find((l) => l.id === selectedLessonId) || levelLessons[0] || STRUCTURED_LESSONS[0];
 
   function speak(text: string) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -51,43 +57,18 @@ export default function GradedReadingPage() {
     } catch {}
   }
 
-  function renderHighlightedParagraph(paragraph: string) {
-    const tokens = paragraph.split(/(\b[a-zA-Z]+\b)/g);
-    return tokens.map((token, idx) => {
-      const clean = token.toLowerCase();
-      const vocabMatch = VOCAB_BY_WORD[clean];
-      if (vocabMatch) {
-        return (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => {
-              setActiveWord(vocabMatch);
-              speak(vocabMatch.word);
-            }}
-            className="inline px-1.5 py-0.5 mx-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 font-extrabold border-b border-amber-400/60 transition-colors cursor-pointer"
-            title={`${vocabMatch.meaningAr} — Click to inspect`}
-          >
-            {token}
-          </button>
-        );
-      }
-      return <span key={idx}>{token}</span>;
-    });
-  }
-
   function handleSubmitQuiz() {
     setQuizSubmitted(true);
     if (!progress) return;
-    const already = progress.completedReadingIds.includes(selectedPassage.id);
+    const already = progress.completedReadingIds.includes(currentLesson.id);
     const updated: AcademyProgress = {
       ...progress,
       completedReadingIds: already
         ? progress.completedReadingIds
-        : [...progress.completedReadingIds, selectedPassage.id],
+        : [...progress.completedReadingIds, currentLesson.id],
       scores: {
         ...progress.scores,
-        vocabulary: Math.min(100, progress.scores.vocabulary + (already ? 0 : 3)),
+        vocabulary: Math.min(100, progress.scores.vocabulary + (already ? 0 : 2)),
         grammar: Math.min(100, progress.scores.grammar + (already ? 0 : 2)),
       },
     };
@@ -96,118 +77,155 @@ export default function GradedReadingPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-[#070D1B] text-white">
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header showBackButton />
       <PageTransition>
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
           <div>
-            <Link href="/learn" className="text-xs font-bold text-blue-400 hover:text-blue-300">
-              ← {isArabic ? "العودة للأكاديمية" : "Back to Academy"}
+            <Link href="/learn" className="text-xs font-extrabold text-ink-soft hover:text-[#002868]">
+              ← {isArabic ? "العودة لمسار الدروس" : "Back to Academy"}
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-black mt-1">
-              📖 {isArabic ? "القراءة المتدرجة المربوطة بالكلمات" : "Graded Reading Passages"}
+            <h1 className="text-2xl sm:text-3xl font-black text-ink mt-1">
+              📖 {isArabic ? "قطع القراءة المتدرجة (A1 → C2)" : "Graded Reading Library"}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-ink-soft mt-1">
               {isArabic
-                ? "الكلمات المظللة بالأصفر مأخوذة من بنك كلمات مستواك — اضغط على أي كلمة لسماع نطقها ومعرفة معناها فوراً!"
-                : "Highlighted words are linked directly to your CEFR Vocabulary Vault — tap any highlighted word for instant IPA, audio & meaning."}
+                ? "12 قطعة قراءة متدرجة تظلّل كلمات مستواك بالأحمر — اضغط أي كلمة لمعناها ونطقها فوراً."
+                : "12 CEFR-calibrated passages highlighting your target Oxford vocabulary — tap any highlighted word."}
             </p>
           </div>
 
-          {/* Story Selector Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {READING_PASSAGES.map((passage) => {
-              const active = passage.id === selectedPassage.id;
-              const done = progress?.completedReadingIds.includes(passage.id);
-              return (
+          {/* Level Filter + Passage Selector */}
+          <div className="bg-white border border-border rounded-[22px] p-4 shadow-2xs flex flex-col gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {CEFR_ORDER.map((lvl) => (
                 <button
-                  key={passage.id}
+                  key={lvl}
                   type="button"
                   onClick={() => {
-                    setSelectedPassage(passage);
+                    setSelectedLevel(lvl);
+                    const first = STRUCTURED_LESSONS.find((l) => l.level === lvl);
+                    if (first) setSelectedLessonId(first.id);
                     setActiveWord(null);
                     setQuizAnswers({});
                     setQuizSubmitted(false);
                   }}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 ${
-                    active
-                      ? "bg-blue-600 text-white border-blue-400 shadow-md"
-                      : "bg-[#0E1A30] text-slate-300 border-slate-700 hover:border-blue-500"
+                  className={`px-4 py-1.5 rounded-xl text-xs font-black cursor-pointer border ${
+                    selectedLevel === lvl
+                      ? "bg-[#002868] text-white border-[#002868]"
+                      : "bg-surface text-ink-soft border-border hover:text-ink"
                   }`}
                 >
-                  <span className="px-1.5 py-0.5 rounded bg-black/30 text-[10px]">
-                    {passage.level}
-                  </span>
-                  <span>{passage.title}</span>
-                  {done && <span className="text-emerald-400">✓</span>}
+                  {lvl}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {levelLessons.map((l) => {
+                const active = l.id === currentLesson.id;
+                const done = progress?.completedReadingIds.includes(l.id);
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedLessonId(l.id);
+                      setActiveWord(null);
+                      setQuizAnswers({});
+                      setQuizSubmitted(false);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold border cursor-pointer transition-all ${
+                      active
+                        ? "bg-[#FFF0F2] text-[#D91023] border-[#D91023]/40"
+                        : "bg-surface text-ink-soft border-border hover:text-ink"
+                    }`}
+                  >
+                    {l.reading.title} {done ? "✓" : ""}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Main Reader Card */}
+          {/* Reader + Word Inspector */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <article className="lg:col-span-2 bg-[#0E1A30]/95 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-5">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
+            <article className="lg:col-span-2 bg-white border border-border rounded-[24px] p-6 sm:p-8 shadow-xs flex flex-col gap-5">
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
                 <div>
-                  <span className="text-[11px] font-black text-blue-400 uppercase tracking-wider">
-                    {selectedPassage.sourceLabel} • {selectedPassage.readingTimeMins} min read
+                  <span className="text-[11px] font-black text-[#002868] uppercase tracking-wider">
+                    {currentLesson.sourceRef}
                   </span>
-                  <h2 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-                    {selectedPassage.title}
+                  <h2 className="text-xl sm:text-2xl font-black text-ink mt-0.5">
+                    {currentLesson.reading.title}
                   </h2>
                 </div>
                 <button
                   type="button"
-                  onClick={() => speak(selectedPassage.paragraphs.join(" "))}
-                  className="px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/35 border border-blue-500/40 text-blue-200 text-xs font-black cursor-pointer"
+                  onClick={() => speak(currentLesson.reading.paragraphs.join(" "))}
+                  className="px-4 py-2 rounded-xl bg-[#EAF1FC] hover:bg-[#DCE8FA] text-[#002868] text-xs font-black cursor-pointer shrink-0"
                 >
                   🔊 {isArabic ? "استمع للقطعة" : "Read Aloud"}
                 </button>
               </div>
 
-              <div className="space-y-4 text-sm sm:text-base text-slate-200 leading-8">
-                {selectedPassage.paragraphs.map((p, idx) => (
-                  <p key={idx}>{renderHighlightedParagraph(p)}</p>
+              <div className="space-y-4 text-sm sm:text-base text-ink leading-8">
+                {currentLesson.reading.paragraphs.map((p, idx) => (
+                  <p key={idx}>
+                    {p.split(/(\b[a-zA-Z]+\b)/g).map((tok, tIdx) => {
+                      const match = VOCAB_BY_WORD[tok.toLowerCase()];
+                      if (match) {
+                        return (
+                          <button
+                            key={tIdx}
+                            type="button"
+                            onClick={() => {
+                              setActiveWord(match);
+                              speak(match.word);
+                            }}
+                            className="inline px-1.5 py-0.5 mx-0.5 rounded-md bg-[#FFF0F2] hover:bg-[#FFE0E5] text-[#D91023] font-extrabold border-b-2 border-[#D91023]/40 cursor-pointer"
+                          >
+                            {tok}
+                          </button>
+                        );
+                      }
+                      return <span key={tIdx}>{tok}</span>;
+                    })}
+                  </p>
                 ))}
               </div>
 
-              {/* Comprehension Quiz */}
-              <div className="mt-4 pt-5 border-t border-slate-800 flex flex-col gap-4">
-                <h3 className="text-sm font-black text-blue-300">
-                  📝 {isArabic ? "اختبار الفهم السريع" : "Quick Comprehension Check"}
+              {/* Quiz */}
+              <div className="pt-5 border-t border-border flex flex-col gap-4">
+                <h3 className="text-sm font-black text-[#002868]">
+                  📝 {isArabic ? "اختبار الفهم السريع" : "Comprehension Check"}
                 </h3>
-                {selectedPassage.quiz.map((q, qIdx) => (
+                {currentLesson.reading.quiz.map((q, qIdx) => (
                   <div
                     key={qIdx}
-                    className="bg-[#070D1B] border border-slate-800 rounded-2xl p-4 flex flex-col gap-2.5"
+                    className="bg-surface border border-border rounded-2xl p-4 flex flex-col gap-2.5"
                   >
-                    <p className="text-xs sm:text-sm font-bold text-white">
+                    <p className="text-xs sm:text-sm font-extrabold text-ink">
                       {qIdx + 1}. {q.question}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {q.options.map((opt, oIdx) => {
                         const chosen = quizAnswers[qIdx] === oIdx;
-                        const isCorrect = oIdx === q.correctIndex;
-                        let style =
-                          "bg-[#0E1A30] border-slate-700 text-slate-300 hover:border-blue-500";
+                        const correct = oIdx === q.correctIndex;
+                        let style = "bg-white border-border text-ink hover:border-[#002868]";
                         if (quizSubmitted) {
-                          if (isCorrect)
-                            style = "bg-emerald-500/20 border-emerald-400 text-emerald-200";
-                          else if (chosen && !isCorrect)
-                            style = "bg-rose-500/20 border-rose-400 text-rose-200";
+                          if (correct) style = "bg-[#ECFDF5] border-[#10B981] text-[#065F46]";
+                          else if (chosen) style = "bg-[#FFF0F2] border-[#D91023] text-[#9F1239]";
                         } else if (chosen) {
-                          style = "bg-blue-600/30 border-blue-400 text-white";
+                          style = "bg-[#EAF1FC] border-[#002868] text-[#002868]";
                         }
                         return (
                           <button
                             key={oIdx}
                             type="button"
                             disabled={quizSubmitted}
-                            onClick={() =>
-                              setQuizAnswers((prev) => ({ ...prev, [qIdx]: oIdx }))
-                            }
-                            className={`text-left px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${style}`}
+                            onClick={() => setQuizAnswers((prev) => ({ ...prev, [qIdx]: oIdx }))}
+                            className={`text-left px-3.5 py-2.5 rounded-xl border text-xs font-bold cursor-pointer ${style}`}
                           >
                             {opt}
                           </button>
@@ -221,77 +239,45 @@ export default function GradedReadingPage() {
                   <button
                     type="button"
                     onClick={handleSubmitQuiz}
-                    className="self-start px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg cursor-pointer"
+                    className="self-start px-6 py-3 rounded-xl btn-primary-crest text-white text-xs font-black cursor-pointer"
                   >
-                    ✓ {isArabic ? "تحقق من الإجابات وأكمل القطعة" : "Check Answers & Complete"}
+                    ✓ {isArabic ? "تحقق من الإجابات" : "Check Answers"}
                   </button>
                 ) : (
-                  <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
-                    🎉 {isArabic ? "أحسنت! تم تسجيل إتمام القطعة وتحديث رصيدك اللغوي." : "Great work! Reading completed and vocabulary score boosted."}
+                  <div className="p-3.5 rounded-xl bg-[#ECFDF5] border border-[#10B981]/40 text-[#065F46] text-xs font-bold">
+                    🎉 {isArabic ? "تم تسجيل إتمام القراءة وتحديث تقدمك السحابي!" : "Passage completed & synced!"}
                   </div>
                 )}
               </div>
             </article>
 
-            {/* Interactive Vocabulary Inspector Sidebar */}
-            <aside className="bg-[#0E1A30]/95 border border-slate-700/80 rounded-3xl p-5 shadow-xl flex flex-col gap-4 lg:sticky lg:top-24">
-              <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">
-                ✨ {isArabic ? "الكلمة المحددة من النص" : "Instant Word Inspector"}
+            <aside className="bg-white border border-border rounded-[24px] p-5 shadow-xs flex flex-col gap-3 lg:sticky lg:top-24">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#002868]">
+                ✨ {isArabic ? "قاموس القطعة الفوري" : "Instant Word Helper"}
               </h3>
               {activeWord ? (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-black text-white">{activeWord.word}</span>
+                    <span className="text-xl font-black text-ink">{activeWord.word}</span>
                     <button
                       type="button"
                       onClick={() => speak(activeWord.word)}
-                      className="px-3 py-1 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer"
+                      className="px-3 py-1 rounded-lg bg-[#EAF1FC] text-[#002868] text-xs font-bold cursor-pointer"
                     >
-                      🔊 Listen
+                      🔊
                     </button>
                   </div>
-                  <span className="text-xs font-mono text-blue-300">
-                    {activeWord.ipa} • ({activeWord.pos}) • {activeWord.level}
-                  </span>
-                  <div className="text-sm font-black text-amber-300">{activeWord.meaningAr}</div>
-                  <p className="text-xs text-slate-300 leading-relaxed">{activeWord.meaningEn}</p>
-                  <div className="p-3 rounded-xl bg-[#070D1B] border border-slate-800 text-xs italic text-slate-200">
-                    &ldquo;{activeWord.example}&rdquo;
-                  </div>
+                  <span className="text-xs font-mono text-[#1D4ED8]">{activeWord.ipa} • {activeWord.level}</span>
+                  <div className="text-sm font-extrabold text-[#D91023]">{activeWord.meaningAr}</div>
+                  <p className="text-xs text-ink-soft leading-relaxed">{activeWord.meaningEn}</p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-ink-soft leading-relaxed">
                   {isArabic
-                    ? "اضغط على أي كلمة مظللة بالأصفر داخل القطعة لتظهر لك هنا تفاصيلها ونطقها ومعناها فوراً."
-                    : "Tap any amber-highlighted word in the story to inspect its IPA, meaning, and hear its pronunciation."}
+                    ? "اضغط على أي كلمة مظللة بالأحمر داخل النص لعرض معناها وسماع نطقها."
+                    : "Tap any highlighted word in the passage to hear its pronunciation and see its meaning."}
                 </p>
               )}
-
-              <div className="pt-3 border-t border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400">
-                  {isArabic ? "الكلمات المستهدفة في هذه القطعة:" : "Target Vocabulary in this Story:"}
-                </span>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {selectedPassage.targetWords.map((w) => {
-                    const v = VOCAB_BY_WORD[w.toLowerCase()];
-                    return (
-                      <button
-                        key={w}
-                        type="button"
-                        onClick={() => {
-                          if (v) {
-                            setActiveWord(v);
-                            speak(v.word);
-                          }
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 cursor-pointer"
-                      >
-                        {w}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </aside>
           </div>
         </div>

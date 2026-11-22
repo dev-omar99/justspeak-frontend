@@ -135,18 +135,18 @@ export default function PronunciationLabPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-[#070D1B] text-white">
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header showBackButton />
       <PageTransition>
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-7">
           <div>
-            <Link href="/learn" className="text-xs font-bold text-blue-400 hover:text-blue-300">
-              ← {isArabic ? "العودة للأكاديمية" : "Back to Academy"}
+            <Link href="/learn" className="text-xs font-extrabold text-ink-soft hover:text-[#002868]">
+              ← {isArabic ? "العودة لمسار الدروس" : "Back to Academy"}
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-black mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-ink mt-1">
               🗣️ {isArabic ? "مختبر النطق ومخارج الحروف" : "Pronunciation Lab & Tongue Twisters"}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-ink-soft mt-1">
               {isArabic
                 ? "تدرّب على أصعب الأصوات الإنجليزية (TH, P/B, R/L, V/F) وجرب تحديات Tongue Twisters مع تقييم فوري بالمايكروفون."
                 : "Master tricky English sounds (TH, P/B, R/L, V/F) using IPA minimal pairs and Tongue Twisters with instant mic feedback."}
@@ -169,34 +169,34 @@ export default function PronunciationLabPage() {
                     setEvalResult(null);
                     setSpokenText("");
                   }}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap border cursor-pointer transition-all flex items-center gap-1.5 ${
+                  className={`px-4 py-2.5 rounded-xl text-xs font-black whitespace-nowrap border cursor-pointer transition-all flex items-center gap-1.5 ${
                     active
-                      ? "bg-amber-500 text-slate-950 border-amber-400 shadow-lg"
-                      : "bg-[#0E1A30] text-slate-200 border-slate-700 hover:border-amber-500/50"
+                      ? "bg-[#002868] text-white border-[#002868] shadow-xs"
+                      : "bg-white text-ink border-border hover:border-[#002868]"
                   }`}
                 >
                   <span>{drill.soundPair}</span>
-                  {done && <span>✓</span>}
+                  {done && <span className="text-[#10B981]">✓</span>}
                 </button>
               );
             })}
           </div>
 
           {/* Active Minimal Pair Drill Card */}
-          <section className="bg-[#0E1A30]/95 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6">
+          <section className="bg-white border border-border rounded-[24px] p-6 sm:p-8 shadow-xs flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black font-mono">
+                <span className="px-3 py-1 rounded-full bg-[#FFF0F2] text-[#D91023] border border-[#D91023]/25 text-xs font-black font-mono">
                   {activeDrill.ipa}
                 </span>
-                <h2 className="text-lg sm:text-xl font-black text-white">
+                <h2 className="text-lg sm:text-xl font-black text-ink">
                   {activeDrill.title} —{" "}
-                  <span className="text-amber-300 text-sm">{activeDrill.titleAr}</span>
+                  <span className="text-[#002868] text-sm">{activeDrill.titleAr}</span>
                 </h2>
               </div>
-              <div className="bg-[#070D1B] border border-blue-500/25 rounded-2xl p-4 text-xs sm:text-sm text-slate-200 leading-relaxed flex flex-col gap-1.5">
-                <p>🎯 {activeDrill.tipEn}</p>
-                <p className="text-blue-300 font-semibold">💡 {activeDrill.tipAr}</p>
+              <div className="bg-[#EAF1FC] border border-[#002868]/20 rounded-2xl p-4 text-xs sm:text-sm text-ink leading-relaxed flex flex-col gap-1.5">
+                <p className="font-bold">🎯 {activeDrill.tipEn}</p>
+                <p className="text-[#002868] font-semibold">💡 {activeDrill.tipAr}</p>
               </div>
             </div>
 
@@ -205,70 +205,70 @@ export default function PronunciationLabPage() {
               {activeDrill.minimalPairs.map((pair, idx) => (
                 <div
                   key={idx}
-                  className="bg-[#070D1B] border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between gap-2"
+                  className="bg-surface border border-border rounded-2xl p-3 flex items-center justify-between gap-2"
                 >
                   <button
                     type="button"
                     onClick={() => speak(pair.wordA, 0.8)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-[#0E1A30] hover:bg-blue-950/80 border border-slate-700 text-left cursor-pointer transition-all"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-[#EAF1FC] border border-border text-left cursor-pointer transition-all"
                   >
-                    <div className="text-sm font-black text-white flex items-center justify-between">
+                    <div className="text-sm font-black text-ink flex items-center justify-between">
                       <span>{pair.wordA}</span>
-                      <span className="text-xs text-blue-400">🔊</span>
+                      <span className="text-xs text-[#002868]">🔊</span>
                     </div>
-                    <span className="text-[11px] font-mono text-amber-300">{pair.ipaA}</span>
+                    <span className="text-[11px] font-mono text-[#D91023]">{pair.ipaA}</span>
                   </button>
-                  <span className="text-[10px] font-black text-slate-500">VS</span>
+                  <span className="text-[10px] font-black text-ink-soft">VS</span>
                   <button
                     type="button"
                     onClick={() => speak(pair.wordB, 0.8)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-[#0E1A30] hover:bg-blue-950/80 border border-slate-700 text-left cursor-pointer transition-all"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-[#EAF1FC] border border-border text-left cursor-pointer transition-all"
                   >
-                    <div className="text-sm font-black text-white flex items-center justify-between">
+                    <div className="text-sm font-black text-ink flex items-center justify-between">
                       <span>{pair.wordB}</span>
-                      <span className="text-xs text-blue-400">🔊</span>
+                      <span className="text-xs text-[#002868]">🔊</span>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">{pair.ipaB}</span>
+                    <span className="text-[11px] font-mono text-ink-soft">{pair.ipaB}</span>
                   </button>
                 </div>
               ))}
             </div>
 
             {/* Practice Sentence + Live Mic Check */}
-            <div className="bg-gradient-to-r from-blue-950/70 to-indigo-950/70 border border-blue-500/30 rounded-2xl p-5 flex flex-col gap-4">
+            <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs font-black uppercase tracking-wider text-blue-300">
+                <span className="text-xs font-black uppercase tracking-wider text-[#002868]">
                   🎙️ {isArabic ? "جملة التدريب بالمايكروفون" : "Live Microphone Drill"}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => speak(activeDrill.practiceSentence, 0.75)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
                   >
                     🐢 Slow 0.75x
                   </button>
                   <button
                     type="button"
                     onClick={() => speak(activeDrill.practiceSentence, 1.0)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
                   >
                     🔊 Listen Normal
                   </button>
                 </div>
               </div>
 
-              <p className="text-base sm:text-lg font-black text-white">
+              <p className="text-base sm:text-lg font-black text-ink">
                 &ldquo;{activeDrill.practiceSentence}&rdquo;
               </p>
 
               <button
                 type="button"
                 onClick={() => startMicCheck(activeDrill.practiceSentence, activeDrill.id)}
-                className={`self-start px-6 py-3 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
+                className={`self-start px-6 py-3 rounded-xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
                   isRecording && activeTargetId === activeDrill.id
-                    ? "bg-rose-600 text-white animate-pulse"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
+                    ? "bg-[#D91023] text-white animate-pulse"
+                    : "btn-primary-crest text-white"
                 }`}
               >
                 <span>🎙️</span>
@@ -282,16 +282,16 @@ export default function PronunciationLabPage() {
               </button>
 
               {evalResult && activeTargetText === activeDrill.practiceSentence && (
-                <div className="bg-[#070D1B] border border-slate-700 rounded-2xl p-4 flex flex-col gap-2">
+                <div className="bg-white border border-border rounded-2xl p-4 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-300">
-                      You said: <em className="text-white">&ldquo;{spokenText}&rdquo;</em>
+                    <span className="text-xs font-bold text-ink-soft">
+                      You said: <em className="text-ink">&ldquo;{spokenText}&rdquo;</em>
                     </span>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-black ${
                         evalResult.score >= 80
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-amber-500/20 text-amber-300"
+                          ? "bg-[#ECFDF5] text-[#065F46]"
+                          : "bg-[#FFF0F2] text-[#D91023]"
                       }`}
                     >
                       Accuracy: {evalResult.score}%
@@ -303,8 +303,8 @@ export default function PronunciationLabPage() {
                         key={i}
                         className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
                           wr.matched
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : "bg-rose-500/20 text-rose-300"
+                            ? "bg-[#ECFDF5] text-[#065F46]"
+                            : "bg-[#FFF0F2] text-[#D91023]"
                         }`}
                       >
                         {wr.word}
@@ -319,10 +319,10 @@ export default function PronunciationLabPage() {
           {/* TONGUE TWISTERS ARENA */}
           <section className="flex flex-col gap-4">
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-white">
+              <h2 className="text-lg sm:text-xl font-black text-ink">
                 🌪️ {isArabic ? "تحديات اللسان (Tongue Twisters)" : "Tongue Twister Speed & Clarity Arena"}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-ink-soft">
                 {isArabic
                   ? "أسرع طريقة لتقوية عضلات النطق والتخلص من تداخل الحروف الصعبة."
                   : "Train mouth muscle memory and crystal-clear articulation under speed."}
@@ -335,30 +335,30 @@ export default function PronunciationLabPage() {
                 return (
                   <div
                     key={tt.id}
-                    className="bg-[#0E1A30]/90 border border-slate-700/80 rounded-3xl p-5 flex flex-col justify-between gap-4 shadow-xl"
+                    className="bg-white border border-border rounded-[22px] p-5 flex flex-col justify-between gap-4 shadow-2xs"
                   >
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#EAF1FC] text-[#002868]">
                           Sound: {tt.targetSound}
                         </span>
-                        <span className="text-[11px] font-bold text-amber-300">
+                        <span className="text-[11px] font-extrabold text-[#D91023]">
                           {tt.difficulty}
                         </span>
                       </div>
-                      <p className="text-base font-black text-white leading-snug">
+                      <p className="text-base font-black text-ink leading-snug">
                         &ldquo;{tt.text}&rdquo;
                       </p>
-                      <p className="text-xs text-slate-400">💡 {tt.tipAr}</p>
+                      <p className="text-xs text-ink-soft">💡 {tt.tipAr}</p>
                     </div>
 
                     {evalResult && isThisTarget && (
-                      <div className="p-3 rounded-xl bg-[#070D1B] border border-slate-700 text-xs flex flex-col gap-1.5">
+                      <div className="p-3 rounded-xl bg-surface border border-border text-xs flex flex-col gap-1.5">
                         <div className="flex items-center justify-between font-bold">
-                          <span className="text-slate-300 truncate max-w-[70%]">
+                          <span className="text-ink-soft truncate max-w-[70%]">
                             &ldquo;{spokenText}&rdquo;
                           </span>
-                          <span className="text-emerald-400 font-black">{evalResult.score}%</span>
+                          <span className="text-[#059669] font-black">{evalResult.score}%</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {evalResult.wordResults.map((wr, i) => (
@@ -366,8 +366,8 @@ export default function PronunciationLabPage() {
                               key={i}
                               className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
                                 wr.matched
-                                  ? "bg-emerald-500/20 text-emerald-300"
-                                  : "bg-rose-500/20 text-rose-300"
+                                  ? "bg-[#ECFDF5] text-[#065F46]"
+                                  : "bg-[#FFF0F2] text-[#D91023]"
                               }`}
                             >
                               {wr.word}
@@ -377,11 +377,11 @@ export default function PronunciationLabPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                    <div className="flex items-center gap-2 pt-2 border-t border-border/70">
                       <button
                         type="button"
                         onClick={() => speak(tt.text, 0.85)}
-                        className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
                       >
                         🔊 Listen
                       </button>
@@ -390,8 +390,8 @@ export default function PronunciationLabPage() {
                         onClick={() => startMicCheck(tt.text, tt.id)}
                         className={`flex-1 py-2 rounded-xl text-xs font-black cursor-pointer transition-all ${
                           isRecording && isThisTarget
-                            ? "bg-rose-600 text-white animate-pulse"
-                            : "bg-blue-600 hover:bg-blue-500 text-white"
+                            ? "bg-[#D91023] text-white animate-pulse"
+                            : "bg-[#002868] hover:bg-[#061533] text-white"
                         }`}
                       >
                         {isRecording && isThisTarget

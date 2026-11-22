@@ -14,10 +14,13 @@ import {
   CefrLevel,
   estimateIeltsBand,
   getAcademyProgress,
-  saveAcademyProgress,
   setAcademyLevel,
   syncAcademyProgressFromServer,
 } from "../../lib/academy";
+import {
+  ALL_CURRICULUM_VOCAB,
+  getLessonsByLevel,
+} from "../../lib/academy-lessons";
 
 export default function AcademyHubPage() {
   const { lang } = useI18n();
@@ -25,7 +28,6 @@ export default function AcademyHubPage() {
 
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
   const [liveSpeakingMins, setLiveSpeakingMins] = useState<number>(0);
-  const [completedCalls, setCompletedCalls] = useState<number>(0);
   const [showLevelPicker, setShowLevelPicker] = useState(false);
 
   useEffect(() => {
@@ -38,7 +40,6 @@ export default function AcademyHubPage() {
       getDashboardData(token)
         .then((d) => {
           const sessions = d.stats?.totalSessions ?? 0;
-          setCompletedCalls(sessions);
           setLiveSpeakingMins(sessions * 7);
         })
         .catch(() => {});
@@ -48,6 +49,7 @@ export default function AcademyHubPage() {
   if (!progress) return null;
 
   const meta = CEFR_LEVELS[progress.cefrLevel];
+  const levelLessons = getLessonsByLevel(progress.cefrLevel);
   const ieltsEstimate = estimateIeltsBand(progress.scores);
   const speakingPct = Math.min(
     100,
@@ -57,312 +59,333 @@ export default function AcademyHubPage() {
     Math.max(0, meta.totalSpeakingMinsToAdvance - liveSpeakingMins) / 7
   );
 
-  function toggleDailyTask(taskId: string) {
-    if (!progress) return;
-    const exists = progress.dailyCompletedTaskIds.includes(taskId);
-    const updated: AcademyProgress = {
-      ...progress,
-      dailyCompletedTaskIds: exists
-        ? progress.dailyCompletedTaskIds.filter((id) => id !== taskId)
-        : [...progress.dailyCompletedTaskIds, taskId],
-    };
-    saveAcademyProgress(updated);
-    setProgress(updated);
-  }
-
   function handleQuickSwitchLevel(lvl: CefrLevel) {
     const updated = setAcademyLevel(lvl, true);
     setProgress(updated);
     setShowLevelPicker(false);
   }
 
-  // The 3 Mandatory Daily Foundations present in EVERY level (A1 → C2)
-  const coreThree = [
+  const freePracticeTools = [
     {
-      id: "speak",
-      step: "1",
-      title: isArabic ? "تحدّث (Speak)" : "1. Speak Live",
-      subtitle: isArabic
-        ? `مكالمات 1-on-1 مع شركاء • هدفك ${meta.dailySpeakingGoalMins} د/يوم`
-        : `1-on-1 partner calls • Goal: ${meta.dailySpeakingGoalMins} mins/day`,
-      icon: "🎙️",
-      href: "/queue",
-      stat: `${completedCalls} ${isArabic ? "مكالمة" : "calls"}`,
-      accent: "border-rose-500/40 hover:border-rose-400 bg-gradient-to-br from-[#141E38] to-[#23152A]",
-      cta: isArabic ? "ابدأ مكالمة ←" : "Start Call →",
-    },
-    {
-      id: "listen",
-      step: "2",
-      title: isArabic ? "استمع (Listen)" : "2. Listen Daily",
-      subtitle: isArabic
-        ? `روايات وقصص مسموعة لمستوى ${meta.level} بنص متزامن`
-        : `${meta.level} graded audiobooks with live transcript`,
-      icon: "🎧",
-      href: "/learn/listening",
-      stat: `${progress.completedListeningIds.length} ${isArabic ? "قصة" : "stories"}`,
-      accent: "border-cyan-500/40 hover:border-cyan-400 bg-gradient-to-br from-[#10203B] to-[#0E2438]",
-      cta: isArabic ? "استمع الآن ←" : "Listen Now →",
-    },
-    {
-      id: "read",
-      step: "3",
-      title: isArabic ? "اقرأ (Read)" : "3. Read Graded",
-      subtitle: isArabic
-        ? `قطع قراءة لمستوى ${meta.level} تظلّل الكلمات الجديدة`
-        : `${meta.level} stories with highlighted target words`,
-      icon: "📖",
-      href: "/learn/reading",
-      stat: `${progress.completedReadingIds.length} ${isArabic ? "قطعة" : "passages"}`,
-      accent: "border-blue-500/40 hover:border-blue-400 bg-gradient-to-br from-[#101E3A] to-[#132548]",
-      cta: isArabic ? "اقرأ الآن ←" : "Read Now →",
-    },
-  ];
-
-  // 3 Complementary Skill Boosters (Clean & Compact)
-  const boosters = [
-    {
-      id: "vocabulary",
-      title: isArabic ? "بنك الكلمات" : "Vocabulary Vault",
-      subtitle: `Oxford / CEFR ${meta.level}`,
-      icon: "📚",
       href: "/learn/vocabulary",
-      stat: `${progress.learnedWordIds.length} ${isArabic ? "كلمة" : "words"}`,
+      icon: "📚",
+      label: isArabic ? "بنك الكلمات" : "Vocabulary",
+      sub: `${progress.learnedWordIds.length}/${ALL_CURRICULUM_VOCAB.length} ${isArabic ? "محفوظة" : "saved"}`,
     },
     {
-      id: "shadowing",
-      title: isArabic ? "شادوينج الأفلام" : "Movie Shadowing",
-      subtitle: isArabic ? "توقف تلقائي بعد كل جملة" : "Auto-Pause per sentence",
-      icon: "🎬",
       href: "/learn/shadowing",
-      stat: `${progress.completedShadowingIds.length} ${isArabic ? "مشهد" : "clips"}`,
+      icon: "🎬",
+      label: isArabic ? "شادوينج الأفلام" : "Movie Shadowing",
+      sub: isArabic ? "توقف تلقائي" : "Auto-Pause",
     },
     {
-      id: "pronunciation",
-      title: isArabic ? "مختبر النطق" : "Pronunciation Lab",
-      subtitle: "TH, P/B, R/L & Twisters",
-      icon: "🗣️",
       href: "/learn/pronunciation",
-      stat: `${progress.completedPronunciationIds.length} ${isArabic ? "تمرين" : "drills"}`,
+      icon: "🗣️",
+      label: isArabic ? "مختبر النطق" : "Pronunciation",
+      sub: "TH, P/B, R/L",
+    },
+    {
+      href: "/learn/listening",
+      icon: "🎧",
+      label: isArabic ? "الروايات الصوتية" : "Audiobooks",
+      sub: isArabic ? "استماع حر" : "Graded Audio",
+    },
+    {
+      href: "/learn/reading",
+      icon: "📖",
+      label: isArabic ? "قطع القراءة" : "Reading",
+      sub: isArabic ? "قراءة متدرجة" : "Graded Stories",
     },
   ];
 
   return (
-    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-[#070D1B] text-white relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[450px] h-[300px] bg-blue-600/15 blur-3xl rounded-full pointer-events-none" />
+    <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header />
 
       <PageTransition>
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6 relative z-10">
-          
-          {/* Simple Placement Banner if not yet taken */}
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-7">
+          {/* Placement Test Prompt (if not completed yet) */}
           {!progress.placementCompleted && (
-            <div className="rounded-3xl bg-blue-600/15 border border-blue-500/35 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="rounded-[24px] bg-white border-2 border-[#002868]/20 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
                 <span className="text-2xl">🧭</span>
-                <p className="text-xs sm:text-sm font-bold text-slate-100">
-                  {isArabic
-                    ? "حدّد مستواك الحقيقي (A1–C2) في 3 دقائق لتضبط خطتك اليومية بدقة."
-                    : "Take the 3-minute CEFR test to calibrate your exact daily plan."}
-                </p>
+                <div>
+                  <h2 className="text-sm sm:text-base font-black text-ink">
+                    {isArabic
+                      ? "ابدأ باختبار تحديد المستوى (3 دقائق)"
+                      : "Find Your Exact CEFR Level in 3 Minutes"}
+                  </h2>
+                  <p className="text-xs text-ink-soft mt-0.5">
+                    {isArabic
+                      ? "لنفتح لك مسار الدروس المناسب لمستواك الحقيقي (A1 إلى C2) وفق منهجية Oxford."
+                      : "Unlock the structured lesson path calibrated to your level (A1–C2)."}
+                  </p>
+                </div>
               </div>
               <Link
                 href="/placement-test"
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black whitespace-nowrap"
+                className="px-5 py-2.5 rounded-xl btn-primary-crest text-white text-xs font-black whitespace-nowrap shadow-xs text-center"
               >
-                {isArabic ? "ابدأ الاختبار →" : "Take Test →"}
+                {isArabic ? "ابدأ اختبار المستوى →" : "Take Level Test →"}
               </Link>
             </div>
           )}
 
-          {/* CLEAN LEVEL & SPEAKING TARGET HERO */}
-          <section className="rounded-[28px] bg-[#0E1A30]/95 border border-slate-700/80 p-6 sm:p-7 shadow-2xl flex flex-col gap-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* BRAND-MATCHED NAVY EDITORIAL HERO (Matches Home & Pricing Identity) */}
+          <section className="rounded-[28px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#0B1F3A] text-white p-6 sm:p-8 shadow-lg border border-[#002868]/40 flex flex-col gap-5 relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#D91023]/25 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`text-xs font-black px-3 py-1 rounded-full border ${meta.badgeBg}`}>
-                  🎓 {meta.level} — {meta.title} ({meta.titleAr})
+                <span className="text-xs font-black px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white">
+                  🎓 CEFR {meta.level} — {meta.title} ({meta.titleAr})
                 </span>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/10 text-amber-300">
-                  IELTS Est: {ieltsEstimate}
+                <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#FFF0F2]/15 text-[#FFB3C1] border border-[#E11D48]/40">
+                  IELTS Est: Band {ieltsEstimate}
                 </span>
               </div>
+
               <div className="flex items-center gap-3 text-xs font-bold">
                 <button
                   type="button"
                   onClick={() => setShowLevelPicker((v) => !v)}
-                  className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                  className="text-slate-200 hover:text-white underline cursor-pointer"
                 >
                   {isArabic ? "تغيير المستوى" : "Switch Level"}
                 </button>
-                <span className="text-slate-600">•</span>
-                <Link href="/placement-test" className="text-slate-300 hover:text-white">
-                  {isArabic ? "اختبار المستوى" : "Placement Test"}
+                <span className="text-white/30">•</span>
+                <Link href="/placement-test" className="text-slate-200 hover:text-white underline">
+                  {isArabic ? "اختبار المستوى" : "Level Test"}
                 </Link>
               </div>
             </div>
 
             {showLevelPicker && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="relative z-10 flex flex-wrap gap-1.5">
                 {CEFR_ORDER.map((lvl) => (
                   <button
                     key={lvl}
                     type="button"
                     onClick={() => handleQuickSwitchLevel(lvl)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black border cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black border cursor-pointer transition-all ${
                       lvl === progress.cefrLevel
-                        ? "bg-blue-600 text-white border-blue-400"
-                        : "bg-[#070D1B] text-slate-300 border-slate-700 hover:border-blue-500"
+                        ? "bg-[#D91023] text-white border-[#E11D48]"
+                        : "bg-white/10 text-white border-white/20 hover:bg-white/20"
                     }`}
                   >
-                    {lvl}
+                    {lvl} • {CEFR_LEVELS[lvl].title}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Speaking Target Bar */}
-            <div className="bg-[#070D1B] border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-black">
-                <span className="text-blue-300">
+            <div className="relative z-10">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+                {isArabic ? `مسار دروس مستوى ${meta.level}` : `${meta.level} Structured Learning Path`}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-2xl leading-relaxed">
+                {isArabic ? meta.canDoSummaryAr : meta.canDoSummary}
+              </p>
+            </div>
+
+            {/* Speaking Target Progress Bar */}
+            <div className="relative z-10 bg-white/10 border border-white/15 rounded-2xl p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs font-extrabold">
+                <span>
                   🎙️{" "}
                   {meta.nextLevel
                     ? isArabic
-                      ? `هدف التحدث للانتقال إلى ${meta.nextLevel}`
-                      : `Speaking Target to Reach ${meta.nextLevel}`
-                    : "C2 Mastery Speaking Progress"}
+                      ? `دقائق التحدث مع الشركاء للانتقال إلى ${meta.nextLevel}`
+                      : `Live Partner Speaking Goal to Reach ${meta.nextLevel}`
+                    : "C2 Mastery Live Speaking Goal"}
                 </span>
-                <span className="text-white">
+                <span>
                   {liveSpeakingMins} / {meta.totalSpeakingMinsToAdvance} mins ({speakingPct}%)
                 </span>
               </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-white/15 rounded-full overflow-hidden">
                 <div
-                  className={`h-full bg-gradient-to-r ${meta.colorClass} transition-all duration-500`}
+                  className="h-full bg-[#E11D48] transition-all duration-500 rounded-full"
                   style={{ width: `${Math.max(4, speakingPct)}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-200">
                 <span>
                   {isArabic
-                    ? `المتبقي: ~${remainingCalls} مكالمة مع شركاء`
-                    : `Remaining: ~${remainingCalls} partner calls`}
+                    ? `هدفك اليومي: ${meta.dailySpeakingGoalMins} دقيقة (${meta.dailyCallsTarget} مكالمات) • المتبقي ~${remainingCalls} مكالمة`
+                    : `Daily goal: ${meta.dailySpeakingGoalMins} mins (${meta.dailyCallsTarget} calls) • ~${remainingCalls} calls remaining`}
                 </span>
-                <span className="text-emerald-400">
-                  ☁️ {isArabic ? "التقدم محفوظ على حسابك" : "Cloud-Synced"}
-                </span>
+                <Link
+                  href="/queue"
+                  className="font-black text-white bg-[#D91023] hover:bg-[#B80D1D] px-3 py-1 rounded-lg transition-colors"
+                >
+                  {isArabic ? "ابدأ مكالمة الآن →" : "Start Live Call →"}
+                </Link>
               </div>
             </div>
+          </section>
 
-            {/* Minimal 3-Item Daily Checklist (Speak • Listen • Read) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {meta.dailyChecklist.map((task) => {
-                const done = progress.dailyCompletedTaskIds.includes(task.id);
+          {/* PRIMARY SECTION: STRUCTURED LESSONS PATH (Clean Editorial Cards) */}
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-ink">
+                  📘 {isArabic ? `دروس مستوى ${meta.level} (خطوة بخطوة)` : `${meta.level} Guided Lessons`}
+                </h2>
+                <p className="text-xs text-ink-soft">
+                  {isArabic
+                    ? "كل درس يجمع الـ 5 خطوات بترتيب أكاديمي واحد: كلمات المستوى ← استماع ← قراءة ← نطق وشادوينج ← تحدث حي."
+                    : "Each lesson guides you step-by-step: Key Words → Listen → Read → Shadow → Live Partner Call."}
+                </p>
+              </div>
+              <span className="text-xs font-extrabold text-[#002868] bg-[#EAF1FC] px-3 py-1 rounded-full">
+                {levelLessons.filter((l) => progress.completedLessonIds.includes(l.id)).length} /{" "}
+                {levelLessons.length} {isArabic ? "مكتمل" : "Completed"}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {levelLessons.map((lesson) => {
+                const isCompleted = progress.completedLessonIds.includes(lesson.id);
+                const savedCount = lesson.vocabulary.filter((w) =>
+                  progress.learnedWordIds.includes(w.id)
+                ).length;
+
                 return (
-                  <button
-                    key={task.id}
-                    type="button"
-                    onClick={() => toggleDailyTask(task.id)}
-                    className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      done
-                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
-                        : "bg-[#070D1B] border-slate-800 text-slate-200 hover:border-slate-600"
+                  <Link
+                    key={lesson.id}
+                    href={`/learn/lesson/${lesson.id}`}
+                    className={`bg-white rounded-[24px] p-5 sm:p-6 border-2 transition-all shadow-2xs hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                      isCompleted
+                        ? "border-[#10B981]/50"
+                        : "border-border hover:border-[#002868]/45"
                     }`}
                   >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black shrink-0 ${
+                          isCompleted
+                            ? "bg-[#ECFDF5] text-[#059669] border border-[#10B981]/40"
+                            : "bg-[#EAF1FC] text-[#002868] border border-[#002868]/20"
+                        }`}
+                      >
+                        {isCompleted ? "✓" : `0${lesson.unitNumber}`}
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-black text-[#002868] uppercase tracking-wider">
+                            {lesson.sourceRef}
+                          </span>
+                          <span className="text-[11px] font-semibold text-ink-soft">
+                            • ⏱️ {lesson.durationMins} min
+                          </span>
+                          {isCompleted && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46]">
+                              Completed ✓
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black text-ink group-hover:text-[#002868] transition-colors">
+                          {lesson.title}{" "}
+                          <span className="text-xs sm:text-sm font-bold text-ink-soft">
+                            — {lesson.titleAr}
+                          </span>
+                        </h3>
+                        <p className="text-xs text-ink-soft leading-relaxed max-w-2xl">
+                          {isArabic ? lesson.objectiveAr : lesson.objective}
+                        </p>
+
+                        {/* 5-step pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink">
+                            📚 {savedCount}/{lesson.vocabulary.length} Words
+                          </span>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
+                            🎧 Listen
+                          </span>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
+                            📖 Read
+                          </span>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-surface border border-border text-ink-soft">
+                            🗣️ Shadow
+                          </span>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-[#FFF0F2] border border-[#E11D48]/25 text-[#D91023]">
+                            🎙️ Live Call
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     <span
-                      className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-black shrink-0 ${
-                        done ? "bg-emerald-500 text-slate-950" : "bg-slate-800 border border-slate-600"
+                      className={`px-5 py-3 rounded-xl text-xs font-black whitespace-nowrap text-center shrink-0 transition-all ${
+                        isCompleted
+                          ? "bg-surface text-ink border border-border group-hover:bg-[#EAF1FC]"
+                          : "btn-primary-crest text-white shadow-sm"
                       }`}
                     >
-                      {done ? "✓" : ""}
+                      {isCompleted
+                        ? isArabic ? "مراجعة الدرس →" : "Review Lesson →"
+                        : isArabic ? "ابدأ الدرس →" : "Start Lesson →"}
                     </span>
-                    <span className={`text-xs font-bold ${done ? "line-through opacity-75" : ""}`}>
-                      {task.icon} {isArabic ? task.labelAr : task.label}
-                    </span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
           </section>
 
-          {/* SECTION 1: THE 3 CORE DAILY FOUNDATIONS (EVERY LEVEL A1 → C2) */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-base sm:text-lg font-black text-white">
-              ⭐ {isArabic ? `الـ 3 أسس اليومية لمستوى ${meta.level} (تحدث • استمع • اقرأ)` : `Core 3 Daily Foundations for ${meta.level} (Speak • Listen • Read)`}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {coreThree.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`rounded-3xl p-5 border transition-all flex flex-col justify-between gap-4 shadow-xl group ${item.accent}`}
-                >
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl">{item.icon}</span>
-                      <span className="text-[11px] font-bold text-slate-300 bg-black/30 px-2.5 py-1 rounded-full">
-                        {item.stat}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-black text-white">{item.title}</h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">{item.subtitle}</p>
-                  </div>
-                  <span className="text-xs font-black text-white group-hover:translate-x-0.5 transition-transform">
-                    {item.cta}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* SECTION 2: 3 SKILL BOOSTERS (SIMPLE & COMPACT) */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-black text-slate-300 uppercase tracking-wider">
-              ⚡ {isArabic ? "أدوات تقوية المهارات" : "Skill Boosters"}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {boosters.map((b) => (
-                <Link
-                  key={b.id}
-                  href={b.href}
-                  className="bg-[#0E1A30]/90 hover:bg-[#132340] border border-slate-700/70 hover:border-blue-500/40 rounded-2xl p-4 flex items-center justify-between gap-3 transition-all group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl shrink-0">{b.icon}</span>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-black text-white truncate">{b.title}</h3>
-                      <p className="text-[11px] text-slate-400 truncate">{b.subtitle}</p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-black text-blue-400 shrink-0">{b.stat} →</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* SECTION 3: COMPACT GLOBAL CEFR / IELTS ASSESSMENT */}
-          <section className="bg-[#0E1A30]/90 border border-slate-700/70 rounded-3xl p-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-sm font-black text-white">
-                📊 {isArabic ? "تقييمك بالمعايير العالمية (CEFR & IELTS)" : "Global CEFR & IELTS Scores"}
+          {/* SECONDARY SECTION: FREE STANDALONE PRACTICE TOOLS */}
+          <section className="flex flex-col gap-3 pt-2">
+            <div>
+              <h2 className="text-sm sm:text-base font-black text-ink">
+                🎯 {isArabic ? "أدوات التدريب الحر (خارج الدروس)" : "Free Standalone Practice Tools"}
               </h2>
-              <span className="text-xs font-black text-amber-300">
+              <p className="text-xs text-ink-soft">
+                {isArabic
+                  ? "لو حابب تتدرب على الشادوينج أو النطق أو الكلمات المحفوظة بشكل مستقل في أي وقت."
+                  : "Jump directly into standalone shadowing, pronunciation drills, audiobooks, or saved vocabulary anytime."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {freePracticeTools.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="bg-white hover:bg-[#EAF1FC]/60 border border-border hover:border-[#002868]/40 rounded-2xl p-4 flex flex-col gap-1.5 transition-all shadow-2xs"
+                >
+                  <span className="text-2xl">{tool.icon}</span>
+                  <span className="text-xs sm:text-sm font-black text-ink">{tool.label}</span>
+                  <span className="text-[11px] font-semibold text-ink-soft">{tool.sub}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* COMPACT GLOBAL CEFR / IELTS ASSESSMENT */}
+          <section className="bg-white border border-border rounded-[24px] p-5 sm:p-6 shadow-2xs flex flex-col gap-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-sm font-black text-ink">
+                📊 {isArabic ? "تقييمك وفق المعايير العالمية (CEFR & IELTS)" : "Global Fluency & CEFR Assessment"}
+              </h2>
+              <span className="text-xs font-black text-[#002868] bg-[#EAF1FC] px-3 py-1 rounded-full">
                 🏆 Est. IELTS Band {ieltsEstimate}
               </span>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: isArabic ? "الطلاقة" : "Fluency", val: progress.scores.fluency, bar: "bg-rose-500" },
-                { label: isArabic ? "النطق" : "Pronunciation", val: progress.scores.pronunciation, bar: "bg-amber-500" },
-                { label: isArabic ? "المفردات" : "Vocabulary", val: progress.scores.vocabulary, bar: "bg-emerald-500" },
-                { label: isArabic ? "القواعد" : "Grammar", val: progress.scores.grammar, bar: "bg-blue-500" },
+                { label: isArabic ? "الطلاقة (Fluency)" : "Fluency", val: progress.scores.fluency, bar: "bg-[#D91023]" },
+                { label: isArabic ? "النطق (Pronunciation)" : "Pronunciation", val: progress.scores.pronunciation, bar: "bg-[#002868]" },
+                { label: isArabic ? "المفردات (Vocabulary)" : "Vocabulary", val: progress.scores.vocabulary, bar: "bg-[#10B981]" },
+                { label: isArabic ? "القواعد (Grammar)" : "Grammar", val: progress.scores.grammar, bar: "bg-[#1D4ED8]" },
               ].map((s) => (
-                <div key={s.label} className="bg-[#070D1B] border border-slate-800 rounded-2xl p-3 flex flex-col gap-1.5">
+                <div key={s.label} className="bg-surface border border-border rounded-2xl p-3.5 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-300">{s.label}</span>
-                    <span className="text-white font-black">{s.val}%</span>
+                    <span className="text-ink-soft">{s.label}</span>
+                    <span className="text-ink font-black">{s.val}%</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div className={`h-full ${s.bar}`} style={{ width: `${s.val}%` }} />
+                  <div className="w-full h-1.5 bg-[#DCE5F2] rounded-full overflow-hidden">
+                    <div className={`h-full ${s.bar} rounded-full`} style={{ width: `${s.val}%` }} />
                   </div>
                 </div>
               ))}
