@@ -27,7 +27,9 @@ export default function GoogleAuthButton({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    "166449027326-hv3d1hpmjf9tql62sqgce5hfu3kus37h.apps.googleusercontent.com";
 
   // Initialize official Google Identity Services
   useEffect(() => {
