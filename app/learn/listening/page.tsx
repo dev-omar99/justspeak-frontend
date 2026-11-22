@@ -26,7 +26,10 @@ export default function ListeningAudiobooksPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
   useEffect(() => {
-    setProgress(getAcademyProgress());
+    const p = getAcademyProgress();
+    setProgress(p);
+    const matching = LISTENING_STORIES.find((s) => s.level === p.cefrLevel);
+    if (matching) setSelectedStory(matching);
     return () => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();

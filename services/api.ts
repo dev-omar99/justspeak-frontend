@@ -458,3 +458,18 @@ export const updateAdminUserSubscription = (
   userId: string,
   payload: { planTier?: "FREE" | "PLUS" | "ELITE"; aiTokensBalance?: number; addTokens?: number }
 ) => api.updateAdminUserSubscription(token, userId, payload);
+
+export const getAcademyProgressApi = (token: string) =>
+  fetch(`${getApiBaseUrl()}/users/academy-progress`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => (r.ok ? r.json() : { progress: null }));
+
+export const saveAcademyProgressApi = (token: string, payload: any) =>
+  fetch(`${getApiBaseUrl()}/users/academy-progress`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then((r) => (r.ok ? r.json() : null));

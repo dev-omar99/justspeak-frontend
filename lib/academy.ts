@@ -45,10 +45,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "فهم واستخدام العبارات اليومية الأساسية، التعريف بالنفس، وإجراء محادثات بسيطة وواضحة.",
     dailyChecklist: [
-      { id: "speak", label: "Complete 2 Live Calls (14 mins)", labelAr: "إتمام مكالمتين حيتين (14 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "vocab", label: "Learn 5 A1 Core Words", labelAr: "حفظ 5 كلمات أساسية لمستوى A1", href: "/learn/vocabulary", icon: "📚" },
-      { id: "reading", label: "Read 1 A1 Graded Story", labelAr: "قراءة قطعة متدرجة لمستوى A1", href: "/learn/reading", icon: "📖" },
-      { id: "pron", label: "Practice 1 Phonetic Drill (P/B, TH)", labelAr: "تمرين نطق واحد (P/B أو TH)", href: "/learn/pronunciation", icon: "🗣️" },
+      { id: "speak", label: "Speak: 2 Live Partner Calls (14 mins)", labelAr: "تحدث: مكالمتان حيتان مع الشركاء (14 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 A1 Graded Audio Story", labelAr: "استمع: قصة صوتية متدرجة لمستوى A1", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 A1 Graded Passage + Words", labelAr: "اقرأ: قطعة قراءة A1 بكلمات المستوى", href: "/learn/reading", icon: "📖" },
     ],
   },
   A2: {
@@ -69,10 +68,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "التواصل في المواقف اليومية الروتينية، وصف خلفيتك، خطط السفر، والتحدث عن حياتك اليومية بثقة.",
     dailyChecklist: [
-      { id: "speak", label: "Complete 2 Live Calls (14 mins)", labelAr: "إتمام مكالمتين حيتين (14 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "vocab", label: "Master 6 A2 Oxford Words", labelAr: "إتقان 6 كلمات لمستوى A2", href: "/learn/vocabulary", icon: "📚" },
-      { id: "listening", label: "Listen to 1 Graded Audio Story", labelAr: "الاستماع لقصة مسموعة متدرجة", href: "/learn/listening", icon: "🎧" },
-      { id: "shadowing", label: "Shadow 1 Short Movie Clip", labelAr: "تقليد مشهد قصير (Shadowing)", href: "/learn/shadowing", icon: "🎬" },
+      { id: "speak", label: "Speak: 2 Live Partner Calls (14 mins)", labelAr: "تحدث: مكالمتان حيتان مع الشركاء (14 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 A2 Graded Audiobook", labelAr: "استمع: قصة صوتية متدرجة لمستوى A2", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 A2 Passage + Level Words", labelAr: "اقرأ: قطعة قراءة A2 بكلمات المستوى", href: "/learn/reading", icon: "📖" },
     ],
   },
   B1: {
@@ -93,10 +91,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "إدارة أغلب محادثات السفر والعمل، التعبير عن الآراء، وشرح التجارب والأهداف بطلاقة متوسطة.",
     dailyChecklist: [
-      { id: "speak", label: "Complete 3 Live Calls (21 mins)", labelAr: "إتمام 3 مكالمات حية (21 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "vocab", label: "Learn 8 B1 Intermediate Words", labelAr: "إتقان 8 كلمات لمستوى B1", href: "/learn/vocabulary", icon: "📚" },
-      { id: "reading", label: "Read 1 B1 Article + Quiz", labelAr: "قراءة مقال B1 وحل الاختبار", href: "/learn/reading", icon: "📖" },
-      { id: "shadowing", label: "Shadow 1 Movie Scene (Auto-Pause)", labelAr: "جلسة شادوينج لمشهد فيلم", href: "/learn/shadowing", icon: "🎬" },
+      { id: "speak", label: "Speak: 3 Live Partner Calls (21 mins)", labelAr: "تحدث: 3 مكالمات حية مع الشركاء (21 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 B1 Classic Audiobook", labelAr: "استمع: فصل من رواية صوتية B1", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 B1 Article + Quiz", labelAr: "اقرأ: مقال B1 بكلمات المستوى + اختبار", href: "/learn/reading", icon: "📖" },
     ],
   },
   B2: {
@@ -117,10 +114,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "التفاعل بطلاقة وتلقائية عالية تجعل المحادثة مع المتحدثين الأصليين سلسة وواضحة في مواضيع متنوعة.",
     dailyChecklist: [
-      { id: "speak", label: "Complete 3 Live Calls (21 mins)", labelAr: "إتمام 3 مكالمات حية (21 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "vocab", label: "Master 10 B2 Oxford 3000 Words", labelAr: "إتقان 10 كلمات لمستوى B2", href: "/learn/vocabulary", icon: "📚" },
-      { id: "shadowing", label: "Shadow 1 Fast-Paced Scene", labelAr: "شادوينج لمشهد سريع الإيقاع", href: "/learn/shadowing", icon: "🎬" },
-      { id: "pron", label: "Master 1 Tongue Twister Challenge", labelAr: "اجتياز تحدي نطق (Tongue Twister)", href: "/learn/pronunciation", icon: "🗣️" },
+      { id: "speak", label: "Speak: 3 Live Partner Calls (21 mins)", labelAr: "تحدث: 3 مكالمات حية مع الشركاء (21 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 B2 Classic Audiobook", labelAr: "استمع: رواية صوتية لمستوى B2", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 B2 Feature + Words", labelAr: "اقرأ: مقال B2 بكلمات المستوى + اختبار", href: "/learn/reading", icon: "📖" },
     ],
   },
   C1: {
@@ -141,10 +137,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "التعبير عن نفسك بطلاقة وعفوية تامة في السياقات المهنية والأكاديمية المعقدة بدقة لغوية عالية.",
     dailyChecklist: [
-      { id: "speak", label: "Complete 4 Live Calls (28 mins)", labelAr: "إتمام 4 مكالمات حية (28 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "vocab", label: "Master 10 C1 Oxford 5000 Words", labelAr: "إتقان 10 كلمات متقدمة C1", href: "/learn/vocabulary", icon: "📚" },
-      { id: "listening", label: "Listen to 1 Classic Novel Chapter", labelAr: "الاستماع لفصل من رواية كلاسيكية", href: "/learn/listening", icon: "🎧" },
-      { id: "shadowing", label: "Shadow Executive Speech / TED", labelAr: "شادوينج لخطاب TED أو مشهد متقدم", href: "/learn/shadowing", icon: "🎬" },
+      { id: "speak", label: "Speak: 4 Live Partner Calls (28 mins)", labelAr: "تحدث: 4 مكالمات حية مع الشركاء (28 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 C1 Classic Audiobook", labelAr: "استمع: فصل من رواية كلاسيكية C1", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 C1 Essay + Advanced Words", labelAr: "اقرأ: مقال أكاديمي C1 بكلمات المستوى", href: "/learn/reading", icon: "📖" },
     ],
   },
   C2: {
@@ -165,10 +160,9 @@ export const CEFR_LEVELS: Record<CefrLevel, CefrLevelMeta> = {
     canDoSummaryAr:
       "فهم كل ما يُسمع أو يُقرأ بسهولة تامة والتعبير عن أدق الفروق المعنوية بثقة المتحدث الأصلي.",
     dailyChecklist: [
-      { id: "speak", label: "Lead 4 Live Debates (28 mins)", labelAr: "قيادة 4 نقاشات حية (28 دقيقة)", href: "/queue", icon: "🎙️" },
-      { id: "shadowing", label: "Shadow Native Idiomatic Clips", labelAr: "شادوينج للتعبيرات الاصطلاحية", href: "/learn/shadowing", icon: "🎬" },
-      { id: "reading", label: "Read Advanced Editorial + Nuance", labelAr: "قراءة مقال متقدم وتحليل الأسلوب", href: "/learn/reading", icon: "📖" },
-      { id: "pron", label: "Accent & Intonation Refinement", labelAr: "صقل النغمة ومخارج الحروف", href: "/learn/pronunciation", icon: "🗣️" },
+      { id: "speak", label: "Speak: 4 Live Debates (28 mins)", labelAr: "تحدث: 4 نقاشات حية مع الشركاء (28 دقيقة)", href: "/queue", icon: "🎙️" },
+      { id: "listen", label: "Listen: 1 C2 Literature Chapter", labelAr: "استمع: فصل أدبي متقدم لمستوى C2", href: "/learn/listening", icon: "🎧" },
+      { id: "read", label: "Read: 1 C2 Editorial + Nuance", labelAr: "اقرأ: مقال تحليلي C2 بكلمات متقدمة", href: "/learn/reading", icon: "📖" },
     ],
   },
 };
@@ -399,7 +393,41 @@ export function saveAcademyProgress(progress: AcademyProgress): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
     window.dispatchEvent(new Event("justspeak-academy-updated"));
+
+    // Silently cloud-sync to backend if user is authenticated
+    const token = localStorage.getItem("justspeak_token");
+    if (token) {
+      import("../services/api")
+        .then(({ saveAcademyProgressApi }) => saveAcademyProgressApi(token, progress))
+        .catch(() => {});
+    }
   } catch {}
+}
+
+export async function syncAcademyProgressFromServer(): Promise<AcademyProgress> {
+  const local = getAcademyProgress();
+  if (typeof window === "undefined") return local;
+  const token = localStorage.getItem("justspeak_token");
+  if (!token) return local;
+
+  try {
+    const { getAcademyProgressApi } = await import("../services/api");
+    const res = await getAcademyProgressApi(token);
+    if (res && res.progress && res.progress.cefrLevel) {
+      const merged: AcademyProgress = {
+        ...local,
+        ...res.progress,
+        dailyDateKey: getTodayKey(),
+        dailyCompletedTaskIds:
+          res.progress.dailyDateKey === getTodayKey()
+            ? res.progress.dailyCompletedTaskIds || []
+            : [],
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      return merged;
+    }
+  } catch {}
+  return local;
 }
 
 export function setAcademyLevel(

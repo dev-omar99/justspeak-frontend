@@ -152,6 +152,21 @@ export const READING_PASSAGES: ReadingPassage[] = [
       { question: "What do the most eloquent speakers prioritize?", options: ["Obscure jargon", "Lucid arguments marked by brevity", "Speaking as loudly as possible", "Avoiding feedback"], correctIndex: 1 },
     ],
   },
+  {
+    id: "r-c2-1",
+    level: "C2",
+    title: "The Quintessential Art of Candid Leadership",
+    sourceLabel: "CEFR C2 Executive Editorial",
+    readingTimeMins: 5,
+    targetWords: ["quintessential", "candid", "brevity", "eloquent", "nuance"],
+    paragraphs: [
+      "What distinguishes a merely competent manager from a quintessential global leader? Often, it is the discipline of pairing candid honesty with refined emotional nuance.",
+      "Rather than hiding behind vague corporate slogans, eloquent executives practice brevity: they name challenges plainly, invite dissenting viewpoints, and align multicultural teams around a lucid vision.",
+    ],
+    quiz: [
+      { question: "How do eloquent executives communicate according to the editorial?", options: ["Through vague slogans", "With brevity, candid honesty, and clear vision", "By avoiding dissenting viewpoints", "By writing lengthy reports"], correctIndex: 1 },
+    ],
+  },
 ];
 
 // ============================================================================
@@ -405,6 +420,27 @@ export const LISTENING_STORIES: ListeningStory[] = [
     },
   },
   {
+    id: "l-a2-1",
+    title: "Around the World in Eighty Days — A Bold Wager",
+    author: "Jules Verne (Graded A2 Adaptation)",
+    sourceLabel: "Project Gutenberg Classic • A2",
+    level: "A2",
+    durationLabel: "2 min",
+    coverEmoji: "🌍",
+    summary: "Phileas Fogg decides to travel around the entire world in eighty days — clear elementary storytelling.",
+    segments: [
+      { text: "Phileas Fogg lived in London and followed the exact same daily schedule every single day.", translationAr: "عاش فيلياس فوج في لندن واتّبع نفس الجدول اليومي بالضبط كل يوم." },
+      { text: "One evening at his club, his friends read an article saying you could travel around the world in eighty days.", translationAr: "في إحدى الأمسيات بناديه، قرأ أصدقاؤه مقالاً يقول إنه يمكن السفر حول العالم في ثمانين يوماً." },
+      { text: "That is impossible! his friends laughed, because trains and ships are often late.", translationAr: "ضحك أصدقاؤه: هذا مستحيل! لأن القطارات والسفن غالباً ما تتأخر." },
+      { text: "I will prove it is possible, said Fogg calmly, and he packed a small bag that very night.", translationAr: "قال فوج بهدوء: سأثبت أن ذلك ممكن، وحزم حقيبة صغيرة في تلك الليلة بالذات." },
+    ],
+    comprehensionQuestion: {
+      question: "Why did Fogg's friends think the trip was impossible?",
+      options: ["Maps were missing", "Trains and ships are often late", "He had no passport", "It was winter"],
+      correctIndex: 1,
+    },
+  },
+  {
     id: "l-b1-1",
     title: "Alice's Adventures in Wonderland — Down the Rabbit-Hole",
     author: "Lewis Carroll (LibriVox / Gutenberg Adapted)",
@@ -444,6 +480,46 @@ export const LISTENING_STORIES: ListeningStory[] = [
     comprehensionQuestion: {
       question: "What distinction does Sherlock Holmes emphasize to Watson?",
       options: ["Reading vs writing", "Seeing vs truly observing", "Running vs walking", "Speaking vs shouting"],
+      correctIndex: 1,
+    },
+  },
+  {
+    id: "l-c1-1",
+    title: "The Great Gatsby — Echoes Across the Bay",
+    author: "F. Scott Fitzgerald (Public Domain Classic)",
+    sourceLabel: "Project Gutenberg Classic • C1",
+    level: "C1",
+    durationLabel: "3 min",
+    coverEmoji: "✨",
+    summary: "Rich descriptive prose ideal for C1 listening nuance, cadence, and literary vocabulary.",
+    segments: [
+      { text: "In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.", translationAr: "في سنوات شبابي الأكثر حساسية، أعطاني والدي نصيحة ما زلت أتفكر فيها منذ ذلك الحين." },
+      { text: "Whenever you feel like criticizing anyone, he told me, just remember that all the people in this world haven't had the advantages that you've had.", translationAr: "قال لي: كلما شعرت برغبة في انتقاد أي شخص، تذكر فقط أن ليس كل الناس في هذا العالم قد حظوا بالمزايا التي حظيتَ بها." },
+      { text: "In consequence, I'm inclined to reserve all judgments, a habit that has opened up many curious natures to me.", translationAr: "ونتيجة لذلك، أميل إلى التحفظ عن إصدار الأحكام، وهي عادة كشفت لي عن شخصيات كثيرة مثيرة للفضول." },
+    ],
+    comprehensionQuestion: {
+      question: "What habit did the narrator develop from his father's advice?",
+      options: ["Traveling every winter", "Reserving judgments about other people", "Writing daily newspapers", "Collecting antique clocks"],
+      correctIndex: 1,
+    },
+  },
+  {
+    id: "l-c2-1",
+    title: "Pride and Prejudice — First Impressions",
+    author: "Jane Austen (Public Domain Classic)",
+    sourceLabel: "Project Gutenberg Classic • C2",
+    level: "C2",
+    durationLabel: "3 min",
+    coverEmoji: "📜",
+    summary: "Master subtle British irony, sophisticated syntax, and C2 rhetorical precision.",
+    segments: [
+      { text: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.", translationAr: "إنها حقيقة معترف بها عالمياً، أن الرجل الأعزب الذي يمتلك ثروة طيبة لا بد أنه يبحث عن زوجة." },
+      { text: "However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families.", translationAr: "مهما كانت مشاعر أو آراء هذا الرجل غير معروفة عند دخوله الحي لأول مرة، فإن هذه الحقيقة راسخة تماماً في أذهان العائلات المحيطة." },
+      { text: "My dear Mr. Bennet, said his lady to him one day, have you heard that Netherfield Park is let at last?", translationAr: "قالت له زوجته يوماً: عزيزي السيد بينيت، هل سمعت أن نذرفيلد بارك قد أُجِّر أخيراً؟" },
+    ],
+    comprehensionQuestion: {
+      question: "What literary tone is Jane Austen famously using in the opening sentence?",
+      options: ["Technical instruction", "Witty social irony", "Horror suspense", "Scientific reporting"],
       correctIndex: 1,
     },
   },
