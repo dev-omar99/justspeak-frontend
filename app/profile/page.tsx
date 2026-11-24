@@ -15,6 +15,8 @@ import {
   unblockUser,
   getBuddies,
   toggleBuddy,
+  changePasswordApi,
+  deleteMyAccountApi,
 } from "../../services/api";
 import { User, BlockedUserItem, BuddyUserItem, RecentPartner } from "../../types";
 
@@ -108,6 +110,14 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Account security (Change Password & Delete Account)
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Sound & Match settings
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -849,6 +859,117 @@ export default function ProfilePage() {
                 </Button>
               </div>
             </form>
+
+            {/* Change Password Section */}
+            <div className="border-t border-slate-200 pt-5 flex flex-col gap-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                🔒 Change Password
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current password"
+                  className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-600"
+                />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password (min 8 chars)"
+                  minLength={8}
+                  className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-blue-600"
+                />
+              </div>
+              {passwordStatus && (
+                <p
+                  className={`text-xs font-semibold ${
+                    passwordStatus.type === "ok" ? "text-emerald-700" : "text-rose-600"
+                  }`}
+                >
+                  {passwordStatus.msg}
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={changingPassword || !currentPassword || newPassword.length < 8}
+                onClick={async () => {
+                  const token = getToken();
+                  if (!token) return;
+                  setChangingPassword(true);
+                  setPasswordStatus(null);
+                  try {
+                    await changePasswordApi(token, currentPassword, newPassword);
+                    setCurrentPassword("");
+                    setNewPassword("");
+                    setPasswordStatus({ type: "ok", msg: "✓ Password updated successfully." });
+                  } catch (err: any) {
+                    setPasswordStatus({
+                      type: "err",
+                      msg: err?.message || "Failed to update password.",
+                    });
+                  } finally {
+                    setChangingPassword(false);
+                  }
+                }}
+                className="self-start px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                {changingPassword ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+
+            {/* Danger Zone: Delete Account */}
+            <div className="border-t border-rose-100 pt-5 flex flex-col gap-2.5">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-rose-700">
+                ⚠️ Danger Zone
+              </h3>
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="self-start px-4 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Delete My Account
+                </button>
+              ) : (
+                <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3.5 flex flex-col gap-2.5">
+                  <p className="text-xs text-rose-800 font-semibold">
+                    Are you sure? This permanently deletes your account, buddies, and progress.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={deletingAccount}
+                      onClick={async () => {
+                        const token = getToken();
+                        if (!token) return;
+                        setDeletingAccount(true);
+                        try {
+                          await deleteMyAccountApi(token);
+                          clearAuth();
+                          router.push("/");
+                        } catch (err: any) {
+                          setError(err?.message || "Failed to delete account.");
+                          setDeletingAccount(false);
+                          setConfirmDelete(false);
+                        }
+                      }}
+                      className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      {deletingAccount ? "Deleting..." : "Yes, Delete Permanently"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

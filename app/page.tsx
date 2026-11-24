@@ -9,6 +9,7 @@ import PageTransition from "../components/PageTransition";
 import Penguin3D from "../components/Penguin3D";
 import LandingHeroView from "../components/home/LandingHeroView";
 import AcademyQuickStrip from "../components/home/AcademyQuickStrip";
+import SavedWordsHomeCard from "../components/home/SavedWordsHomeCard";
 import {
   BlockedUsersModal,
   BuddyUpgradeModal,
@@ -432,6 +433,9 @@ export default function HomePage() {
               Join Live Conversation Now →
             </Link>
           </section>
+
+          {/* Prominent Dedicated Saved Words Card */}
+          <SavedWordsHomeCard />
 
           {/* Compact CEFR Academy Daily Quick Strip */}
           <AcademyQuickStrip />

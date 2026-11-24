@@ -25,6 +25,7 @@ interface AiTurnMessage {
   fluencyScore?: number;
   grammarScore?: number;
   vocabScore?: number;
+  evaluationMode?: "ai" | "basic";
   suggestedPhrases?: string[];
   wordCount?: number;
 }
@@ -32,9 +33,12 @@ interface AiTurnMessage {
 function analyzeLocally(topic: AiPracticeTopic, userText: string, turnIndex: number) {
   const words = userText.trim().split(/\s+/).filter(Boolean);
   const wordCount = words.length;
-  const rules: { rx: RegExp; fix: string; rep: string }[] = [
+  const rules: { rx: RegExp; fix: string; rep?: string }[] = [
     { rx: /\bi am agree\b/i, fix: 'Say "I agree" instead of "I am agree".', rep: "I agree" },
     { rx: /\b(he|she|it)\s+don'?t\b/i, fix: 'Use "doesn\'t" with he/she/it.', rep: "$1 doesn't" },
+    { rx: /\b(he|she|it)\s+are\b/i, fix: 'Use "is" with he/she/it (e.g., "he is").', rep: "$1 is" },
+    { rx: /\bme\s+(go|went|going|want|like|have|think|need)\b/i, fix: 'Use "I" as the subject instead of "me".', rep: "I $1" },
+    { rx: /\b(tomorrow\s+yesterday|yesterday\s+tomorrow)\b/i, fix: 'Avoid mixing contradictory time words ("tomorrow" and "yesterday").' },
     { rx: /\bmore better\b/i, fix: 'Say "much better" instead of "more better".', rep: "much better" },
     { rx: /\b(go|went|going)\s+to\s+home\b/i, fix: 'Say "go/went home" without "to".', rep: "$1 home" },
     { rx: /\bdepend\s+of\b/i, fix: 'Use "depend on" instead of "depend of".', rep: "depend on" },
@@ -49,7 +53,9 @@ function analyzeLocally(topic: AiPracticeTopic, userText: string, turnIndex: num
   for (const r of rules) {
     if (r.rx.test(upgraded)) {
       corrections.push(r.fix);
-      upgraded = upgraded.replace(r.rx, r.rep);
+      if (r.rep) {
+        upgraded = upgraded.replace(r.rx, r.rep);
+      }
     }
   }
 
@@ -66,43 +72,39 @@ function analyzeLocally(topic: AiPracticeTopic, userText: string, turnIndex: num
       .map((w) => w.replace(/[^a-zA-Z]/g, "").toLowerCase())
       .find((w) => w.length >= 5 && !stopWords.has(w)) || "";
 
-  const intro = keyword
-    ? `You made a great point about "${keyword}".`
-    : `That's a thoughtful point on "${topic.title}".`;
+  const intro =
+    corrections.length > 0
+      ? `Let's refine that sentence — check the grammar note below.`
+      : keyword
+      ? `You made a point about "${keyword}".`
+      : `Thanks for sharing your thought on "${topic.title}".`;
 
   const followUps = [
-    `${intro} Could you share a specific real-life example or story that illustrates that?`,
+    `${intro} Could you share a specific real-life example that illustrates that?`,
     `${intro} What do you see as the toughest challenge people face in this situation?`,
-    `${intro} If someone strongly disagreed with you, what would be your most persuasive argument?`,
+    `${intro} If someone disagreed with you, what would be your main argument?`,
     `${intro} How do you think this will change over the next few years?`,
   ];
 
-  const fluencyScore = wordCount < 8 ? 76 : hasConnector ? 95 : 88;
-  const grammarScore = Math.max(70, 95 - corrections.length * 9);
-  const vocabScore = hasConnector ? 92 : 83;
   const tip =
     corrections[0] ||
     (wordCount < 8
       ? `You spoke ${wordCount} words. Try expanding with "because..." or "for example..." to reach 15–20 words.`
       : hasConnector
-      ? `Strong ${wordCount}-word flow with clear linking phrases!`
-      : `Good ${wordCount}-word answer! Try opening your next thought with "From my perspective," or "Furthermore,".`);
+      ? `Good ${wordCount}-word flow with clear linking phrases.`
+      : `Good ${wordCount}-word answer! Try linking your next idea with "However," or "For example,".`);
 
-  const nativeUpgrade =
-    upgraded !== userText.trim()
-      ? upgraded
-      : wordCount < 10
-      ? `From my perspective, ${userText.trim().charAt(0).toLowerCase()}${userText.trim().slice(1).replace(/\.$/, "")}, because it makes a meaningful difference.`
-      : "";
+  const nativeUpgrade = upgraded !== userText.trim() ? upgraded : "";
 
   return {
     reply: followUps[turnIndex % followUps.length],
     tip,
     corrections,
     nativeUpgrade,
-    fluencyScore,
-    grammarScore,
-    vocabScore,
+    fluencyScore: undefined as number | undefined,
+    grammarScore: undefined as number | undefined,
+    vocabScore: undefined as number | undefined,
+    evaluationMode: "basic" as "ai" | "basic",
     suggestedPhrases: [
       "From my perspective, the main reason is...",
       "A concrete example from my experience is...",
@@ -126,6 +128,8 @@ export default function AiStudioPage() {
   const [isThinking, setIsThinking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechRate, setSpeechRate] = useState<number>(0.96);
+  const [quotaError, setQuotaError] = useState<string | null>(null);
+  const [remainingFreeTurns, setRemainingFreeTurns] = useState<number | null>(null);
 
   const recRef = useRef<any>(null);
   const streamEndRef = useRef<HTMLDivElement | null>(null);
@@ -213,6 +217,7 @@ export default function AiStudioPage() {
 
     setMessages((prev) => [...prev, userMsg]);
     setUserInput("");
+    setQuotaError(null);
     setIsThinking(true);
 
     let coachResult = analyzeLocally(activeTopic, cleanText, messages.length);
@@ -220,43 +225,69 @@ export default function AiStudioPage() {
     const token = getToken();
     if (token) {
       try {
-        const res = await sendAiStudioTurn(token, {
+        const res: any = await sendAiStudioTurn(token, {
           topicTitle: activeTopic.title,
           category: activeTopic.category,
           userMessage: cleanText,
           turnIndex: messages.length,
         });
+        if (typeof res?.remainingFreeTurns === "number") {
+          setRemainingFreeTurns(res.remainingFreeTurns);
+        }
         if (res && res.reply) {
           coachResult = {
             reply: res.reply,
             tip: res.tip || coachResult.tip,
             corrections: res.corrections || coachResult.corrections,
-            nativeUpgrade: res.nativeUpgrade || coachResult.nativeUpgrade,
-            fluencyScore: res.fluencyScore ?? coachResult.fluencyScore,
-            grammarScore: res.grammarScore ?? coachResult.grammarScore,
-            vocabScore: res.vocabScore ?? coachResult.vocabScore,
+            nativeUpgrade: res.nativeUpgrade ?? coachResult.nativeUpgrade,
+            fluencyScore:
+              res.evaluationMode === "ai" && typeof res.fluencyScore === "number"
+                ? res.fluencyScore
+                : undefined,
+            grammarScore:
+              res.evaluationMode === "ai" && typeof res.grammarScore === "number"
+                ? res.grammarScore
+                : undefined,
+            vocabScore:
+              res.evaluationMode === "ai" && typeof res.vocabScore === "number"
+                ? res.vocabScore
+                : undefined,
+            evaluationMode: res.evaluationMode === "ai" ? "ai" : "basic",
             suggestedPhrases: res.suggestedPhrases?.length
               ? res.suggestedPhrases
               : coachResult.suggestedPhrases,
             wordCount: res.wordCount ?? coachResult.wordCount,
           };
         }
-      } catch {}
+      } catch (err: any) {
+        if (err?.message && /free daily AI Coach|Upgrade to JustSpeak/i.test(err.message)) {
+          setQuotaError(err.message);
+          setIsThinking(false);
+          return;
+        }
+      }
     }
 
-    // Sync improved fluency/grammar scores into CEFR Academy progress
-    try {
-      const academy = getAcademyProgress();
-      saveAcademyProgress({
-        ...academy,
-        scores: {
-          ...academy.scores,
-          fluency: Math.round((academy.scores.fluency + coachResult.fluencyScore) / 2),
-          grammar: Math.round((academy.scores.grammar + coachResult.grammarScore) / 2),
-          vocabulary: Math.round((academy.scores.vocabulary + coachResult.vocabScore) / 2),
-        },
-      });
-    } catch {}
+    // Only sync real AI evaluation scores into CEFR Academy progress
+    if (
+      coachResult.evaluationMode === "ai" &&
+      typeof coachResult.fluencyScore === "number" &&
+      typeof coachResult.grammarScore === "number" &&
+      typeof coachResult.vocabScore === "number"
+    ) {
+      try {
+        const academy = getAcademyProgress();
+        saveAcademyProgress({
+          ...academy,
+          scores: {
+            ...academy.scores,
+            fluency: Math.round((academy.scores.fluency + coachResult.fluencyScore) / 2),
+            grammar: Math.round((academy.scores.grammar + coachResult.grammarScore) / 2),
+            vocabulary: Math.round((academy.scores.vocabulary + coachResult.vocabScore) / 2),
+          },
+        });
+      } catch {}
+    }
 
     const aiMsg: AiTurnMessage = {
       id: `ai-${Date.now() + 1}`,
@@ -268,6 +299,7 @@ export default function AiStudioPage() {
       fluencyScore: coachResult.fluencyScore,
       grammarScore: coachResult.grammarScore,
       vocabScore: coachResult.vocabScore,
+      evaluationMode: coachResult.evaluationMode,
       suggestedPhrases: coachResult.suggestedPhrases,
     };
 
@@ -362,7 +394,7 @@ export default function AiStudioPage() {
                         ? "🔊 Coach is speaking..."
                         : isListening
                         ? "🎙️ Listening to your English..."
-                        : "Oxford-Trained Voice Coach • Live Grammar & Native Rewrite"}
+                        : "AI Voice Speaking Coach • Live Grammar & Phrasing Feedback"}
                     </p>
                   </div>
                 </div>
@@ -504,6 +536,29 @@ export default function AiStudioPage() {
 
               {/* Suggested Reply Starters + Input Bar */}
               <div className="p-4 sm:p-5 bg-white border-t border-border flex flex-col gap-3">
+                {quotaError && (
+                  <div className="rounded-2xl bg-[#FFF0F2] border border-[#E11D48]/35 px-4 py-3 text-xs font-bold text-[#9F1239] flex flex-wrap items-center justify-between gap-2">
+                    <span>⚠️ {quotaError}</span>
+                    <Link
+                      href="/pricing"
+                      className="px-3 py-1.5 rounded-xl bg-[#D91023] text-white text-xs font-black"
+                    >
+                      {isArabic ? "ترقية الخطة →" : "Upgrade Plan →"}
+                    </Link>
+                  </div>
+                )}
+                {!quotaError && remainingFreeTurns !== null && (
+                  <div className="text-[11px] font-bold text-ink-soft flex items-center justify-between">
+                    <span>
+                      {isArabic
+                        ? `المتبقي لك اليوم في التجربة المجانية: ${remainingFreeTurns} رسائل`
+                        : `Free daily trial messages remaining: ${remainingFreeTurns}`}
+                    </span>
+                    <Link href="/pricing" className="text-[#002868] hover:underline font-black">
+                      {isArabic ? "احصل على 500 توكن ←" : "Get 500 Tokens →"}
+                    </Link>
+                  </div>
+                )}
                 {lastAiMessage?.suggestedPhrases && lastAiMessage.suggestedPhrases.length > 0 && (
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <span className="text-[11px] font-black text-ink-soft shrink-0">

@@ -483,3 +483,37 @@ export const saveAcademyProgressApi = (token: string, payload: any) =>
     },
     body: JSON.stringify(payload),
   }).then((r) => (r.ok ? r.json() : null));
+
+export const changePasswordApi = async (
+  token: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  const res = await fetch(`${getApiBaseUrl()}/users/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Failed to update password");
+  }
+  return data;
+};
+
+export const deleteMyAccountApi = async (token: string) => {
+  const res = await fetch(`${getApiBaseUrl()}/users/me`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Failed to delete account");
+  }
+  return data;
+};

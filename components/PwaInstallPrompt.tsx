@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useI18n } from "../lib/i18n";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -11,6 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function PwaInstallPrompt() {
   const { lang } = useI18n();
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -92,7 +94,9 @@ export default function PwaInstallPrompt() {
     localStorage.setItem("justspeak_pwa_dismissed", Date.now().toString());
   };
 
-  if (!isVisible) return null;
+  const hiddenRoutes = ["/login", "/signup", "/onboarding", "/queue", "/room"];
+  const isHiddenRoute = hiddenRoutes.some((r) => pathname?.startsWith(r));
+  if (!isVisible || isHiddenRoute) return null;
 
   const isArabic = lang === "ar";
 

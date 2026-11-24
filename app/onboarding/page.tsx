@@ -42,19 +42,35 @@ const LEVEL_OPTIONS = [
   },
 ];
 
+function formatTribeLocalTime(utcStartHour: number): string {
+  try {
+    const start = new Date(Date.UTC(2026, 0, 1, utcStartHour, 0));
+    const end = new Date(Date.UTC(2026, 0, 1, (utcStartHour + 2) % 24, 0));
+    const fmt = new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${fmt.format(start)} – ${fmt.format(end)}`;
+  } catch {
+    const s = String(utcStartHour).padStart(2, "0");
+    const e = String((utcStartHour + 2) % 24).padStart(2, "0");
+    return `${s}:00 – ${e}:00 UTC`;
+  }
+}
+
 const TRIBES = [
-  { id: 1, label: "Tribe 1", time: "03:00 AM Cairo / Riyadh" },
-  { id: 2, label: "Tribe 2", time: "05:00 AM Cairo / Riyadh" },
-  { id: 3, label: "Tribe 3", time: "07:00 AM Cairo / Riyadh" },
-  { id: 4, label: "Tribe 4", time: "09:00 AM Cairo / Riyadh" },
-  { id: 5, label: "Tribe 5", time: "11:00 AM Cairo / Riyadh" },
-  { id: 6, label: "Tribe 6", time: "01:00 PM Cairo / Riyadh" },
-  { id: 7, label: "Tribe 7", time: "03:00 PM Cairo / Riyadh" },
-  { id: 8, label: "Tribe 8", time: "05:00 PM Cairo / Riyadh" },
-  { id: 9, label: "Tribe 9", time: "07:00 PM Cairo / Riyadh" },
-  { id: 10, label: "Tribe 10", time: "09:00 PM Cairo / Riyadh" },
-  { id: 11, label: "Tribe 11", time: "11:00 PM Cairo / Riyadh" },
-  { id: 12, label: "Tribe 12", time: "01:00 AM Cairo / Riyadh" },
+  { id: 1, label: "Tribe 1", utcStartHour: 0 },
+  { id: 2, label: "Tribe 2", utcStartHour: 2 },
+  { id: 3, label: "Tribe 3", utcStartHour: 4 },
+  { id: 4, label: "Tribe 4", utcStartHour: 6 },
+  { id: 5, label: "Tribe 5", utcStartHour: 8 },
+  { id: 6, label: "Tribe 6", utcStartHour: 10 },
+  { id: 7, label: "Tribe 7", utcStartHour: 12 },
+  { id: 8, label: "Tribe 8", utcStartHour: 14 },
+  { id: 9, label: "Tribe 9", utcStartHour: 16 },
+  { id: 10, label: "Tribe 10", utcStartHour: 18 },
+  { id: 11, label: "Tribe 11", utcStartHour: 20 },
+  { id: 12, label: "Tribe 12", utcStartHour: 22 },
 ];
 
 export default function OnboardingPage() {
@@ -258,7 +274,7 @@ export default function OnboardingPage() {
               {/* Tribe Slot Grid */}
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold text-ink uppercase tracking-wider">
-                  Choose your regular daily speaking slot:
+                  Choose your regular daily speaking slot (your local time):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
                   {TRIBES.map((tr) => {
@@ -276,7 +292,9 @@ export default function OnboardingPage() {
                       >
                         <div>
                           <span className="text-xs font-bold text-ink block">{tr.label}</span>
-                          <span className="text-[11px] text-primary font-semibold">{tr.time}</span>
+                          <span className="text-[11px] text-primary font-semibold">
+                            {formatTribeLocalTime(tr.utcStartHour)}
+                          </span>
                         </div>
                         <span className={`text-sm ${isSelected ? "text-primary font-bold" : "text-border"}`}>
                           {isSelected ? "✓" : "+"}

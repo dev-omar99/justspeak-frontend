@@ -526,17 +526,19 @@ export function evaluatePlacementAnswers(answers: Record<string, number>): {
   };
 }
 
-export function estimateIeltsBand(scores: AcademyProgress["scores"]): string {
+export function estimateIeltsBand(
+  scores: AcademyProgress["scores"],
+  cefrLevel?: CefrLevel
+): string {
+  if (cefrLevel && CEFR_LEVELS[cefrLevel]) {
+    return CEFR_LEVELS[cefrLevel].ieltsBand;
+  }
   const avg =
     (scores.fluency + scores.pronunciation + scores.vocabulary + scores.grammar) / 4;
-  if (avg >= 92) return "8.5";
-  if (avg >= 85) return "8.0";
-  if (avg >= 78) return "7.5";
-  if (avg >= 72) return "7.0";
-  if (avg >= 65) return "6.5";
-  if (avg >= 58) return "6.0";
-  if (avg >= 50) return "5.5";
-  if (avg >= 42) return "5.0";
-  if (avg >= 34) return "4.5";
-  return "4.0";
+  if (avg >= 92) return "8.5 – 9.0";
+  if (avg >= 82) return "7.0 – 8.0";
+  if (avg >= 70) return "6.0 – 6.5";
+  if (avg >= 55) return "5.0 – 5.5";
+  if (avg >= 40) return "3.5 – 4.5";
+  return "2.5 – 3.5";
 }

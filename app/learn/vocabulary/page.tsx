@@ -99,17 +99,25 @@ export default function VocabularyVaultPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setFlashcardMode((v) => !v)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black border transition-all cursor-pointer shrink-0 ${
-                flashcardMode
-                  ? "bg-[#002868] text-white border-[#002868]"
-                  : "bg-white text-ink border-border hover:border-[#002868]"
-              }`}
-            >
-              {flashcardMode ? "🃏 Flashcard Mode ON" : "🃏 Flashcard Mode"}
-            </button>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Link
+                href="/learn/saved-words"
+                className="px-4 py-2.5 rounded-xl text-xs font-black border border-[#10B981]/40 bg-[#ECFDF5] text-[#059669] hover:bg-[#D1FAE5] transition-all"
+              >
+                ✅ {isArabic ? "صفحة المحفوظة" : "Saved Words Page"} ({learnedIds.length})
+              </Link>
+              <button
+                type="button"
+                onClick={() => setFlashcardMode((v) => !v)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black border transition-all cursor-pointer shrink-0 ${
+                  flashcardMode
+                    ? "bg-[#002868] text-white border-[#002868]"
+                    : "bg-white text-ink border-border hover:border-[#002868]"
+                }`}
+              >
+                {flashcardMode ? "🃏 Flashcard Mode ON" : "🃏 Flashcard Mode"}
+              </button>
+            </div>
           </div>
 
           {/* Primary Tabs: To Learn vs Saved Words + Search */}

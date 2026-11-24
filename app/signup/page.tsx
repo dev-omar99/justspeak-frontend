@@ -91,8 +91,8 @@ export default function SignupPage() {
               </h1>
               <p className="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-xs mx-auto">
                 {isArabic
-                  ? "انضم لآلاف المتعلمين من 50+ دولة لممارسة المحادثات اليومية مجاناً"
-                  : "Join learners from 50+ countries. Real 1-on-1 daily practice sessions."}
+                  ? "تدرّب يومياً في محادثات إنجليزية حقيقية 1-on-1 مع متعلمين حول العالم مجاناً"
+                  : "Practice real 1-on-1 daily English conversations with learners worldwide."}
               </p>
             </div>
           </div>
@@ -143,6 +143,8 @@ export default function SignupPage() {
                 </label>
                 <input
                   type="text"
+                  required
+                  maxLength={60}
                   autoComplete="name"
                   placeholder={isArabic ? "مثلاً: عمر أو أحمد" : "e.g., Alex Johnson"}
                   value={name}
@@ -176,6 +178,7 @@ export default function SignupPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     required
+                    minLength={8}
                     autoComplete="new-password"
                     placeholder="••••••••"
                     value={password}
@@ -186,6 +189,7 @@ export default function SignupPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 text-sm"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     title={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? "🙈" : "👁️"}
@@ -214,6 +218,18 @@ export default function SignupPage() {
                   </>
                 )}
               </button>
+
+              <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                {isArabic ? "بإنشاء حسابك فإنك توافق على " : "By creating an account, you agree to our "}
+                <Link href="/terms" className="text-blue-400 hover:underline font-semibold">
+                  {isArabic ? "شروط الاستخدام" : "Terms of Service"}
+                </Link>
+                {isArabic ? " و" : " and "}
+                <Link href="/privacy" className="text-blue-400 hover:underline font-semibold">
+                  {isArabic ? "سياسة الخصوصية" : "Privacy Policy"}
+                </Link>
+                .
+              </p>
             </form>
           </div>
 

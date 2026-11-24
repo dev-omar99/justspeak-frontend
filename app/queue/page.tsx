@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { joinQueue, leaveQueue } from "../../services/api";
 import { getToken, getUser } from "../../lib/auth";
@@ -52,6 +53,7 @@ function QueueContent() {
   const [differentCountryOnly, setDifferentCountryOnly] = useState(false);
   const [surveyWaitCountdown, setSurveyWaitCountdown] = useState(5);
   const [waitingCountdown, setWaitingCountdown] = useState(20);
+  const [wavesCompleted, setWavesCompleted] = useState(0);
   const [nextSessionClock, setNextSessionClock] = useState(() =>
     getSecondsUntilNextWave(120)
   );
@@ -65,6 +67,8 @@ function QueueContent() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [micReady, setMicReady] = useState(false);
+  const [mediaRequested, setMediaRequested] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   // Play gentle notification chime when matched
   function playMatchChime() {
@@ -91,7 +95,29 @@ function QueueContent() {
     } catch {}
   }
 
-  // Initialize user & camera preview
+  async function enableCameraAndMic() {
+    if (streamRef.current) return;
+    setMediaRequested(true);
+    setMediaError(null);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      streamRef.current = mediaStream;
+      setCameraReady(mediaStream.getVideoTracks().length > 0);
+      setMicReady(mediaStream.getAudioTracks().length > 0);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch {
+      setCameraReady(false);
+      setMicReady(false);
+      setMediaError("Camera or microphone permission was denied. You can still join or allow access in your browser settings.");
+    }
+  }
+
+  // Initialize user & cleanup media on unmount (do not prompt for camera until user clicks)
   useEffect(() => {
     const token = getToken();
     const user = getUser();
@@ -110,33 +136,7 @@ function QueueContent() {
       if (savedFilter === "true") setDifferentCountryOnly(true);
     } catch {}
 
-    let active = true;
-    async function initMedia() {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        if (!active) {
-          mediaStream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        streamRef.current = mediaStream;
-        setCameraReady(mediaStream.getVideoTracks().length > 0);
-        setMicReady(mediaStream.getAudioTracks().length > 0);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-      } catch {
-        setCameraReady(false);
-        setMicReady(false);
-      }
-    }
-
-    initMedia();
-
     return () => {
-      active = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
@@ -190,7 +190,11 @@ function QueueContent() {
     let pollInterval: NodeJS.Timeout;
 
     const countdownInterval = setInterval(() => {
-      setWaitingCountdown((prev) => (prev > 1 ? prev - 1 : 20));
+      setWaitingCountdown((prev) => {
+        if (prev > 1) return prev - 1;
+        setWavesCompleted((w) => w + 1);
+        return 20;
+      });
       setNextSessionClock(getSecondsUntilNextWave(120));
     }, 1000);
 
@@ -258,9 +262,13 @@ function QueueContent() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
-  function handleJoinNowClick() {
-    // Show the Episoden Survey Reminder modal first (Screenshot #7)
-    setShowSurveyReminder(true);
+  async function handleJoinNowClick() {
+    if (!streamRef.current) {
+      await enableCameraAndMic();
+    }
+    setWavesCompleted(0);
+    setWaitingCountdown(20);
+    setStage("waiting_room");
   }
 
   function handleConfirmSurveyReminder() {
@@ -553,11 +561,38 @@ function QueueContent() {
             </div>
 
             <p className="text-sm text-slate-400">
-              Next session{" "}
+              Next wave{" "}
               <span className="font-bold text-slate-300 tabular-nums">
                 {formatMmSs(nextSessionClock)}
               </span>
             </p>
+
+            {wavesCompleted >= 1 && (
+              <div className="w-full max-w-md bg-white/8 border border-white/15 rounded-2xl p-4 text-left flex flex-col gap-3 mt-1">
+                <div>
+                  <p className="text-xs font-extrabold text-amber-300">
+                    ⏳ No partner matched in that wave yet
+                  </p>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                    You&apos;re still in line — we&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our AI Coach:
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href="/ai-studio"
+                    className="flex-1 text-center px-3.5 py-2.5 rounded-xl bg-[#D91023] hover:bg-[#BE123C] text-white text-xs font-black transition-all"
+                  >
+                    🤖 Practice with AI Coach →
+                  </Link>
+                  <Link
+                    href="/learn/saved-words"
+                    className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                  >
+                    ✅ Saved Words
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {error && (
               <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">
@@ -764,9 +799,23 @@ function QueueContent() {
               className="w-full h-full object-cover transform scale-x-[-1]"
             />
             {!cameraReady && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 text-white text-xs gap-2">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 text-white text-center px-6 gap-3">
                 <span className="text-3xl">📷</span>
-                <span>Initializing Camera...</span>
+                <p className="text-xs sm:text-sm font-bold text-white">
+                  Camera &amp; Mic Preview
+                </p>
+                <p className="text-[11px] text-slate-300 leading-relaxed max-w-xs">
+                  {mediaError
+                    ? mediaError
+                    : "JustSpeak uses your camera and microphone for live 7-minute 1-on-1 English conversations. Calls are never recorded."}
+                </p>
+                <button
+                  type="button"
+                  onClick={enableCameraAndMic}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {mediaRequested ? "Retry Camera & Mic" : "Enable Camera & Mic"}
+                </button>
               </div>
             )}
 

@@ -95,6 +95,50 @@ export default function LandingHeroView() {
             ))}
           </section>
 
+          {/* How It Works in 3 Simple Steps */}
+          <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-xs flex flex-col gap-6">
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-[#002868]">
+                How JustSpeak Works
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-ink mt-1">
+                From Hesitation to Natural Speaking in 3 Steps
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                {
+                  step: "01",
+                  title: "Set Your Level & Routine",
+                  desc: "Take a 3-minute CEFR placement test (A1–C2) and pick your preferred daily speaking slot in your local time.",
+                },
+                {
+                  step: "02",
+                  title: "Speak Live or with AI Coach",
+                  desc: "Join a 7-minute 1-on-1 live human video call, or practice speaking immediately with our interactive Voice AI Coach.",
+                },
+                {
+                  step: "03",
+                  title: "Save Words & Level Up",
+                  desc: "Check off new Oxford-aligned vocabulary into your Saved Words vault and build your daily speaking streak.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="rounded-2xl bg-surface border border-border/80 p-5 flex flex-col gap-2"
+                >
+                  <span className="text-xs font-black text-[#D91023] tracking-widest">
+                    STEP {item.step}
+                  </span>
+                  <h3 className="text-base font-black text-ink">{item.title}</h3>
+                  <p className="text-xs sm:text-sm text-ink-soft leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Compact 3-Tier Membership Preview */}
           <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-md flex flex-col gap-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -150,7 +194,7 @@ export default function LandingHeroView() {
                       <span>
                         {plan.monthlyAiTokens > 0
                           ? `${plan.monthlyAiTokens.toLocaleString()} AI Tokens / mo`
-                          : "Human Random Calls Only"}
+                          : "5 Free Calls/day + 5 AI Trial Msgs/day"}
                       </span>
                     </div>
                   </div>
@@ -171,6 +215,69 @@ export default function LandingHeroView() {
               ))}
             </div>
           </section>
+
+          {/* Frequently Asked Questions */}
+          <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-xs flex flex-col gap-6">
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-[#002868]">
+                FAQ
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-ink mt-1">
+                Common Questions
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                {
+                  q: "What is included in the Free Starter plan?",
+                  a: "You get 5 daily 1-on-1 live human video calls (7 minutes each), 5 daily AI Coach trial messages, and full access to JustSpeak CEFR Academy lessons and your Saved Words vault.",
+                },
+                {
+                  q: "Are my live video calls recorded?",
+                  a: "No. All 1-on-1 practice calls run over real-time WebRTC connections and are never recorded or stored.",
+                },
+                {
+                  q: "What if no partner is online when I join?",
+                  a: "Your daily call pass is never deducted without a completed match. While waiting, you can keep the sound chime on or jump straight into the AI Speaking Coach.",
+                },
+                {
+                  q: "Can I block a partner or delete my account?",
+                  a: "Yes. You can block any partner permanently with Never Meet Again, and you can change your password or permanently delete your account anytime from Profile Settings.",
+                },
+              ].map((faq) => (
+                <div
+                  key={faq.q}
+                  className="rounded-2xl bg-surface border border-border/80 p-5 flex flex-col gap-1.5"
+                >
+                  <h3 className="text-sm font-black text-ink">{faq.q}</h3>
+                  <p className="text-xs sm:text-sm text-ink-soft leading-relaxed">
+                    {faq.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Clean Footer with Legal & Navigation Links */}
+          <footer className="border-t border-border pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-soft">
+            <p className="font-semibold">
+              © {new Date().getFullYear()} JustSpeak. All rights reserved.
+            </p>
+            <nav className="flex flex-wrap items-center gap-5 font-bold">
+              <Link href="/learn" className="hover:text-[#002868] transition-colors">
+                Academy
+              </Link>
+              <Link href="/pricing" className="hover:text-[#002868] transition-colors">
+                Pricing
+              </Link>
+              <Link href="/privacy" className="hover:text-[#002868] transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-[#002868] transition-colors">
+                Terms of Service
+              </Link>
+            </nav>
+          </footer>
         </div>
       </PageTransition>
     </main>

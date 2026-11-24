@@ -22,7 +22,7 @@ export default function AcademyQuickStrip() {
   if (!progress) return null;
 
   const meta = CEFR_LEVELS[progress.cefrLevel];
-  const ielts = estimateIeltsBand(progress.scores);
+  const ielts = estimateIeltsBand(progress.scores, progress.cefrLevel);
 
   return (
     <section className="rounded-[26px] bg-white border border-[#002868]/20 p-5 shadow-sm flex flex-col gap-4">

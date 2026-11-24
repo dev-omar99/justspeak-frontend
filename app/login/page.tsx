@@ -9,7 +9,7 @@ import PageTransition from "../../components/PageTransition";
 import BrandLogo from "../../components/BrandLogo";
 import BrandWatermark from "../../components/BrandWatermark";
 import GoogleAuthButton from "../../components/GoogleAuthButton";
-import { login, resetPassword } from "../../services/api";
+import { login, resetPassword, sendOtp } from "../../services/api";
 import { saveToken, saveUser } from "../../lib/auth";
 
 export default function LoginPage() {
@@ -68,35 +68,11 @@ export default function LoginPage() {
     }
   }
 
-  // Handle 1-Click Demo Login
-  async function handleDemoLogin() {
-    setEmail("learner@justspeak.io");
-    setPassword("Password123!");
-    setError(null);
-    setLoading(true);
-    try {
-      const result = await login({
-        identifier: "learner@justspeak.io",
-        password: "Password123!",
-      });
-      saveToken(result.accessToken);
-      saveUser(result.user);
-      setSuccessMsg(isArabic ? "تم الدخول بحساب المعاينة التجريبي! جاري التحويل..." : "Signed in with Demo Account! Redirecting...");
-      setTimeout(() => {
-        router.push("/");
-      }, 400);
-    } catch (err: any) {
-      // If demo account doesn't exist yet, fill fields so user can click submit or signup
-      setError(isArabic ? "بيانات الحساب التجريبي جاهزة. اضغط تسجيل الدخول." : "Demo credentials filled. Click Sign In.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   // Handle Password Reset Request
   async function handleResetRequest(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes("@")) {
       setError(isArabic ? "أدخل بريدك الإلكتروني لاستلام كود الاستعادة." : "Please enter your email to receive recovery code.");
@@ -104,11 +80,11 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      // Call password reset initiation endpoint
+      await sendOtp({ identifier: cleanEmail, type: "email" });
       setResetStep("verify");
       setSuccessMsg(isArabic ? "تم إرسال كود الاستعادة إلى بريدك الإلكتروني." : "Recovery code sent to your email.");
     } catch (err: any) {
-      setError(err.message || "Failed to send reset code.");
+      setError(err.message || (isArabic ? "فشل إرسال كود الاستعادة. حاول مرة أخرى." : "Failed to send reset code."));
     } finally {
       setLoading(false);
     }
@@ -263,6 +239,7 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 text-sm"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
                         title={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? "🙈" : "👁️"}
@@ -286,17 +263,6 @@ export default function LoginPage() {
                     )}
                   </button>
                 </form>
-
-                {/* Instant 1-Click Demo Button */}
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  disabled={loading}
-                  className="w-full py-2.5 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                >
-                  <span>⚡</span>
-                  <span>{isArabic ? "دخول سريع بحساب تجريبي (1-Click)" : "Instant Demo Account (1-Click)"}</span>
-                </button>
               </>
             ) : (
               /* Password Reset Flow */

@@ -371,30 +371,38 @@ export default function GuidedLessonPage() {
                   </p>
                 </div>
 
-                {/* Clean Active vs Saved Switcher */}
-                <div className="inline-flex bg-white border border-border rounded-xl p-1 shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setVocabTab("learn")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold cursor-pointer transition-all ${
-                      vocabTab === "learn"
-                        ? "bg-[#002868] text-white"
-                        : "text-ink-soft hover:text-ink"
-                    }`}
+                {/* Clean Active vs Saved Switcher + All Saved Words Link */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="inline-flex bg-white border border-border rounded-xl p-1 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setVocabTab("learn")}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold cursor-pointer transition-all ${
+                        vocabTab === "learn"
+                          ? "bg-[#002868] text-white"
+                          : "text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      {isArabic ? "للتعلم" : "To Learn"} ({wordsToLearn.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVocabTab("saved")}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold cursor-pointer transition-all ${
+                        vocabTab === "saved"
+                          ? "bg-[#10B981] text-white"
+                          : "text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      {isArabic ? "المحفوظة ✓" : "Saved ✓"} ({savedWordsInLesson.length})
+                    </button>
+                  </div>
+                  <Link
+                    href="/learn/saved-words"
+                    className="px-3 py-2 rounded-xl bg-[#ECFDF5] hover:bg-[#D1FAE5] border border-[#10B981]/35 text-[#059669] text-xs font-black transition-all"
                   >
-                    {isArabic ? "للتعلم" : "To Learn"} ({wordsToLearn.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVocabTab("saved")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold cursor-pointer transition-all ${
-                      vocabTab === "saved"
-                        ? "bg-[#10B981] text-white"
-                        : "text-ink-soft hover:text-ink"
-                    }`}
-                  >
-                    {isArabic ? "المحفوظة ✓" : "Saved ✓"} ({savedWordsInLesson.length})
-                  </button>
+                    ✅ {isArabic ? "كل المحفوظة" : "All Saved"} ({learnedIds.length}) →
+                  </Link>
                 </div>
               </div>
 

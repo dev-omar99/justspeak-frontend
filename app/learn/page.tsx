@@ -50,7 +50,7 @@ export default function AcademyHubPage() {
 
   const meta = CEFR_LEVELS[progress.cefrLevel];
   const levelLessons = getLessonsByLevel(progress.cefrLevel);
-  const ieltsEstimate = estimateIeltsBand(progress.scores);
+  const ieltsEstimate = estimateIeltsBand(progress.scores, progress.cefrLevel);
   const speakingPct = Math.min(
     100,
     Math.round((liveSpeakingMins / meta.totalSpeakingMinsToAdvance) * 100)
@@ -67,10 +67,16 @@ export default function AcademyHubPage() {
 
   const freePracticeTools = [
     {
+      href: "/learn/saved-words",
+      icon: "✅",
+      label: isArabic ? "الكلمات المحفوظة" : "Saved Words",
+      sub: `${progress.learnedWordIds.length} ${isArabic ? "محفوظة" : "saved"}`,
+    },
+    {
       href: "/learn/vocabulary",
       icon: "📚",
       label: isArabic ? "بنك الكلمات" : "Vocabulary",
-      sub: `${progress.learnedWordIds.length}/${ALL_CURRICULUM_VOCAB.length} ${isArabic ? "محفوظة" : "saved"}`,
+      sub: `${ALL_CURRICULUM_VOCAB.length} ${isArabic ? "كلمة" : "words"}`,
     },
     {
       href: "/learn/shadowing",
