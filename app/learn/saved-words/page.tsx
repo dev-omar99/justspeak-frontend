@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "../../../components/Header";
 import PageTransition from "../../../components/PageTransition";
+import WordDetailModal, { ModalWordItem } from "../../../components/academy/WordDetailModal";
+import { useI18n } from "../../../lib/i18n";
 import { getToken } from "../../../lib/auth";
 import { translateWordApi } from "../../../services/api";
 import {
@@ -24,6 +26,7 @@ import {
   addCustomSavedWord,
   getCustomSavedWords,
   removeCustomSavedWord,
+  toggleCustomWordMemorized,
 } from "../../../lib/custom-words";
 
 type UnifiedWord = VocabItem & { isCustom?: boolean };
@@ -48,11 +51,14 @@ function buildQuizQuestions(saved: UnifiedWord[]): QuizQuestion[] {
 }
 
 export default function SavedWordsPage() {
+  const { lang } = useI18n();
+  const isArabic = lang === "ar";
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
   const [customWords, setCustomWords] = useState<CustomSavedWord[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [activeModalWord, setActiveModalWord] = useState<ModalWordItem | null>(null);
 
   // Add Custom Word (Auto-Translate EN <-> AR)
   const [newWordInput, setNewWordInput] = useState("");
@@ -102,7 +108,7 @@ export default function SavedWordsPage() {
 
   function removeWord(item: UnifiedWord) {
     if (item.isCustom) {
-      setCustomWords(removeCustomSavedWord(item.id));
+      setCustomWords(toggleCustomWordMemorized(item.id));
       return;
     }
     if (!progress) return;
@@ -113,6 +119,11 @@ export default function SavedWordsPage() {
     };
     saveAcademyProgress(updated);
     setProgress(updated);
+  }
+
+  function deleteCustomWordPermanently(item: ModalWordItem) {
+    if (!item.isCustom) return;
+    setCustomWords(removeCustomSavedWord(item.id));
   }
 
   async function handleAddCustomWord(e: React.FormEvent) {
@@ -158,10 +169,15 @@ export default function SavedWordsPage() {
         };
       }
 
-      const nextCustom = addCustomSavedWord(translated);
+      // New words go into To Learn first (isMemorized = false)
+      const nextCustom = addCustomSavedWord(translated, false);
       setCustomWords(nextCustom);
       setNewWordInput("");
-      setAddSuccess(`Saved "${translated.word}" (${translated.meaningAr}) to your vocabulary deck.`);
+      setAddSuccess(
+        isArabic
+          ? `تمت إضافة "${translated.word}" (${translated.meaningAr}) لقائمة غير المحفوظة`
+          : `Added "${translated.word}" (${translated.meaningAr}) to To Learn`
+      );
       speakWord(translated.word, "en-US");
     } catch (err: any) {
       setAddError(err?.message || "Could not translate that word right now. Please try again.");
@@ -172,10 +188,11 @@ export default function SavedWordsPage() {
 
   const learnedIds = progress?.learnedWordIds || [];
   const allSavedWords: UnifiedWord[] = useMemo(() => {
+    const memorizedCustom = customWords.filter((w) => w.isMemorized);
     const curriculumSaved = ALL_CURRICULUM_VOCAB.filter((w) =>
       learnedIds.includes(w.id)
     );
-    return [...customWords, ...curriculumSaved];
+    return [...memorizedCustom, ...curriculumSaved];
   }, [learnedIds, customWords]);
 
   const filteredSavedWords = useMemo(() => {
@@ -300,14 +317,11 @@ export default function SavedWordsPage() {
                   </Link>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#061533] mt-1.5 flex items-center gap-2.5 flex-wrap tracking-tight">
-                  <span>Saved Words</span>
+                  <span>{isArabic ? "الكلمات المحفوظة" : "Saved Words"}</span>
                   <span className="text-xs font-bold tabular-nums px-2.5 py-1 rounded-lg bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/25">
-                    {allSavedWords.length} saved
+                    {allSavedWords.length} {isArabic ? "محفوظة" : "saved"}
                   </span>
                 </h1>
-                <p className="text-xs sm:text-sm text-[#475569] mt-1">
-                  Add any Arabic or English word for instant translation, review with Flip Flashcards, or test yourself.
-                </p>
               </div>
 
               {/* Mode Switcher */}
@@ -321,7 +335,7 @@ export default function SavedWordsPage() {
                       : "bg-[#F8FAFC] text-[#061533] border-[#D8E2F0] hover:border-[#002868]"
                   }`}
                 >
-                  All Words
+                  {isArabic ? "كل الكلمات" : "All Words"}
                 </button>
                 <button
                   type="button"
@@ -333,7 +347,7 @@ export default function SavedWordsPage() {
                       : "bg-[#F8FAFC] text-[#061533] border-[#D8E2F0] hover:border-[#D91023]"
                   }`}
                 >
-                  Flashcards Deck
+                  {isArabic ? "فلاش كاردز" : "Flashcards"}
                 </button>
                 <button
                   type="button"
@@ -345,7 +359,7 @@ export default function SavedWordsPage() {
                       : "bg-[#F8FAFC] text-[#061533] border-[#D8E2F0] hover:border-[#D91023]"
                   }`}
                 >
-                  Quick Quiz
+                  {isArabic ? "اختبار سريع" : "Quick Quiz"}
                 </button>
               </div>
             </div>
@@ -354,7 +368,7 @@ export default function SavedWordsPage() {
             <div className="flex flex-col gap-1.5 pt-1">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-[#475569]">
-                  Vault Mastery ({allSavedWords.length} / {totalTarget} words)
+                  {isArabic ? "التقدم" : "Progress"} ({allSavedWords.length} / {totalTarget})
                 </span>
                 <span className="text-[#002868] font-bold tabular-nums">{overallPct}%</span>
               </div>
@@ -770,7 +784,16 @@ export default function SavedWordsPage() {
                       return (
                         <div
                           key={item.id}
-                          className="luxury-card bg-white rounded-2xl p-5 border border-[#D8E2F0] shadow-sm flex flex-col justify-between gap-4"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setActiveModalWord(item)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setActiveModalWord(item);
+                            }
+                          }}
+                          className="luxury-card cursor-pointer bg-white rounded-2xl p-5 border border-[#D8E2F0] shadow-sm flex flex-col justify-between gap-4"
                         >
                           <div className="flex flex-col gap-2.5">
                             <div className="flex items-start justify-between gap-2">
@@ -851,10 +874,13 @@ export default function SavedWordsPage() {
 
                           <button
                             type="button"
-                            onClick={() => removeWord(item)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeWord(item);
+                            }}
                             className="w-full py-2 rounded-xl bg-[#F8FAFC] hover:bg-[#FFF0F2] text-[#475569] hover:text-[#D91023] border border-[#D8E2F0] text-xs font-bold transition-colors cursor-pointer"
                           >
-                            Remove from Saved
+                            {isArabic ? "↩ إرجاع لغير المحفوظة" : "↩ Move Back to To Learn"}
                           </button>
                         </div>
                       );
@@ -889,18 +915,14 @@ export default function SavedWordsPage() {
                       </div>
                       <div>
                         <h2 className="text-[15px] font-bold text-[#061533] leading-snug">
-                          Add New Word
+                          {isArabic ? "إضافة كلمة جديدة" : "Add New Word"}
                         </h2>
                         <p className="text-xs text-[#475569] mt-0.5">
-                          Auto-translate EN ↔ AR
+                          {isArabic ? "ترجمة تلقائية عربي ↔ إنجليزي" : "Auto-translate EN ↔ AR"}
                         </p>
                       </div>
                     </div>
                   </div>
-
-                  <p className="text-xs text-[#475569] leading-relaxed">
-                    Type any word in English or Arabic. We translate it, add a natural example, and save it to your flashcards.
-                  </p>
 
                   <form onSubmit={handleAddCustomWord} className="flex flex-col gap-3">
                     <input
@@ -908,7 +930,7 @@ export default function SavedWordsPage() {
                       dir="auto"
                       value={newWordInput}
                       onChange={(e) => setNewWordInput(e.target.value)}
-                      placeholder="e.g., resilient or طلاقة"
+                      placeholder={isArabic ? "اكتب كلمة عربي أو إنجليزي..." : "e.g., resilient or طلاقة"}
                       maxLength={120}
                       className="w-full h-11 rounded-xl bg-[#F8FAFC] border border-[#D8E2F0] px-3.5 text-sm font-semibold text-[#061533] focus:outline-none focus:border-[#002868] focus:bg-white transition-colors"
                     />
@@ -917,7 +939,9 @@ export default function SavedWordsPage() {
                       disabled={translating || !newWordInput.trim()}
                       className="w-full h-11 rounded-xl btn-primary-crest text-white text-xs sm:text-sm font-bold disabled:opacity-45 cursor-pointer shadow-xs"
                     >
-                      {translating ? "Translating..." : "+ Translate & Save"}
+                      {translating
+                        ? isArabic ? "جاري الترجمة..." : "Translating..."
+                        : isArabic ? "+ ترجم واحفظ" : "+ Translate & Save"}
                     </button>
                   </form>
 
@@ -927,8 +951,14 @@ export default function SavedWordsPage() {
                     </div>
                   )}
                   {addSuccess && (
-                    <div className="rounded-xl bg-[#ECFDF5] border border-[#16A34A]/25 px-3 py-2 text-xs font-semibold text-[#16A34A]">
-                      ✓ {addSuccess}
+                    <div className="rounded-xl bg-[#ECFDF5] border border-[#16A34A]/25 px-3 py-2 text-xs font-semibold text-[#16A34A] flex flex-col gap-1">
+                      <span>✓ {addSuccess}</span>
+                      <Link
+                        href="/learn/vocabulary"
+                        className="text-[#002868] hover:underline font-bold"
+                      >
+                        {isArabic ? "عرض في غير المحفوظة ←" : "View in To Learn →"}
+                      </Link>
                     </div>
                   )}
 
@@ -944,6 +974,16 @@ export default function SavedWordsPage() {
           )}
         </div>
       </PageTransition>
+
+      <WordDetailModal
+        word={activeModalWord}
+        isArabic={isArabic}
+        isSaved={true}
+        onClose={() => setActiveModalWord(null)}
+        onSpeak={speakWord}
+        onToggleSaved={removeWord}
+        onDeleteCustom={deleteCustomWordPermanently}
+      />
     </main>
   );
 }

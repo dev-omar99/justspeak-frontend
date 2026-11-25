@@ -18,6 +18,7 @@ import {
   TribeSelectionModal,
 } from "../components/home/DashboardModals";
 import { getUser, getToken, clearAuth } from "../lib/auth";
+import { useI18n } from "../lib/i18n";
 import { TRIBES } from "../lib/brand";
 import { canDirectCallBuddy, getPlanById } from "../lib/plans";
 import {
@@ -62,6 +63,8 @@ function formatPartnerDate(isoOrDate: string): string {
 
 export default function HomePage() {
   const router = useRouter();
+  const { lang } = useI18n();
+  const isArabic = lang === "ar";
   const [user, setUser] = useState<User | null>(null);
   const [dashboard, setDashboard] = useState<UserDashboardData | null>(null);
   const [partnerFilter, setPartnerFilter] = useState<"all" | "buddies">("all");
@@ -392,10 +395,12 @@ export default function HomePage() {
                 <div className="max-w-lg">
                   <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-300">
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span>1-on-1 Live Human Practice</span>
+                    <span>{isArabic ? "ممارسة حية 1-on-1" : "1-on-1 Live Human Practice"}</span>
                   </div>
                   <h1 className="text-2xl sm:text-[28px] font-bold mt-2 leading-tight tracking-tight text-white">
-                    Ready for your next 7-minute English call?
+                    {isArabic
+                      ? "جاهز لمكالمتك الإنجليزية القادمة (7 دقائق)؟"
+                      : "Ready for your next 7-minute English call?"}
                   </h1>
                 </div>
 
@@ -411,19 +416,25 @@ export default function HomePage() {
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                   <span>{userTribeName}</span>
-                  <span className="text-emerald-400 tabular-nums">· {activeMembersCount} online</span>
+                  <span className="text-emerald-400 tabular-nums">
+                    · {activeMembersCount} {isArabic ? "متصل" : "online"}
+                  </span>
                 </button>
               </div>
 
               <div className="grid grid-cols-2 divide-x divide-white/10 bg-white/[0.04] border border-white/10 rounded-xl py-3.5 px-4">
                 <div className="flex flex-col items-center gap-0.5 pr-3">
-                  <span className="text-[11px] font-medium text-slate-400">Active Rooms</span>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    {isArabic ? "الغرف النشطة" : "Active Rooms"}
+                  </span>
                   <span className="text-lg sm:text-xl font-bold text-white tabular-nums">
-                    {stats.liveRoomsCount} live
+                    {stats.liveRoomsCount} {isArabic ? "نشطة" : "live"}
                   </span>
                 </div>
                 <div className="flex flex-col items-center gap-0.5 pl-3">
-                  <span className="text-[11px] font-medium text-slate-400">Next Wave In</span>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    {isArabic ? "الموجة القادمة خلال" : "Next Wave In"}
+                  </span>
                   <span className="text-lg sm:text-xl font-bold text-white tabular-nums">
                     {formatNextSessionCountdown(nextSessionSeconds)}
                   </span>
@@ -434,11 +445,8 @@ export default function HomePage() {
                 href="/queue"
                 className="w-full bg-[#D91023] hover:bg-[#B91C1C] active:scale-[0.995] transition-all text-white font-bold text-center py-3.5 px-6 rounded-xl text-sm sm:text-base shadow-sm flex items-center justify-center gap-2"
               >
-                <span>Join Live Conversation Now</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14" />
-                  <path d="M13 5l7 7-7 7" />
-                </svg>
+                <span>{isArabic ? "انضم لمحادثة حية الآن" : "Join Live Conversation Now"}</span>
+                <span>{isArabic ? "←" : "→"}</span>
               </Link>
             </div>
           </section>
@@ -449,13 +457,13 @@ export default function HomePage() {
             <AcademyQuickStrip />
           </div>
 
-          {/* Dual Feature Row: AI Speaking Studio + Membership Tier (Official Eagle Crest Palette) */}
+          {/* Dual Feature Row: AI Speaking Studio + Membership Tier (Clean & Minimal) */}
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/ai-studio"
               className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-4 group"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -464,30 +472,18 @@ export default function HomePage() {
                       <line x1="12" y1="19" x2="12" y2="23" />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#061533] group-hover:text-[#D91023] transition-colors leading-snug">
-                      AI Speaking Studio
-                    </h2>
-                    <p className="text-xs text-[#475569] mt-0.5">
-                      24/7 voice &amp; grammar coach
-                    </p>
-                  </div>
+                  <h2 className="text-[15px] font-bold text-[#061533] group-hover:text-[#D91023] transition-colors">
+                    {isArabic ? "مدرب الذكاء الاصطناعي" : "AI Speaking Studio"}
+                  </h2>
                 </div>
                 <span className="text-[11px] font-bold tabular-nums px-2.5 py-1 rounded-lg bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/25 shrink-0">
-                  {aiTokensBalance.toLocaleString()} tokens
+                  {aiTokensBalance.toLocaleString()} {isArabic ? "توكن" : "tokens"}
                 </span>
               </div>
 
-              <p className="text-xs text-[#475569] leading-relaxed">
-                Rehearse interviews, IELTS, and real-world topics with instant phrasing feedback.
-              </p>
-
               <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between text-xs font-bold text-[#D91023] group-hover:text-[#002868] transition-colors">
-                <span>Open AI Studio</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform">
-                  <path d="M5 12h14" />
-                  <path d="M13 5l7 7-7 7" />
-                </svg>
+                <span>{isArabic ? "ابدأ التدريب الصوتي" : "Open AI Studio"}</span>
+                <span>{isArabic ? "←" : "→"}</span>
               </div>
             </Link>
 
@@ -495,43 +491,31 @@ export default function HomePage() {
               href="/pricing"
               className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-4 group"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#061533] group-hover:text-[#D91023] transition-colors leading-snug">
-                      Upgrade Membership
-                    </h2>
-                    <p className="text-xs text-[#475569] mt-0.5">
-                      Buddy Calls &amp; monthly tokens
-                    </p>
-                  </div>
+                  <h2 className="text-[15px] font-bold text-[#061533] group-hover:text-[#D91023] transition-colors">
+                    {isArabic ? "الخطط والعضوية" : "Membership"}
+                  </h2>
                 </div>
                 <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/25 shrink-0">
                   {currentPlan.name}
                 </span>
               </div>
 
-              <p className="text-xs text-[#475569] leading-relaxed">
-                Unlock unlimited live human calls, direct Buddy Reconnect, and up to 3,500 AI Tokens.
-              </p>
-
               <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between text-xs font-bold text-[#D91023] group-hover:text-[#002868] transition-colors">
-                <span>Compare Plans</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform">
-                  <path d="M5 12h14" />
-                  <path d="M13 5l7 7-7 7" />
-                </svg>
+                <span>{isArabic ? "مقارنة الخطط" : "Compare Plans"}</span>
+                <span>{isArabic ? "←" : "→"}</span>
               </div>
             </Link>
           </section>
 
-          {/* My 7-Day Speaking Streak Card (Official Eagle Crest Palette) */}
-          <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col gap-5">
+          {/* My 7-Day Speaking Streak Card (Clean & Minimal) */}
+          <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -539,23 +523,19 @@ export default function HomePage() {
                     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
                   </svg>
                 </span>
-                <div>
-                  <h3 className="text-[15px] font-bold text-[#061533] leading-snug">
-                    Speaking Streak
-                  </h3>
-                  <p className="text-xs text-[#475569] mt-0.5">
-                    Complete 1 session daily to keep your streak alive
-                  </p>
-                </div>
+                <h3 className="text-[15px] font-bold text-[#061533]">
+                  {isArabic ? "سلسلة التحدث" : "Speaking Streak"}
+                </h3>
               </div>
               <Link
                 href="/achievements"
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/25 hover:bg-[#D91023] hover:text-white transition-colors shrink-0"
               >
                 <span>
-                  {stats.streakDays} {stats.streakDays === 1 ? "day" : "days"}
+                  {stats.streakDays}{" "}
+                  {isArabic ? "يوم" : stats.streakDays === 1 ? "day" : "days"}
                 </span>
-                <span>→</span>
+                <span>{isArabic ? "←" : "→"}</span>
               </Link>
             </div>
 

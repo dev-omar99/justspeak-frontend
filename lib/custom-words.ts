@@ -10,6 +10,7 @@ export interface CustomSavedWord {
   meaningAr: string;
   example: string;
   isCustom: true;
+  isMemorized: boolean;
   createdAt: string;
 }
 
@@ -21,14 +22,28 @@ export function getCustomSavedWords(): CustomSavedWord[] {
     const raw = localStorage.getItem(CUSTOM_WORDS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((w: any) => ({
+      ...w,
+      isCustom: true as const,
+      isMemorized: Boolean(w.isMemorized),
+    }));
   } catch {
     return [];
   }
 }
 
+function persistCustomWords(next: CustomSavedWord[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(next.slice(0, 300)));
+    window.dispatchEvent(new Event("justspeak-academy-updated"));
+  } catch {}
+}
+
 export function addCustomSavedWord(
-  entry: Omit<CustomSavedWord, "id" | "isCustom" | "createdAt">
+  entry: Omit<CustomSavedWord, "id" | "isCustom" | "isMemorized" | "createdAt">,
+  isMemorized = false
 ): CustomSavedWord[] {
   const current = getCustomSavedWords();
   const normalized = entry.word.trim().toLowerCase();
@@ -43,6 +58,7 @@ export function addCustomSavedWord(
         ? current[existingIdx].id
         : `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     isCustom: true,
+    isMemorized: existingIdx >= 0 ? current[existingIdx].isMemorized : isMemorized,
     createdAt: new Date().toISOString(),
   };
 
@@ -51,22 +67,20 @@ export function addCustomSavedWord(
       ? current.map((w, i) => (i === existingIdx ? nextItem : w))
       : [nextItem, ...current];
 
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(next.slice(0, 300)));
-      window.dispatchEvent(new Event("justspeak-academy-updated"));
-    } catch {}
-  }
+  persistCustomWords(next);
+  return next;
+}
+
+export function toggleCustomWordMemorized(wordId: string): CustomSavedWord[] {
+  const next = getCustomSavedWords().map((w) =>
+    w.id === wordId ? { ...w, isMemorized: !w.isMemorized } : w
+  );
+  persistCustomWords(next);
   return next;
 }
 
 export function removeCustomSavedWord(wordId: string): CustomSavedWord[] {
   const next = getCustomSavedWords().filter((w) => w.id !== wordId);
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("justspeak-academy-updated"));
-    } catch {}
-  }
+  persistCustomWords(next);
   return next;
 }

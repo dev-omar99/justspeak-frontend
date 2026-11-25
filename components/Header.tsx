@@ -20,23 +20,24 @@ type HeaderProps = {
 interface NavItem {
   href: string;
   label: string;
+  labelAr: string;
   icon: string;
   accent?: "gold" | "glacier";
 }
 
 const AUTHENTICATED_LINKS: readonly NavItem[] = [
-  { href: "/", label: "Home", icon: "🏠" },
-  { href: "/learn", label: "Academy", icon: "🎓", accent: "glacier" },
-  { href: "/ai-studio", label: "AI Coach", icon: "✨", accent: "glacier" },
-  { href: "/leaderboard", label: "Ranks", icon: "🏆" },
-  { href: "/pricing", label: "Plans", icon: "👑", accent: "gold" },
+  { href: "/", label: "Home", labelAr: "الرئيسية", icon: "🏠" },
+  { href: "/learn", label: "Academy", labelAr: "الأكاديمية", icon: "🎓", accent: "glacier" },
+  { href: "/ai-studio", label: "AI Coach", labelAr: "المدرب الذكي", icon: "✨", accent: "glacier" },
+  { href: "/leaderboard", label: "Ranks", labelAr: "المتصدرون", icon: "🏆" },
+  { href: "/pricing", label: "Plans", labelAr: "الخطط", icon: "👑", accent: "gold" },
 ];
 
 const PUBLIC_LINKS: readonly NavItem[] = [
-  { href: "/", label: "Home", icon: "🏠" },
-  { href: "/learn", label: "Academy", icon: "🎓", accent: "glacier" },
-  { href: "/ai-studio", label: "AI Coach", icon: "✨", accent: "glacier" },
-  { href: "/pricing", label: "Plans & Pricing", icon: "👑", accent: "gold" },
+  { href: "/", label: "Home", labelAr: "الرئيسية", icon: "🏠" },
+  { href: "/learn", label: "Academy", labelAr: "الأكاديمية", icon: "🎓", accent: "glacier" },
+  { href: "/ai-studio", label: "AI Coach", labelAr: "المدرب الذكي", icon: "✨", accent: "glacier" },
+  { href: "/pricing", label: "Plans & Pricing", labelAr: "الخطط والأسعار", icon: "👑", accent: "gold" },
 ];
 
 function formatHms(seconds: number): string {
@@ -52,7 +53,8 @@ export default function Header({
   blueTickets: propBlueTickets,
   resetsInSeconds: propResetsIn,
 }: HeaderProps) {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
+  const isArabic = lang === "ar";
   const pathname = usePathname();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -182,15 +184,23 @@ export default function Header({
                     }`}
                   >
                     <span className="text-sm leading-none">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span>{isArabic ? item.labelAr : item.label}</span>
                   </Link>
                 );
               })}
             </nav>
           )}
 
-          {/* Right: AI Tokens Pill, Call Tickets, & Profile / Auth */}
+          {/* Right: Language Switcher, AI Tokens Pill, Call Tickets, & Profile / Auth */}
           <div className="flex items-center gap-2 sm:gap-2.5">
+            <button
+              type="button"
+              onClick={() => setLang(isArabic ? "en" : "ar")}
+              aria-label={isArabic ? "Switch to English" : "التبديل إلى العربية"}
+              className="px-2.5 py-1.5 rounded-xl border border-border bg-surface-subtle hover:bg-white text-[11px] font-bold text-[#002868] transition-colors cursor-pointer"
+            >
+              {isArabic ? "EN" : "عربي"}
+            </button>
             {isLoggedIn ? (
               <>
                 {/* AI Tokens Balance Pill -> Links to /ai-studio or /pricing */}

@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useI18n } from "../../lib/i18n";
 import {
   AcademyProgress,
   CEFR_LEVELS,
-  estimateIeltsBand,
   getAcademyProgress,
 } from "../../lib/academy";
 import { getLessonsByLevel } from "../../lib/academy-lessons";
 
 export default function AcademyQuickStrip() {
+  const router = useRouter();
+  const { lang } = useI18n();
+  const isArabic = lang === "ar";
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
 
   useEffect(() => {
@@ -23,8 +27,6 @@ export default function AcademyQuickStrip() {
   if (!progress) return null;
 
   const meta = CEFR_LEVELS[progress.cefrLevel];
-  const ielts = estimateIeltsBand(progress.scores, progress.cefrLevel);
-
   const levelLessons = getLessonsByLevel(progress.cefrLevel);
   const completedLessonsCount = levelLessons.filter((l) =>
     (progress.completedLessonIds || []).includes(l.id)
@@ -44,8 +46,7 @@ export default function AcademyQuickStrip() {
   const pillars = [
     {
       href: "/learn/listening",
-      label: "Listen",
-      sub: meta.level,
+      label: isArabic ? "استماع" : "Listen",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
@@ -55,8 +56,7 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/reading",
-      label: "Read",
-      sub: meta.level,
+      label: isArabic ? "قراءة" : "Read",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -66,8 +66,7 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/shadowing",
-      label: "Shadowing",
-      sub: "Rhythm",
+      label: isArabic ? "شادوينج" : "Shadowing",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="5 3 19 12 5 21 5 3" />
@@ -76,8 +75,7 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/pronunciation",
-      label: "Pronounce",
-      sub: "TH · R/L",
+      label: isArabic ? "النطق" : "Pronounce",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -89,34 +87,31 @@ export default function AcademyQuickStrip() {
   ];
 
   return (
-    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[290px] sm:aspect-[1/0.95]">
-      {/* Card Header + Live Progress Bar */}
+    <section
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push("/learn")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push("/learn");
+        }
+      }}
+      className="luxury-card cursor-pointer rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-4 min-h-[280px] sm:aspect-[1/0.95]"
+    >
+      {/* Header + Progress Bar */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                 <path d="M6 12v5c3 3 9 3 12 0v-5" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
-                JustSpeak Academy
-              </h2>
-              <p className="text-xs text-[#475569] mt-0.5">
-                CEFR {meta.level} · IELTS {ielts}
-              </p>
-            </div>
+            <h2 className="text-[15px] font-bold text-[#061533] tracking-tight">
+              {isArabic ? "الأكاديمية" : "Academy"}
+            </h2>
           </div>
 
           <span className="text-xs font-bold text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
@@ -124,11 +119,12 @@ export default function AcademyQuickStrip() {
           </span>
         </div>
 
-        {/* Dynamic Level Progress Bar */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between text-[11px] font-semibold">
             <span className="text-[#475569]">
-              Level {meta.level} Progress ({completedLessonsCount}/{levelLessons.length} lessons)
+              {isArabic
+                ? `دروس ${meta.level} (${completedLessonsCount}/${levelLessons.length})`
+                : `${meta.level} Lessons (${completedLessonsCount}/${levelLessons.length})`}
             </span>
             <span className="text-[#002868] tabular-nums font-bold">{academyPct}%</span>
           </div>
@@ -141,20 +137,18 @@ export default function AcademyQuickStrip() {
         </div>
       </div>
 
-      {/* 2x2 Compact Practice Tiles */}
+      {/* 2x2 Clean Practice Tiles */}
       <div className="grid grid-cols-2 gap-2.5 flex-1 content-center">
         {pillars.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-xl bg-[#F8FAFC] hover:bg-[#FFF0F2] border border-[#D8E2F0] hover:border-[#E11D48]/40 px-3.5 py-3 flex flex-col gap-1.5 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            className="group rounded-xl bg-[#F8FAFC] hover:bg-[#FFF0F2] border border-[#D8E2F0] hover:border-[#E11D48]/40 px-3.5 py-3 flex items-center gap-2.5 transition-colors"
           >
-            <div className="flex items-center justify-between text-[#002868] group-hover:text-[#D91023] transition-colors">
+            <span className="text-[#002868] group-hover:text-[#D91023] transition-colors shrink-0">
               {item.icon}
-              <span className="text-[10px] font-bold text-[#475569]">
-                {item.sub}
-              </span>
-            </div>
+            </span>
             <span className="text-xs font-bold text-[#061533] truncate">
               {item.label}
             </span>
@@ -162,35 +156,26 @@ export default function AcademyQuickStrip() {
         ))}
       </div>
 
-      {/* Footer Link */}
+      {/* Footer */}
       <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between gap-2">
         <Link
           href={progress.placementCompleted ? "/learn" : "/placement-test"}
+          onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D91023] hover:text-[#002868] transition-colors"
         >
           <span>
-            {progress.placementCompleted ? "Open Full Plan" : "Take 3-Min Level Test"}
+            {progress.placementCompleted
+              ? isArabic ? "افتح الخطة" : "Open Plan"
+              : isArabic ? "اختبار المستوى" : "Level Test"}
           </span>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14" />
-            <path d="M13 5l7 7-7 7" />
-          </svg>
+          <span>{isArabic ? "←" : "→"}</span>
         </Link>
 
         <Link
           href="/learn"
           className="text-xs font-semibold text-[#002868] hover:text-[#D91023] transition-colors"
         >
-          Lessons
+          {isArabic ? "الدروس" : "Lessons"}
         </Link>
       </div>
     </section>
