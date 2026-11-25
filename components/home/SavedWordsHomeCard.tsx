@@ -2,43 +2,49 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useI18n } from "../../lib/i18n";
 import {
   AcademyProgress,
   getAcademyProgress,
   syncAcademyProgressFromServer,
 } from "../../lib/academy";
 import { ALL_CURRICULUM_VOCAB } from "../../lib/academy-lessons";
+import { CustomSavedWord, getCustomSavedWords } from "../../lib/custom-words";
 
 export default function SavedWordsHomeCard() {
-  const { lang } = useI18n();
-  const isArabic = lang === "ar";
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
+  const [customWords, setCustomWords] = useState<CustomSavedWord[]>([]);
 
   useEffect(() => {
-    setProgress(getAcademyProgress());
+    const refresh = () => {
+      setProgress(getAcademyProgress());
+      setCustomWords(getCustomSavedWords());
+    };
+    refresh();
     syncAcademyProgressFromServer().then((synced) => setProgress(synced));
-    const onUpdate = () => setProgress(getAcademyProgress());
-    window.addEventListener("justspeak-academy-updated", onUpdate);
-    return () => window.removeEventListener("justspeak-academy-updated", onUpdate);
+    window.addEventListener("justspeak-academy-updated", refresh);
+    return () => window.removeEventListener("justspeak-academy-updated", refresh);
   }, []);
 
-  const savedWords = useMemo(() => {
+  const combinedWords = useMemo(() => {
     const ids = progress?.learnedWordIds || [];
-    if (ids.length === 0) return [];
     const byId = new Map(ALL_CURRICULUM_VOCAB.map((w) => [w.id, w]));
-    return ids
+    const curriculumSaved = ids
       .map((id) => byId.get(id))
-      .filter((w): w is NonNullable<typeof w> => Boolean(w));
-  }, [progress?.learnedWordIds]);
+      .filter((w): w is NonNullable<typeof w> => Boolean(w))
+      .reverse();
+    return [...customWords, ...curriculumSaved];
+  }, [progress?.learnedWordIds, customWords]);
 
-  const recentPreview = savedWords.slice(-3).reverse();
-  const totalVocab = ALL_CURRICULUM_VOCAB.length;
-  const pct = Math.min(100, Math.round((savedWords.length / Math.max(1, totalVocab)) * 100));
+  const recentPreview = combinedWords.slice(0, 3);
+  const totalTarget = ALL_CURRICULUM_VOCAB.length + customWords.length;
+  const pct = Math.min(
+    100,
+    Math.round((combinedWords.length / Math.max(1, totalTarget)) * 100)
+  );
 
   return (
-    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
-      {/* Card Header */}
+    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[290px] sm:aspect-[1/0.95]">
+      {/* Card Header + Live Progress Bar */}
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -59,25 +65,31 @@ export default function SavedWordsHomeCard() {
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
-                {isArabic ? "الكلمات المحفوظة" : "Saved Words"}
+                Saved Words
               </h2>
               <p className="text-xs text-[#475569] mt-0.5">
-                {isArabic ? "مفكرتك الشخصية للمراجعة" : "Personal review vault"}
+                Personal vocabulary &amp; flashcards
               </p>
             </div>
           </div>
 
           <span className="text-xs font-bold tabular-nums text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
-            {savedWords.length} / {totalVocab}
+            {combinedWords.length} / {totalTarget}
           </span>
         </div>
 
-        {/* Official Crimson Progress Track */}
-        <div className="w-full h-1.5 rounded-full bg-[#EEF3FA] overflow-hidden">
-          <div
-            className="h-full rounded-full btn-primary-crest transition-all duration-300"
-            style={{ width: `${Math.max(pct, savedWords.length > 0 ? 5 : 0)}%` }}
-          />
+        {/* Dynamic Progress Bar */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold">
+            <span className="text-[#475569]">Vocabulary Progress</span>
+            <span className="text-[#002868] tabular-nums font-bold">{pct}%</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-[#EEF3FA] overflow-hidden">
+            <div
+              className="h-full rounded-full btn-primary-crest transition-all duration-500"
+              style={{ width: `${combinedWords.length > 0 ? Math.max(pct, 6) : 0}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -108,9 +120,7 @@ export default function SavedWordsHomeCard() {
         ) : (
           <div className="rounded-xl border border-dashed border-[#D8E2F0] bg-[#F8FAFC] px-4 py-6 text-center">
             <p className="text-xs font-medium text-[#475569] leading-relaxed">
-              {isArabic
-                ? "أي كلمة تعمل عليها تشيك في الدروس أو بنك الكلمات هتظهر هنا تلقائياً."
-                : "Words you check off in lessons or the bank appear here for quick review."}
+              Add your own words (auto-translated EN ↔ AR) or check off lesson vocabulary to start building your deck.
             </p>
           </div>
         )}
@@ -122,7 +132,7 @@ export default function SavedWordsHomeCard() {
           href="/learn/saved-words"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D91023] hover:text-[#002868] transition-colors"
         >
-          <span>{isArabic ? "فتح صفحة المحفوظة" : "Open Saved Words"}</span>
+          <span>Open Saved Words</span>
           <svg
             width="14"
             height="14"
@@ -139,10 +149,10 @@ export default function SavedWordsHomeCard() {
         </Link>
 
         <Link
-          href="/learn/vocabulary"
+          href="/learn/saved-words#add-word"
           className="text-xs font-semibold text-[#002868] hover:text-[#D91023] transition-colors"
         >
-          {isArabic ? "+ بنك الكلمات" : "+ Add words"}
+          + Add word
         </Link>
       </div>
     </section>

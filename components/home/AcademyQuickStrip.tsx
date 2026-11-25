@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useI18n } from "../../lib/i18n";
 import {
   AcademyProgress,
   CEFR_LEVELS,
   estimateIeltsBand,
   getAcademyProgress,
 } from "../../lib/academy";
+import { getLessonsByLevel } from "../../lib/academy-lessons";
 
 export default function AcademyQuickStrip() {
-  const { lang } = useI18n();
-  const isArabic = lang === "ar";
   const [progress, setProgress] = useState<AcademyProgress | null>(null);
 
   useEffect(() => {
@@ -27,10 +25,26 @@ export default function AcademyQuickStrip() {
   const meta = CEFR_LEVELS[progress.cefrLevel];
   const ielts = estimateIeltsBand(progress.scores, progress.cefrLevel);
 
+  const levelLessons = getLessonsByLevel(progress.cefrLevel);
+  const completedLessonsCount = levelLessons.filter((l) =>
+    (progress.completedLessonIds || []).includes(l.id)
+  ).length;
+  const activitiesDone =
+    completedLessonsCount +
+    Math.min(3, (progress.completedReadingIds || []).length) +
+    Math.min(3, (progress.completedListeningIds || []).length) +
+    Math.min(2, (progress.completedShadowingIds || []).length) +
+    Math.min(2, (progress.completedPronunciationIds || []).length);
+  const activitiesTotal = Math.max(1, levelLessons.length + 10);
+  const academyPct = Math.min(
+    100,
+    Math.round((activitiesDone / activitiesTotal) * 100)
+  );
+
   const pillars = [
     {
       href: "/learn/listening",
-      label: isArabic ? "استماع" : "Listen",
+      label: "Listen",
       sub: meta.level,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +55,7 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/reading",
-      label: isArabic ? "قراءة" : "Read",
+      label: "Read",
       sub: meta.level,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -52,8 +66,8 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/shadowing",
-      label: isArabic ? "شادوينج" : "Shadowing",
-      sub: isArabic ? "نطق طبيعي" : "Rhythm",
+      label: "Shadowing",
+      sub: "Rhythm",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="5 3 19 12 5 21 5 3" />
@@ -62,7 +76,7 @@ export default function AcademyQuickStrip() {
     },
     {
       href: "/learn/pronunciation",
-      label: isArabic ? "مخارج" : "Pronounce",
+      label: "Pronounce",
       sub: "TH · R/L",
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -75,38 +89,56 @@ export default function AcademyQuickStrip() {
   ];
 
   return (
-    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
-      {/* Card Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c3 3 9 3 12 0v-5" />
-            </svg>
+    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[290px] sm:aspect-[1/0.95]">
+      {/* Card Header + Live Progress Bar */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
+                JustSpeak Academy
+              </h2>
+              <p className="text-xs text-[#475569] mt-0.5">
+                CEFR {meta.level} · IELTS {ielts}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
-              {isArabic ? "أكاديمية JustSpeak" : "JustSpeak Academy"}
-            </h2>
-            <p className="text-xs text-[#475569] mt-0.5">
-              CEFR {meta.level} · IELTS {ielts}
-            </p>
-          </div>
+
+          <span className="text-xs font-bold text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
+            {meta.level}
+          </span>
         </div>
 
-        <span className="text-xs font-bold text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
-          {meta.level}
-        </span>
+        {/* Dynamic Level Progress Bar */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold">
+            <span className="text-[#475569]">
+              Level {meta.level} Progress ({completedLessonsCount}/{levelLessons.length} lessons)
+            </span>
+            <span className="text-[#002868] tabular-nums font-bold">{academyPct}%</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-[#EEF3FA] overflow-hidden">
+            <div
+              className="h-full rounded-full btn-primary-crest transition-all duration-500"
+              style={{ width: `${activitiesDone > 0 ? Math.max(academyPct, 6) : 0}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* 2x2 Compact Practice Tiles */}
@@ -137,9 +169,7 @@ export default function AcademyQuickStrip() {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D91023] hover:text-[#002868] transition-colors"
         >
           <span>
-            {progress.placementCompleted
-              ? isArabic ? "متابعة خطة الدروس" : "Open Full Plan"
-              : isArabic ? "اختبار تحديد المستوى" : "Take 3-Min Level Test"}
+            {progress.placementCompleted ? "Open Full Plan" : "Take 3-Min Level Test"}
           </span>
           <svg
             width="14"
@@ -160,7 +190,7 @@ export default function AcademyQuickStrip() {
           href="/learn"
           className="text-xs font-semibold text-[#002868] hover:text-[#D91023] transition-colors"
         >
-          {isArabic ? "الدروس" : "Lessons"}
+          Lessons
         </Link>
       </div>
     </section>

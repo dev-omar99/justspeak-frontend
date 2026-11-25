@@ -484,6 +484,34 @@ export const saveAcademyProgressApi = (token: string, payload: any) =>
     body: JSON.stringify(payload),
   }).then((r) => (r.ok ? r.json() : null));
 
+export const translateWordApi = async (
+  token: string,
+  text: string
+): Promise<{
+  word: string;
+  meaningAr: string;
+  meaningEn: string;
+  example: string;
+  ipa: string;
+  pos: string;
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  sourceLang: "ar" | "en";
+}> => {
+  const res = await fetch(`${getApiBaseUrl()}/users/translate-word`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || "Failed to translate word");
+  }
+  return data;
+};
+
 export const changePasswordApi = async (
   token: string,
   currentPassword: string,
