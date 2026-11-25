@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUser } from "../lib/auth";
+import { aiPartnerEnabled } from "../services/ai-partner";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export default function BottomNav() {
     "/login",
     "/signup",
     "/onboarding",
+    "/ai-partner/session",
   ];
   const shouldHide = hiddenRoutes.some(
     (route) => pathname === route || pathname?.startsWith(`${route}/`)
@@ -46,6 +48,16 @@ export default function BottomNav() {
       icon: "✨",
       match: (p: string) => p.startsWith("/ai-studio"),
     },
+    ...(aiPartnerEnabled()
+      ? [
+          {
+            href: "/ai-partner",
+            label: "AI Partner",
+            icon: "🎙️",
+            match: (p: string) => p.startsWith("/ai-partner"),
+          },
+        ]
+      : []),
     {
       href: "/leaderboard",
       label: "Ranks",
