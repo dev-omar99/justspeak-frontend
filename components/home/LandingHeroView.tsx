@@ -8,27 +8,53 @@ import { SUBSCRIPTION_PLANS } from "../../lib/plans";
 
 const VALUE_PILLARS = [
   {
-    icon: "🌍",
+    icon: "globe" as const,
     title: "Real 1-on-1 Human Calls",
     description:
-      "7-minute live video & voice sessions with friendly English learners worldwide. Available to everyone daily.",
-    accent: "border-[#002868]/25 bg-[#EAF1FC]/75 text-[#061533]",
+      "7-minute live video & voice sessions with friendly English learners worldwide. Five free sessions every day.",
   },
   {
-    icon: "🤝",
+    icon: "users" as const,
     title: "Direct Buddy Reconnect",
     description:
       "Met a great speaking partner? Upgrade to Plus to call your favorite buddies directly anytime you want.",
-    accent: "border-[#E11D48]/35 bg-[#FFF0F2]/85 text-[#061533]",
   },
   {
-    icon: "✨",
+    icon: "mic" as const,
     title: "AI Topic Speaking Studio",
     description:
-      "Practice IELTS, job interviews, travel, and custom scenarios 24/7 using your monthly AI Token quota.",
-    accent: "border-[#1D4ED8]/30 bg-white text-[#061533]",
+      "Practice IELTS, job interviews, travel, and custom scenarios 24/7 with honest grammar and phrasing feedback.",
   },
 ] as const;
+
+function PillarIcon({ kind }: { kind: "globe" | "users" | "mic" }) {
+  if (kind === "globe") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    );
+  }
+  if (kind === "users") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+    </svg>
+  );
+}
 
 export default function LandingHeroView() {
   return (
@@ -36,59 +62,56 @@ export default function LandingHeroView() {
       <Header />
 
       <PageTransition>
-        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-16 flex flex-col gap-14">
-          {/* Hero American Flag Patriotic Banner */}
-          <section className="relative rounded-[32px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#881337] text-white px-6 py-12 sm:px-12 sm:py-16 shadow-2xl overflow-hidden flex flex-col items-center text-center gap-6 border-2 border-[#E11D48]/35">
-            {/* Patriotic Crimson Red & Liberty Blue Glow Orbs */}
-            <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-[#3B82F6]/30 blur-3xl pointer-events-none" />
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex flex-col gap-12">
+          {/* Architectural Deep-Navy Hero Banner */}
+          <section className="rounded-3xl bg-[#061533] text-white shadow-[0_12px_32px_rgba(6,21,51,0.14)] overflow-hidden border border-slate-800">
+            <div className="h-1 w-full bg-[#D91023]" />
+            <div className="px-6 py-12 sm:px-12 sm:py-16 flex flex-col items-center text-center gap-6">
+              <BrandLogo size="hero" withGlow={false} priority={true} />
 
-            <BrandLogo size="hero" withGlow={true} priority={true} />
-
-            <span className="inline-flex items-center gap-2 bg-white/12 border border-white/25 text-white text-xs font-extrabold px-4 py-1.5 rounded-full shadow-xs">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] animate-pulse" />
-              Live Global 1-on-1 Practice • Standalone AI Speaking Studio
-            </span>
-
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight max-w-3xl">
-              Speak English with{" "}
-              <span className="bg-gradient-to-r from-[#FF4D6D] via-white to-[#93C5FD] bg-clip-text text-transparent">
-                Real Confidence
+              <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/15 text-slate-200 text-xs font-semibold px-4 py-1.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                Live 1-on-1 Practice · CEFR Academy · Voice AI Studio
               </span>
-            </h1>
 
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-              Jump into pure 7-minute live conversations with global speaking partners for free, or unlock dedicated AI Topic Tokens to rehearse interviews, IELTS, and real-world scenarios 24/7.
-            </p>
+              <h1 className="text-3xl sm:text-5xl font-bold leading-[1.12] tracking-tight max-w-2xl text-white">
+                Speak English with{" "}
+                <span className="text-[#FF6B7F]">Real Confidence</span>
+              </h1>
 
-            <div className="w-full max-w-md flex flex-col sm:flex-row gap-3.5 pt-2">
-              <Link
-                href="/signup"
-                className="flex-1 btn-primary-crest text-white rounded-2xl py-4 px-6 text-sm font-black shadow-xl text-center"
-              >
-                Create Free Account →
-              </Link>
-              <Link
-                href="/login"
-                className="flex-1 text-center border border-white/25 text-white bg-white/10 hover:bg-white/18 backdrop-blur-xs rounded-2xl py-4 px-6 text-sm font-extrabold transition-all"
-              >
-                Member Log In
-              </Link>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+                Jump into focused 7-minute live conversations with speaking partners worldwide, build vocabulary in JustSpeak Academy, or rehearse interviews 24/7 with AI.
+              </p>
+
+              <div className="w-full max-w-md flex flex-col sm:flex-row gap-3 pt-2">
+                <Link
+                  href="/signup"
+                  className="flex-1 bg-[#D91023] hover:bg-[#B91C1C] text-white rounded-xl py-3.5 px-6 text-sm font-bold shadow-sm text-center transition-colors"
+                >
+                  Create Free Account →
+                </Link>
+                <Link
+                  href="/login"
+                  className="flex-1 text-center border border-white/20 text-white bg-white/[0.06] hover:bg-white/[0.12] rounded-xl py-3.5 px-6 text-sm font-semibold transition-colors"
+                >
+                  Member Log In
+                </Link>
+              </div>
             </div>
           </section>
 
           {/* 3 Clean Value Pillars */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {VALUE_PILLARS.map((pillar) => (
               <div
                 key={pillar.title}
-                className={`luxury-card rounded-3xl p-6 border bg-white shadow-sm flex flex-col gap-3 ${pillar.accent}`}
+                className="rounded-2xl p-6 border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(6,21,51,0.04)] flex flex-col gap-3"
               >
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-border flex items-center justify-center text-2xl">
-                  {pillar.icon}
+                <div className="w-10 h-10 rounded-xl bg-[#002868]/[0.07] text-[#002868] flex items-center justify-center">
+                  <PillarIcon kind={pillar.icon} />
                 </div>
-                <h2 className="text-lg font-black text-ink">{pillar.title}</h2>
-                <p className="text-xs sm:text-sm text-ink-soft leading-relaxed">
+                <h2 className="text-base font-bold text-[#061533]">{pillar.title}</h2>
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
                   {pillar.description}
                 </p>
               </div>

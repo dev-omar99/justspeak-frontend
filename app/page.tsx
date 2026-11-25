@@ -366,147 +366,168 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* American Flag Navy & Crimson Active Tribe Ribbon */}
+      {/* Understated Deep-Navy Active Tribe Bar */}
       <button
         type="button"
         onClick={() => setShowTribeModal(true)}
-        className="w-full bg-gradient-to-r from-[#002868] via-[#B91C1C] to-[#002868] border-b border-white/15 py-2.5 px-4 flex items-center justify-center gap-2 text-white hover:brightness-110 transition-all cursor-pointer shadow-xs"
+        className="w-full bg-[#061533] border-b border-white/10 py-2 px-4 flex items-center justify-center gap-2.5 text-slate-200 hover:bg-[#0B1F3A] transition-colors cursor-pointer"
       >
-        <span className="w-5 h-5 rounded-full bg-white text-[#D91023] text-xs font-black flex items-center justify-center">
-          ★
+        <span className="w-2 h-2 rounded-full bg-[#D91023]" />
+        <span className="text-xs font-medium tracking-tight">
+          <span className="font-semibold text-white">{activeTribeName}</span> · {activeTribeWindow} UTC
         </span>
-        <span className="text-xs sm:text-sm font-extrabold tracking-tight">
-          <span className="text-white underline decoration-[#E11D48]">{activeTribeName}</span> Window (
-          {activeTribeWindow} UTC)
-        </span>
-        <span className="text-[11px] text-rose-100 underline ml-1">
-          Switch Tribe
+        <span className="text-[11px] font-semibold text-slate-300 border border-white/15 rounded-md px-2 py-0.5 hover:text-white">
+          Switch
         </span>
       </button>
 
       <PageTransition>
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-7 pb-10 flex flex-col gap-6">
-          {/* Top Hero Card: Live 1-on-1 Human Speaking Room Entry (American Flag Navy & Crimson) */}
-          <section className="rounded-[30px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#881337] text-white p-6 sm:p-8 shadow-xl border-2 border-[#E11D48]/35 flex flex-col gap-6 relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-7 pb-10 flex flex-col gap-5">
+          {/* Top Hero Card: Architectural Deep Navy Live Speaking Entry */}
+          <section className="rounded-2xl bg-[#061533] text-white shadow-[0_8px_24px_rgba(6,21,51,0.12)] border border-slate-800 overflow-hidden">
+            {/* Signature JustSpeak Crimson Top Accent Rule */}
+            <div className="h-1 w-full bg-[#D91023]" />
+            <div className="p-6 sm:p-8 flex flex-col gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="max-w-lg">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>1-on-1 Live Human Practice</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-[28px] font-bold mt-2 leading-tight tracking-tight text-white">
+                    Ready for your next 7-minute English call?
+                  </h1>
+                </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-              <div>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-white/10 text-[#9CCDF2] px-3 py-1 rounded-full">
-                  <span className="w-2 h-2 rounded-full bg-[#E11D48] animate-pulse" />
-                  1-on-1 Live Human Practice
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-black mt-2 leading-tight">
-                  Ready for your next 7-minute English call?
-                </h1>
+                <button
+                  type="button"
+                  onClick={() => setShowTribeModal(true)}
+                  className="self-start inline-flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-100 transition-colors cursor-pointer shrink-0"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <span>{userTribeName}</span>
+                  <span className="text-emerald-400 tabular-nums">· {activeMembersCount} online</span>
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowTribeModal(true)}
-                className="self-start sm:self-auto inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer"
+              <div className="grid grid-cols-2 divide-x divide-white/10 bg-white/[0.04] border border-white/10 rounded-xl py-3.5 px-4">
+                <div className="flex flex-col items-center gap-0.5 pr-3">
+                  <span className="text-[11px] font-medium text-slate-400">Active Rooms</span>
+                  <span className="text-lg sm:text-xl font-bold text-white tabular-nums">
+                    {stats.liveRoomsCount} live
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 pl-3">
+                  <span className="text-[11px] font-medium text-slate-400">Next Wave In</span>
+                  <span className="text-lg sm:text-xl font-bold text-white tabular-nums">
+                    {formatNextSessionCountdown(nextSessionSeconds)}
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href="/queue"
+                className="w-full bg-[#D91023] hover:bg-[#B91C1C] active:scale-[0.995] transition-all text-white font-bold text-center py-3.5 px-6 rounded-xl text-sm sm:text-base shadow-sm flex items-center justify-center gap-2"
               >
-                <span>🛡️ {userTribeName}</span>
-                <span className="text-[#F5A623]">• {activeMembersCount} online</span>
-              </button>
+                <span>Join Live Conversation Now</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="M13 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-
-            <div className="grid grid-cols-2 gap-4 bg-white/8 border border-white/10 rounded-2xl p-4 text-center relative z-10">
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-xs text-slate-300">Active Rooms</span>
-                <span className="text-lg sm:text-xl font-black text-white">
-                  {stats.liveRoomsCount} live
-                </span>
-              </div>
-              <div className="flex flex-col items-center gap-0.5 border-l border-white/10">
-                <span className="text-xs text-slate-300">Next Wave In</span>
-                <span className="text-lg sm:text-xl font-black text-[#FF6B7F] tabular-nums">
-                  {formatNextSessionCountdown(nextSessionSeconds)}
-                </span>
-              </div>
-            </div>
-
-            <Link
-              href="/queue"
-              className="relative z-10 w-full btn-primary-crest text-white font-black text-center py-4 rounded-2xl text-base sm:text-lg shadow-xl"
-            >
-              Join Live Conversation Now →
-            </Link>
           </section>
 
-          {/* Prominent Dedicated Saved Words Card */}
-          <SavedWordsHomeCard />
+          {/* Balanced 2-Column Square Bento Cards: Saved Words + JustSpeak Academy */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SavedWordsHomeCard />
+            <AcademyQuickStrip />
+          </div>
 
-          {/* Compact CEFR Academy Daily Quick Strip */}
-          <AcademyQuickStrip />
-
-          {/* Dual Feature Row: Standalone AI Topic Studio + Membership Tier */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Dual Feature Row: AI Topic Studio + Membership Tier */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/ai-studio"
-              className="luxury-card bg-white rounded-[26px] p-5 border border-[#002868]/20 shadow-sm flex items-center justify-between gap-4 group"
+              className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(6,21,51,0.04)] hover:border-slate-300 transition-colors flex items-center justify-between gap-4 group"
             >
               <div className="flex items-start gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#EAF1FC] border border-[#002868]/25 flex items-center justify-center text-2xl flex-shrink-0">
-                  🤖
+                <div className="w-10 h-10 rounded-xl bg-[#002868]/[0.07] text-[#002868] flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                  </svg>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black text-ink group-hover:text-[#D91023] transition-colors">
-                      AI Topic Speaking Studio
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-[15px] font-bold text-[#061533] group-hover:text-[#002868] transition-colors">
+                      AI Speaking Studio
                     </h2>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FFF0F2] text-[#D91023] border border-[#E11D48]/35">
-                      ⚡ {aiTokensBalance.toLocaleString()}
+                    <span className="text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                      {aiTokensBalance.toLocaleString()} tokens
                     </span>
                   </div>
-                  <p className="text-xs text-ink-soft mt-1 leading-relaxed">
-                    Practice IELTS, job interviews & travel topics independently with our AI model.
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Rehearse interviews, IELTS, and real-world topics with instant feedback.
                   </p>
                 </div>
               </div>
-              <span className="text-[#D91023] group-hover:translate-x-0.5 transition-transform font-bold">
-                →
-              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover:text-[#002868] group-hover:translate-x-0.5 transition-all shrink-0">
+                <path d="M5 12h14" />
+                <path d="M13 5l7 7-7 7" />
+              </svg>
             </Link>
 
             <Link
               href="/pricing"
-              className="luxury-card bg-gradient-to-br from-[#FFF0F2] via-white to-[#EAF1FC]/70 rounded-[26px] p-5 border border-[#E11D48]/40 shadow-sm flex items-center justify-between gap-4 group"
+              className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-[0_1px_2px_rgba(6,21,51,0.04)] hover:border-slate-300 transition-colors flex items-center justify-between gap-4 group"
             >
               <div className="flex items-start gap-3.5">
-                <div className="w-12 h-12 rounded-2xl btn-primary-crest text-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
-                  👑
+                <div className="w-10 h-10 rounded-xl bg-[#D91023]/[0.08] text-[#D91023] flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#D91023]">
-                    Current Plan: {currentPlan.name}
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#D91023]">
+                    {currentPlan.name}
                   </span>
-                  <h2 className="text-sm sm:text-base font-black text-ink mt-0.5">
-                    Unlock Direct Buddy Calls & 3,500 AI Tokens
+                  <h2 className="text-[15px] font-bold text-[#061533] mt-0.5 group-hover:text-[#D91023] transition-colors">
+                    Upgrade Membership
                   </h2>
-                  <p className="text-xs text-ink-soft mt-0.5">
-                    Compare Free, Plus & Elite VIP benefits
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Unlock direct Buddy Calls &amp; monthly AI Tokens
                   </p>
                 </div>
               </div>
-              <span className="text-[#D91023] group-hover:translate-x-0.5 transition-transform font-bold">
-                →
-              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover:text-[#D91023] group-hover:translate-x-0.5 transition-all shrink-0">
+                <path d="M5 12h14" />
+                <path d="M13 5l7 7-7 7" />
+              </svg>
             </Link>
           </section>
 
           {/* My 7-Day Speaking Streak Card */}
-          <section className="luxury-card bg-white rounded-[28px] p-5 sm:p-6 border border-border shadow-sm flex flex-col gap-4">
+          <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_1px_2px_rgba(6,21,51,0.04)] flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔥</span>
-                <h3 className="text-base sm:text-lg font-black text-ink">
-                  My Speaking Streak
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg bg-[#D91023]/[0.08] text-[#D91023] flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                  </svg>
+                </span>
+                <h3 className="text-[15px] font-bold text-[#061533]">
+                  Speaking Streak
                 </h3>
               </div>
               <Link
                 href="/achievements"
-                className="flex items-center gap-1 text-xs sm:text-sm font-extrabold text-glacier hover:text-primary"
+                className="flex items-center gap-1 text-xs font-bold text-[#002868] hover:text-[#D91023] transition-colors"
               >
                 <span>
                   {stats.streakDays} {stats.streakDays === 1 ? "day" : "days"}
