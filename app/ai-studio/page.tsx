@@ -625,30 +625,29 @@ export default function AiStudioPage() {
             </section>
           ) : (
             <>
-              {/* BRAND-MATCHED NAVY EDITORIAL HERO */}
-              <section className="rounded-[28px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#0B1F3A] text-white p-6 sm:p-9 shadow-lg border border-[#002868]/40 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative overflow-hidden">
-                <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#D91023]/25 blur-3xl pointer-events-none" />
+              {/* BRAND-MATCHED ARCHITECTURAL NAVY HERO */}
+              <section className="rounded-2xl bg-[#061533] text-white shadow-[0_10px_28px_rgba(6,21,51,0.14)] border border-slate-800 overflow-hidden">
+                <div className="h-1 w-full bg-[#D91023]" />
+                <div className="p-6 sm:p-9 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                  <div className="flex flex-col gap-2.5 max-w-2xl">
+                    <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/15 text-slate-200 text-xs font-semibold px-3 py-1 rounded-full w-fit">
+                      Interactive Voice AI Coach · Grammar &amp; Phrasing Feedback
+                    </span>
+                    <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">
+                      AI Speaking &amp; Grammar Coach
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      Practice real-world scenarios by voice (interviews, travel, IELTS) and receive honest grammar fixes and phrasing upgrades.
+                    </p>
+                  </div>
 
-                <div className="relative z-10 flex flex-col gap-2.5 max-w-2xl">
-                  <span className="inline-flex items-center gap-1.5 bg-white/15 border border-white/20 text-white text-xs font-black px-3 py-1 rounded-full w-fit">
-                    🎙️ Interactive Voice AI Coach • Grammar + Native Rewrite
-                  </span>
-                  <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-                    {isArabic ? "مدرب المحادثة الذكي (AI Speaking Coach)" : "AI Speaking & Grammar Coach"}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                    {isArabic
-                      ? "تدرّب بصوتك على سيناريوهات حقيقية (مقابلات عمل، سفر، IELTS) واحصل فوراً على تصحيح القواعد، وإعادة الصياغة بأسلوب المتحدث الأصلي، وتقييم الطلاقة."
-                      : "Practice real-world scenarios by voice and receive instant grammar fixes, native-speaker rewrites, and live fluency scoring."}
-                  </p>
+                  <Link
+                    href="/queue"
+                    className="px-5 py-3.5 rounded-xl btn-primary-crest text-white text-xs sm:text-sm font-bold whitespace-nowrap shadow-sm"
+                  >
+                    Or Talk to a Real Partner →
+                  </Link>
                 </div>
-
-                <Link
-                  href="/queue"
-                  className="relative z-10 px-5 py-3.5 rounded-2xl btn-primary-crest text-white text-xs sm:text-sm font-black whitespace-nowrap shadow-md"
-                >
-                  🎙️ {isArabic ? "أو تحدث مع شريك حقيقي →" : "Or Talk to a Real Partner →"}
-                </Link>
               </section>
 
               {/* Category Filter Pills */}

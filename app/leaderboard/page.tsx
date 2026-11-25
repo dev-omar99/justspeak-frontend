@@ -59,32 +59,33 @@ export default function LeaderboardPage() {
       <PageTransition>
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
           
-          {/* Header Hero Banner */}
-          <div className="bg-gradient-to-br from-[#071426] via-[#0B1F3A] to-[#13325B] text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-gold/15 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col gap-2 text-center md:text-left max-w-xl">
-              <span className="inline-flex items-center gap-1.5 bg-gold/20 text-[#F5A623] border border-gold/35 text-xs font-bold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
-                🏆 Global & Tribe Champions
-              </span>
-              <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">
-                Speaking Leaderboard
-              </h1>
-              <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-                Celebrate the most dedicated English speakers and top-performing Tribes from around the world!
-              </p>
-            </div>
-
-            {/* My Live Rank Badge */}
-            <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/15 flex items-center gap-4 flex-shrink-0">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-ink font-black text-2xl flex items-center justify-center shadow-lg shadow-amber-400/30">
-                #{myRank}
-              </div>
-              <div className="text-left">
-                <p className="text-xs text-white/70">My Global Rank</p>
-                <p className="text-sm font-extrabold text-amber-300">
-                  {user?.name || (user?.email ? user.email.split("@")[0] : "Learner")}
+          {/* Header Hero Banner (Architectural Eagle Crest Navy + Crimson) */}
+          <div className="bg-[#061533] text-white rounded-2xl shadow-[0_10px_28px_rgba(6,21,51,0.14)] border border-slate-800 overflow-hidden">
+            <div className="h-1 w-full bg-[#D91023]" />
+            <div className="p-6 sm:p-9 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col gap-2 text-center md:text-left max-w-xl">
+                <span className="inline-flex items-center gap-1.5 bg-white/[0.06] text-slate-200 border border-white/15 text-xs font-semibold px-3.5 py-1 rounded-full w-max mx-auto md:mx-0">
+                  Global &amp; Tribe Champions
+                </span>
+                <h1 className="text-2xl sm:text-4xl font-bold leading-tight tracking-tight">
+                  Speaking Leaderboard
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Celebrate the most dedicated English speakers and top-performing Tribes from around the world.
                 </p>
+              </div>
+
+              {/* My Live Rank Badge */}
+              <div className="bg-white/[0.06] rounded-2xl p-4 sm:p-5 border border-white/15 flex items-center gap-4 flex-shrink-0">
+                <div className="w-14 h-14 rounded-xl btn-primary-crest text-white font-bold text-2xl flex items-center justify-center shadow-sm">
+                  #{myRank}
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-slate-300">My Global Rank</p>
+                  <p className="text-sm font-bold text-white">
+                    {user?.name || (user?.email ? user.email.split("@")[0] : "Learner")}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

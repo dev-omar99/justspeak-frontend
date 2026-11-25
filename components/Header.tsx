@@ -52,7 +52,7 @@ export default function Header({
   blueTickets: propBlueTickets,
   resetsInSeconds: propResetsIn,
 }: HeaderProps) {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const pathname = usePathname();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -189,17 +189,8 @@ export default function Header({
             </nav>
           )}
 
-          {/* Right: Language Switcher, AI Tokens Pill, Call Tickets, & Profile / Auth */}
+          {/* Right: AI Tokens Pill, Call Tickets, & Profile / Auth */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <button
-              type="button"
-              onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-              aria-label={lang === "ar" ? "Switch language to English" : "التبديل إلى اللغة العربية"}
-              title={lang === "ar" ? "Switch to English" : "التبديل للعربية"}
-              className="px-2.5 py-1.5 rounded-xl border border-border bg-surface-subtle hover:bg-white text-[11px] font-extrabold text-[#002868] transition-colors cursor-pointer"
-            >
-              {lang === "ar" ? "EN" : "عربي"}
-            </button>
             {isLoggedIn ? (
               <>
                 {/* AI Tokens Balance Pill -> Links to /ai-studio or /pricing */}

@@ -97,26 +97,25 @@ export default function PricingPage() {
 
       <PageTransition>
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col gap-10">
-          {/* Top Hero Header */}
-          <section className="rounded-[32px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#881337] text-white p-7 sm:p-11 shadow-2xl border-2 border-[#E11D48]/35 text-center flex flex-col items-center gap-4 relative overflow-hidden">
-            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#E11D48]/35 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -right-20 w-72 h-72 rounded-full bg-[#3B82F6]/30 blur-3xl pointer-events-none" />
+          {/* Top Hero Header (Architectural Eagle Crest Navy + Crimson) */}
+          <section className="rounded-3xl bg-[#061533] text-white shadow-[0_12px_32px_rgba(6,21,51,0.14)] border border-slate-800 overflow-hidden">
+            <div className="h-1 w-full bg-[#D91023]" />
+            <div className="p-7 sm:p-11 text-center flex flex-col items-center gap-4">
+              <BrandLogo size="md" withGlow={false} />
 
-            <BrandLogo size="md" withGlow={true} />
+              <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/15 text-slate-200 text-xs font-semibold px-4 py-1.5 rounded-full">
+                Transparent Plans · Live Human Calls + AI Token Quotas
+              </span>
 
-            <span className="inline-flex items-center gap-2 bg-white/12 border border-white/25 text-white text-xs font-extrabold px-4 py-1.5 rounded-full">
-              👑 Transparent Plans • Live Human Calls + AI Token Quotas
-            </span>
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight max-w-2xl leading-tight">
+                Choose Your English Fluency Plan
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                Start with 5 free 1-on-1 live human calls every day. Upgrade to call your favorite partners directly and unlock monthly <strong>AI Studio Tokens</strong>.
+              </p>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight max-w-2xl leading-tight">
-              Choose Your English Fluency Plan
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Live 1-on-1 conversations with global learners are open to everyone. Upgrade to call your favorite partners directly and unlock monthly <strong>AI Studio Tokens</strong>.
-            </p>
-
-            {/* Billing Cycle Switcher */}
-            <div className="mt-2 inline-flex items-center bg-white/10 border border-white/15 p-1 rounded-2xl">
+              {/* Billing Cycle Switcher */}
+              <div className="mt-2 inline-flex items-center bg-white/10 border border-white/15 p-1 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setBillingCycle("monthly")}
@@ -142,6 +141,7 @@ export default function PricingPage() {
                   Save 35%
                 </span>
               </button>
+            </div>
             </div>
           </section>
 
@@ -233,10 +233,10 @@ export default function PricingPage() {
                       <span className="text-xs font-extrabold">
                         AI Studio Quota
                       </span>
-                      <span className="text-xs font-black">
+                      <span className="text-xs font-bold">
                         {plan.monthlyAiTokens > 0
-                          ? `⚡ ${plan.monthlyAiTokens.toLocaleString()} Tokens / mo`
-                          : "🔒 Locked (0 Tokens)"}
+                          ? `${plan.monthlyAiTokens.toLocaleString()} Tokens / mo`
+                          : "5 Free Trial Msgs / day"}
                       </span>
                     </div>
 
@@ -294,22 +294,43 @@ export default function PricingPage() {
             })}
           </section>
 
-          {/* Clear Architecture Distinction Note */}
-          <section className="bg-white rounded-[28px] p-6 sm:p-8 border border-border flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="max-w-2xl">
-              <h3 className="text-base sm:text-lg font-black text-ink">
-                How Live Human Calls & AI Studio Tokens Work Together
-              </h3>
-              <p className="text-xs sm:text-sm text-ink-soft mt-1.5 leading-relaxed">
-                Your 1-on-1 conversations with real people stay 100% natural, private, and distraction-free. Whenever you want targeted topic rehearsal—like job interviews, IELTS speaking, or travel roleplay—head to the standalone <strong>AI Topic Speaking Studio</strong> and spend your monthly AI Tokens at your own pace.
-              </p>
+          {/* Clear Architecture Distinction & Cancellation Policy */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-2xl p-6 border border-[#D8E2F0] flex flex-col justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-[#061533]">
+                  How Live Calls &amp; AI Tokens Work Together
+                </h3>
+                <p className="text-xs sm:text-sm text-[#475569] mt-1.5 leading-relaxed">
+                  Your 1-on-1 conversations with real learners stay 100% natural and private. Whenever you want focused topic rehearsal—like interviews or IELTS—head to the <strong>AI Speaking Studio</strong>.
+                </p>
+              </div>
+              <Link
+                href="/ai-studio"
+                className="self-start px-5 py-2.5 rounded-xl bg-[#002868] hover:bg-[#061533] text-white text-xs font-bold transition-colors"
+              >
+                Explore AI Studio →
+              </Link>
             </div>
-            <Link
-              href="/ai-studio"
-              className="px-6 py-3.5 rounded-2xl bg-[#0B1F3A] hover:bg-[#122E54] text-white text-xs font-black whitespace-nowrap transition-all"
-            >
-              Explore AI Studio →
-            </Link>
+
+            <div className="bg-white rounded-2xl p-6 border border-[#D8E2F0] flex flex-col justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-[#061533]">
+                  Flexible Cancellation &amp; Payment Options
+                </h3>
+                <p className="text-xs sm:text-sm text-[#475569] mt-1.5 leading-relaxed">
+                  Cancel or switch back to Free Starter anytime with zero lock-in. We support international cards (Visa/Mastercard) and local Egyptian payment options (Cards, Mobile Wallets, InstaPay).
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-xs font-bold text-[#002868]">
+                <Link href="/terms" className="hover:underline">
+                  Terms of Service
+                </Link>
+                <Link href="/privacy" className="hover:underline">
+                  Privacy Policy
+                </Link>
+              </div>
+            </div>
           </section>
         </div>
       </PageTransition>
