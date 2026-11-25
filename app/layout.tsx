@@ -49,10 +49,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "/",
-    languages: {
-      "en-US": "/?lang=en",
-      "ar-SA": "/?lang=ar",
-    },
   },
   openGraph: {
     title: "JustSpeak — Speak English with Confidence Worldwide",
@@ -62,14 +58,13 @@ export const metadata: Metadata = {
     siteName: "JustSpeak",
     images: [
       {
-        url: "/logo.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "JustSpeak - 1-on-1 English Conversation Practice",
       },
     ],
     locale: "en_US",
-    alternateLocale: ["ar_AR"],
     type: "website",
   },
   twitter: {
@@ -77,7 +72,7 @@ export const metadata: Metadata = {
     title: "JustSpeak — 1-on-1 English Conversation Practice",
     description:
       "Instant 1-on-1 video conversations with global English learners + AI conversation coach. Build fluency and confidence in 7-minute daily sessions.",
-    images: ["/logo.png"],
+    images: ["/og-image.png"],
     creator: "@justspeak_app",
   },
   robots: {
@@ -92,8 +87,11 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",

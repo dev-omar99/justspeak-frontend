@@ -37,19 +37,19 @@ export default function SavedWordsHomeCard() {
   const pct = Math.min(100, Math.round((savedWords.length / Math.max(1, totalVocab)) * 100));
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-[#881337] via-[#9F1239] to-[#6B0F2B] text-white border border-white/15 shadow-[0_10px_28px_rgba(136,19,55,0.22)] hover:brightness-[1.04] transition-all p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
+    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
       {/* Card Header */}
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/12 border border-white/15 text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.85"
+                strokeWidth="1.9"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -58,25 +58,25 @@ export default function SavedWordsHomeCard() {
               </svg>
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-white tracking-tight leading-snug">
+              <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
                 {isArabic ? "الكلمات المحفوظة" : "Saved Words"}
               </h2>
-              <p className="text-xs text-rose-100/75 mt-0.5">
+              <p className="text-xs text-[#475569] mt-0.5">
                 {isArabic ? "مفكرتك الشخصية للمراجعة" : "Personal review vault"}
               </p>
             </div>
           </div>
 
-          <span className="text-xs font-semibold tabular-nums text-white bg-black/25 border border-white/15 px-2.5 py-1 rounded-lg shrink-0">
+          <span className="text-xs font-bold tabular-nums text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
             {savedWords.length} / {totalVocab}
           </span>
         </div>
 
-        {/* Subtle Progress Track */}
-        <div className="w-full h-1.5 rounded-full bg-black/25 overflow-hidden">
+        {/* Official Crimson Progress Track */}
+        <div className="w-full h-1.5 rounded-full bg-[#EEF3FA] overflow-hidden">
           <div
-            className="h-full rounded-full bg-white transition-all duration-300"
-            style={{ width: `${Math.max(pct, savedWords.length > 0 ? 4 : 0)}%` }}
+            className="h-full rounded-full btn-primary-crest transition-all duration-300"
+            style={{ width: `${Math.max(pct, savedWords.length > 0 ? 5 : 0)}%` }}
           />
         </div>
       </div>
@@ -84,30 +84,30 @@ export default function SavedWordsHomeCard() {
       {/* Middle Body */}
       <div className="flex-1 flex flex-col justify-center">
         {recentPreview.length > 0 ? (
-          <ul className="divide-y divide-white/10 border border-white/12 rounded-xl bg-black/20 px-3.5">
+          <ul className="divide-y divide-[#D8E2F0]/70 border border-[#D8E2F0] rounded-xl bg-[#F8FAFC] px-3.5">
             {recentPreview.map((w) => (
               <li
                 key={w.id}
                 className="py-2.5 flex items-center justify-between gap-3 text-xs"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                  <span className="font-semibold text-white truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D91023] shrink-0" />
+                  <span className="font-bold text-[#061533] truncate">
                     {w.word}
                   </span>
-                  <span className="text-[10px] font-medium text-rose-200/75 uppercase shrink-0">
+                  <span className="text-[10px] font-bold text-[#002868] bg-[#EAF1FC] px-1.5 py-0.5 rounded uppercase shrink-0">
                     {w.level}
                   </span>
                 </div>
-                <span className="text-rose-100/90 font-medium truncate max-w-[48%] text-right">
+                <span className="text-[#475569] font-semibold truncate max-w-[45%] text-right">
                   {w.meaningAr}
                 </span>
               </li>
             ))}
           </ul>
         ) : (
-          <div className="rounded-xl border border-dashed border-white/25 bg-black/15 px-4 py-6 text-center">
-            <p className="text-xs font-medium text-rose-100/85 leading-relaxed">
+          <div className="rounded-xl border border-dashed border-[#D8E2F0] bg-[#F8FAFC] px-4 py-6 text-center">
+            <p className="text-xs font-medium text-[#475569] leading-relaxed">
               {isArabic
                 ? "أي كلمة تعمل عليها تشيك في الدروس أو بنك الكلمات هتظهر هنا تلقائياً."
                 : "Words you check off in lessons or the bank appear here for quick review."}
@@ -117,10 +117,10 @@ export default function SavedWordsHomeCard() {
       </div>
 
       {/* Footer Actions */}
-      <div className="pt-3 border-t border-white/15 flex items-center justify-between gap-2">
+      <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between gap-2">
         <Link
           href="/learn/saved-words"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-rose-100 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D91023] hover:text-[#002868] transition-colors"
         >
           <span>{isArabic ? "فتح صفحة المحفوظة" : "Open Saved Words"}</span>
           <svg
@@ -140,7 +140,7 @@ export default function SavedWordsHomeCard() {
 
         <Link
           href="/learn/vocabulary"
-          className="text-xs font-semibold text-rose-100/80 hover:text-white transition-colors"
+          className="text-xs font-semibold text-[#002868] hover:text-[#D91023] transition-colors"
         >
           {isArabic ? "+ بنك الكلمات" : "+ Add words"}
         </Link>

@@ -33,7 +33,7 @@ export default function AcademyQuickStrip() {
       label: isArabic ? "استماع" : "Listen",
       sub: meta.level,
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
           <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
         </svg>
@@ -44,7 +44,7 @@ export default function AcademyQuickStrip() {
       label: isArabic ? "قراءة" : "Read",
       sub: meta.level,
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </svg>
@@ -55,7 +55,7 @@ export default function AcademyQuickStrip() {
       label: isArabic ? "شادوينج" : "Shadowing",
       sub: isArabic ? "نطق طبيعي" : "Rhythm",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="5 3 19 12 5 21 5 3" />
         </svg>
       ),
@@ -65,7 +65,7 @@ export default function AcademyQuickStrip() {
       label: isArabic ? "مخارج" : "Pronounce",
       sub: "TH · R/L",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
           <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
           <line x1="12" y1="19" x2="12" y2="23" />
@@ -75,18 +75,18 @@ export default function AcademyQuickStrip() {
   ];
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-[#881337] via-[#9F1239] to-[#6B0F2B] text-white border border-white/15 shadow-[0_10px_28px_rgba(136,19,55,0.22)] hover:brightness-[1.04] transition-all p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
+    <section className="luxury-card rounded-2xl bg-white border border-[#D8E2F0] shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-5 min-h-[280px] sm:aspect-[1/0.95]">
       {/* Card Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/12 border border-white/15 text-white flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl btn-primary-crest text-white flex items-center justify-center shrink-0 shadow-xs">
             <svg
               width="20"
               height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.85"
+              strokeWidth="1.9"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -95,16 +95,16 @@ export default function AcademyQuickStrip() {
             </svg>
           </div>
           <div>
-            <h2 className="text-[15px] font-bold text-white tracking-tight leading-snug">
+            <h2 className="text-[15px] font-bold text-[#061533] tracking-tight leading-snug">
               {isArabic ? "أكاديمية JustSpeak" : "JustSpeak Academy"}
             </h2>
-            <p className="text-xs text-rose-100/75 mt-0.5">
+            <p className="text-xs text-[#475569] mt-0.5">
               CEFR {meta.level} · IELTS {ielts}
             </p>
           </div>
         </div>
 
-        <span className="text-xs font-semibold text-white bg-black/25 border border-white/15 px-2.5 py-1 rounded-lg shrink-0">
+        <span className="text-xs font-bold text-[#D91023] bg-[#FFF0F2] border border-[#E11D48]/25 px-2.5 py-1 rounded-lg shrink-0">
           {meta.level}
         </span>
       </div>
@@ -115,15 +115,15 @@ export default function AcademyQuickStrip() {
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-xl bg-black/20 hover:bg-white/15 border border-white/12 hover:border-white/25 px-3.5 py-3 flex flex-col gap-1.5 transition-colors"
+            className="group rounded-xl bg-[#F8FAFC] hover:bg-[#FFF0F2] border border-[#D8E2F0] hover:border-[#E11D48]/40 px-3.5 py-3 flex flex-col gap-1.5 transition-colors"
           >
-            <div className="flex items-center justify-between text-white">
+            <div className="flex items-center justify-between text-[#002868] group-hover:text-[#D91023] transition-colors">
               {item.icon}
-              <span className="text-[10px] font-semibold text-rose-200/80">
+              <span className="text-[10px] font-bold text-[#475569]">
                 {item.sub}
               </span>
             </div>
-            <span className="text-xs font-semibold text-white truncate">
+            <span className="text-xs font-bold text-[#061533] truncate">
               {item.label}
             </span>
           </Link>
@@ -131,10 +131,10 @@ export default function AcademyQuickStrip() {
       </div>
 
       {/* Footer Link */}
-      <div className="pt-3 border-t border-white/15 flex items-center justify-between gap-2">
+      <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between gap-2">
         <Link
           href={progress.placementCompleted ? "/learn" : "/placement-test"}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-rose-100 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D91023] hover:text-[#002868] transition-colors"
         >
           <span>
             {progress.placementCompleted
@@ -158,7 +158,7 @@ export default function AcademyQuickStrip() {
 
         <Link
           href="/learn"
-          className="text-xs font-semibold text-rose-100/80 hover:text-white transition-colors"
+          className="text-xs font-semibold text-[#002868] hover:text-[#D91023] transition-colors"
         >
           {isArabic ? "الدروس" : "Lessons"}
         </Link>

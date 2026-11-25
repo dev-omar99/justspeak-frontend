@@ -160,13 +160,15 @@ export default function OnboardingPage() {
           {/* Step 1: Goal Selection */}
           {step === 1 && (
             <div className="w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
-              <div className="grid grid-cols-1 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5" role="radiogroup" aria-label="Speaking goal">
                 {GOAL_OPTIONS.map((g) => {
                   const isSelected = selectedGoal === g.id;
                   return (
                     <button
                       key={g.id}
                       type="button"
+                      role="radio"
+                      aria-checked={isSelected}
                       onClick={() => setSelectedGoal(g.id)}
                       className={`p-4 rounded-2xl border-2 text-left flex items-start gap-3.5 transition-all ${
                         isSelected
@@ -204,13 +206,15 @@ export default function OnboardingPage() {
           {/* Step 2: Level Placement Assessment */}
           {step === 2 && (
             <div className="w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-3" role="radiogroup" aria-label="English speaking level">
                 {LEVEL_OPTIONS.map((lvl) => {
                   const isSelected = selectedLevel === lvl.id;
                   return (
                     <button
                       key={lvl.id}
                       type="button"
+                      role="radio"
+                      aria-checked={isSelected}
                       onClick={() => setSelectedLevel(lvl.id)}
                       className={`p-5 rounded-2xl border-2 text-left flex items-start gap-4 transition-all ${
                         isSelected
@@ -276,13 +280,15 @@ export default function OnboardingPage() {
                 <label className="text-xs font-bold text-ink uppercase tracking-wider">
                   Choose your regular daily speaking slot (your local time):
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1" role="radiogroup" aria-label="Daily speaking slot">
                   {TRIBES.map((tr) => {
                     const isSelected = selectedTribe === tr.id;
                     return (
                       <button
                         key={tr.id}
                         type="button"
+                        role="radio"
+                        aria-checked={isSelected}
                         onClick={() => setSelectedTribe(tr.id)}
                         className={`p-3 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
                           isSelected
