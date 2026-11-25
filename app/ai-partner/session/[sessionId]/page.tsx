@@ -8,6 +8,7 @@ import {
   connectAiPartnerSocket,
   PcmRecorder,
   SentencePlayer,
+  takePracticeQuestion,
 } from "../../../../services/ai-partner";
 
 interface Line {
@@ -81,7 +82,8 @@ export default function AiPartnerSessionPage() {
     }
 
     socket.on("connect", async () => {
-      socket.emit("start-session", { sessionId });
+      const practiceQ = takePracticeQuestion();
+      socket.emit("start-session", practiceQ ? { sessionId, topicSeed: practiceQ } : { sessionId });
       const recorder = new PcmRecorder();
       recorderRef.current = recorder;
       try {

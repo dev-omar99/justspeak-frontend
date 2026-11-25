@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
@@ -12,6 +13,8 @@ import {
   fetchAiPartnerQuota,
   fetchAiPartnerStatus,
   startAiPartnerSession,
+  takePracticeQuestion,
+  uploadAiPartnerAudio,
 } from "../../services/ai-partner";
 
 const MODES: { id: AiSessionMode; icon: string; title: string; blurb: string }[] = [
@@ -35,6 +38,14 @@ const MODES: { id: AiSessionMode; icon: string; title: string; blurb: string }[]
   },
 ];
 
+const RUBRIC = [
+  { label: "Grammar", note: "every mistake quoted and corrected" },
+  { label: "Vocabulary", note: "range and precision for your level" },
+  { label: "Fluency", note: "pace and fillers vs your level band" },
+  { label: "Pronunciation", note: "clarity from recognition confidence" },
+  { label: "Interaction", note: "full answers, asking back, turn-taking" },
+];
+
 export default function AiPartnerPage() {
   const router = useRouter();
   const [status, setStatus] = useState<AiPartnerStatus | null>(null);
@@ -44,14 +55,23 @@ export default function AiPartnerPage() {
   const [fieldId, setFieldId] = useState<string>("software");
   const [lessonId, setLessonId] = useState<string>("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [starting, setStarting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [practiceQ, setPracticeQ] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const token = getToken();
     if (!token) {
       router.replace("/login");
       return;
+    }
+    const q = takePracticeQuestion();
+    if (q) {
+      setPracticeQ(q);
+      setMode("free-talk");
     }
     Promise.all([fetchAiPartnerStatus(token), fetchAiPartnerQuota(token)])
       .then(([statusData, quotaData]) => {
@@ -79,10 +99,28 @@ export default function AiPartnerPage() {
         ...(mode === "interview" ? { fieldId } : {}),
         ...(mode === "lesson" ? { lessonId } : {}),
       });
+      if (practiceQ && mode === "free-talk") {
+        sessionStorage.setItem("ai_partner_practice_q", practiceQ);
+      }
       router.push(`/ai-partner/session/${sessionId}`);
     } catch (err: any) {
       setError(err.message || "Could not start the session.");
       setStarting(false);
+    }
+  }
+
+  async function handleUpload(file: File) {
+    const token = getToken();
+    if (!token) return;
+    setUploading(true);
+    setError("");
+    setNotice("");
+    try {
+      const { sessionId } = await uploadAiPartnerAudio(token, file);
+      router.push(`/ai-partner/report/${sessionId}`);
+    } catch (err: any) {
+      setError(err.message || "Could not analyse this file.");
+      setUploading(false);
     }
   }
 
@@ -91,11 +129,12 @@ export default function AiPartnerPage() {
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
         <Header />
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
+          {/* Coach hero, Yoodli-home style, JustSpeak colours */}
           <div className="bg-[#061533] text-white rounded-[26px] px-5 py-6 sm:px-8">
-            <h1 className="text-xl sm:text-2xl font-black">AI Partner</h1>
+            <h1 className="text-xl sm:text-2xl font-black">Your AI speaking coach</h1>
             <p className="text-sm text-slate-300 mt-1">
-              A live voice conversation partner. Speak, get interrupted kindly,
-              and finish with a coaching report.
+              What is coming up that you would like to feel ready for? Start a live
+              voice session, and finish with an honest coaching report.
             </p>
             {quota && (
               <p className="text-xs mt-3 inline-block bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 font-bold">
@@ -104,6 +143,20 @@ export default function AiPartnerPage() {
                   : `${quota.remaining} of ${quota.limit} sessions left today`}
               </p>
             )}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Link
+                href="/ai-partner/recordings"
+                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl"
+              >
+                🎧 My recordings
+              </Link>
+              <Link
+                href="/ai-partner/dashboard"
+                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl"
+              >
+                📈 My progress
+              </Link>
+            </div>
           </div>
 
           {loading && <p className="text-sm text-ink-soft">Loading…</p>}
@@ -112,9 +165,30 @@ export default function AiPartnerPage() {
               {error}
             </p>
           )}
+          {notice && (
+            <p className="text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+              {notice}
+            </p>
+          )}
 
           {status && (
             <>
+              {practiceQ && (
+                <div className="bg-white border border-[#002868]/30 rounded-2xl px-4 py-3 flex items-start gap-3">
+                  <span className="text-lg">🎯</span>
+                  <div className="flex-1">
+                    <p className="text-xs font-black text-ink-soft">PRACTICING YOUR FOLLOW-UP QUESTION</p>
+                    <p className="text-sm font-bold">{practiceQ}</p>
+                  </div>
+                  <button
+                    onClick={() => setPracticeQ(null)}
+                    className="text-xs font-bold text-ink-soft hover:text-ink cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
               <section>
                 <h2 className="text-sm font-black mb-2">1 · Choose a mode</h2>
                 <div className="grid sm:grid-cols-3 gap-3">
@@ -182,7 +256,7 @@ export default function AiPartnerPage() {
 
               <section>
                 <h2 className="text-sm font-black mb-2">
-                  {mode === "free-talk" ? "2" : "3"} · Choose your partner
+                  {mode === "free-talk" ? "2" : "3"} · Choose your coach
                 </h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {status.personas.map((persona) => (
@@ -203,6 +277,23 @@ export default function AiPartnerPage() {
                 </div>
               </section>
 
+              {/* Rubric preview, the setup screen's scoring contract */}
+              <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                <h2 className="text-sm font-black mb-1">How you will be scored</h2>
+                <p className="text-xs text-ink-soft mb-3">
+                  Five dimensions, scored against your level — never against native
+                  speech. Every claim in your report quotes your own words.
+                </p>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                  {RUBRIC.map((item) => (
+                    <div key={item.label} className="border border-border rounded-xl px-3 py-2.5">
+                      <div className="text-xs font-black">{item.label}</div>
+                      <div className="text-[11px] text-ink-soft mt-0.5">{item.note}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
               <button
                 onClick={handleStart}
                 disabled={starting || !quotaLeft}
@@ -210,6 +301,33 @@ export default function AiPartnerPage() {
               >
                 {starting ? "Starting…" : quotaLeft ? "Start talking 🎙️" : "No sessions left"}
               </button>
+
+              {/* Upload analysis */}
+              <section className="bg-white border border-dashed border-border rounded-2xl px-5 py-5 text-center">
+                <h2 className="text-sm font-black">Have a recording already?</h2>
+                <p className="text-xs text-ink-soft mt-1 mb-3">
+                  Upload any English audio of yourself and get the same honest
+                  report: corrections, coaching cards, drills.
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.mp4"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleUpload(file);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || !quotaLeft}
+                  className="bg-white border border-[#002868]/40 text-[#002868] font-black rounded-2xl px-6 py-3 text-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {uploading ? "Analysing — this takes a moment…" : "Upload audio for analysis ⬆️"}
+                </button>
+              </section>
             </>
           )}
         </div>

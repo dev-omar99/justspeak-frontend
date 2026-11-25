@@ -266,6 +266,114 @@ export class SentencePlayer {
   }
 }
 
+
+/* ------------------------------------------------------------------ */
+/* v2: Yoodli-parity surfaces (report, library, dashboard, upload).    */
+/* ------------------------------------------------------------------ */
+
+export interface ReportCorrection {
+  said: string;
+  better: string;
+  rule: string;
+  explanation_ar: string;
+}
+
+export interface SessionReportV2 {
+  status: "OK" | "INSUFFICIENT_DATA";
+  overall_score: number;
+  cefr_estimate: string;
+  summary: string;
+  dimensions: { grammar: number; vocabulary: number; fluency: number; pronunciation: number; interaction: number };
+  metrics_echo: { student_speech_sec: number; words_per_minute: number; fillers_per_minute: number; student_talk_ratio: number };
+  corrections: ReportCorrection[];
+  recasts: { said: string; natural: string }[];
+  strengths: string[];
+  coaching: {
+    strength_card: { title: string; quote: string; detail: string };
+    growth_area: { title: string; quote: string; detail: string };
+    tone: string[];
+    conciseness_note: string;
+  };
+  follow_up_questions: string[];
+  lesson_result?: { goal_met: string; note: string };
+  drills: { title: string; instruction: string; example: string }[];
+  next_focus: string;
+  suggested_lessons: string[];
+}
+
+export interface AiSessionListItem {
+  id: string;
+  mode: string;
+  personaId: string;
+  fieldId: string | null;
+  lessonId: string | null;
+  level: string;
+  status: string;
+  durationSec: number;
+  createdAt: string;
+  report: SessionReportV2 | null;
+}
+
+export interface AiDashboard {
+  total_sessions: number;
+  total_minutes: number;
+  last_session_at: string | null;
+  cefr_estimate: string;
+  weekly: { week: string; sessions: number; minutes: number; avg_score: number | null; avg_wpm: number | null }[];
+  top_weaknesses: { rule: string; count: number }[];
+}
+
+export function fetchAiPartnerSessions(token: string) {
+  return request<AiSessionListItem[]>("/ai-partner/sessions", token);
+}
+
+export function fetchAiPartnerDashboard(token: string) {
+  return request<AiDashboard>("/ai-partner/dashboard", token);
+}
+
+export async function uploadAiPartnerAudio(token: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${getApiBaseUrl()}/ai-partner/sessions/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+    throw new Error(message || `Upload failed with status ${res.status}`);
+  }
+  return data as { sessionId: string; report: SessionReportV2 };
+}
+
+/** Per-word filler counts from the student's own transcript text. */
+export function countFillersByWord(text: string): { word: string; count: number }[] {
+  const counts = new Map<string, number>();
+  const pattern = /\b(um+|uh+|er+|erm|like|you know|actually|basically|literally)\b/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const word = match[1].toLowerCase();
+    counts.set(word, (counts.get(word) ?? 0) + 1);
+  }
+  const list: { word: string; count: number }[] = [];
+  counts.forEach((count, word) => list.push({ word, count }));
+  return list.sort((a, b) => b.count - a.count);
+}
+
+/** Remember a follow-up question to seed the next free-talk session. */
+export function setPracticeQuestion(question: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("ai_partner_practice_q", question);
+}
+
+export function takePracticeQuestion(): string | null {
+  if (typeof window === "undefined") return null;
+  const q = sessionStorage.getItem("ai_partner_practice_q");
+  sessionStorage.removeItem("ai_partner_practice_q");
+  return q;
+}
+
 export function aiPartnerEnabled(): boolean {
   return process.env.NEXT_PUBLIC_AI_PARTNER_ENABLED?.trim().toLowerCase() === "true";
 }
