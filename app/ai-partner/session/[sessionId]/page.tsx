@@ -231,38 +231,38 @@ export default function AiPartnerSessionPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col bg-[#061533] text-white">
+    <main className="min-h-screen flex flex-col bg-surface text-ink">
       <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-5 flex flex-col gap-4 flex-1 min-h-0">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-base font-black">AI Partner</h1>
-            <p className="text-xs text-slate-300">{stateLabel[callState]}</p>
+            <p className="text-xs text-ink-soft">{stateLabel[callState]}</p>
           </div>
-          <span className="text-xs font-bold bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 tabular-nums">
+          <span className="text-xs font-bold bg-white border border-border rounded-xl px-3 py-1.5 tabular-nums">
             {mm}:{ss}
           </span>
         </div>
 
         <div
           className={`h-2 rounded-full transition-all ${
-            callState === "listening" ? "bg-emerald-400 animate-pulse" : "bg-white/15"
+            callState === "listening" ? "bg-crimson animate-pulse" : "bg-border"
           }`}
         />
 
         {error && (
-          <p className="text-xs font-semibold text-amber-200 bg-amber-500/15 border border-amber-300/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
             {error}
           </p>
         )}
 
         {micMuted && (
-          <p className="text-xs font-semibold text-amber-200 bg-amber-500/15 border border-amber-300/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
             Microphone is off. The coach cannot hear you.
           </p>
         )}
 
         {cameraError && (
-          <p className="text-xs font-semibold text-amber-200 bg-amber-500/15 border border-amber-300/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
             {cameraError}
           </p>
         )}
@@ -273,7 +273,7 @@ export default function AiPartnerSessionPage() {
             className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1"
           >
             {lines.length === 0 && (
-              <p className="text-xs text-slate-400 text-center mt-8">
+              <p className="text-xs text-ink-soft text-center mt-8">
                 The transcript appears here while you talk.
               </p>
             )}
@@ -282,8 +282,8 @@ export default function AiPartnerSessionPage() {
                 key={line.id}
                 className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                   line.role === "ai"
-                    ? "self-start bg-white/10 border border-white/10"
-                    : "self-end bg-[#1f3d7a] border border-[#2c4f96]"
+                    ? "self-start bg-white border border-border text-ink"
+                    : "self-end bg-crimson border border-crimson text-white"
                 } ${line.isFinal ? "" : "opacity-60"}`}
               >
                 {line.text}
@@ -292,7 +292,7 @@ export default function AiPartnerSessionPage() {
           </div>
         ) : (
           <div className="flex-1 min-h-0 flex items-center justify-center">
-            <p className="text-xs text-slate-400">Captions hidden. Tap "Captions" to show them again.</p>
+            <p className="text-xs text-ink-soft">Captions hidden. Tap "Captions" to show them again.</p>
           </div>
         )}
 
@@ -304,9 +304,9 @@ export default function AiPartnerSessionPage() {
               { label: "You talk", value: `${Math.round(metrics.student_talk_ratio * 100)}%` },
               { label: "Turns", value: metrics.turns },
             ].map((item) => (
-              <div key={item.label} className="bg-white/10 border border-white/10 rounded-xl px-2 py-2">
+              <div key={item.label} className="bg-white border border-border rounded-xl px-2 py-2">
                 <div className="text-sm font-black tabular-nums">{item.value}</div>
-                <div className="text-[10px] text-slate-300">{item.label}</div>
+                <div className="text-[10px] text-ink-soft">{item.label}</div>
               </div>
             ))}
           </div>
@@ -317,8 +317,8 @@ export default function AiPartnerSessionPage() {
               onClick={() => setShowTranscript((v) => !v)}
               className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
                 showTranscript
-                  ? "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                  : "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
+                  ? "bg-white hover:bg-surface-subtle border-border text-ink"
+                  : "bg-crimson hover:bg-crimson-bright border-crimson text-white"
               }`}
               title={showTranscript ? "Hide captions" : "Show captions"}
             >
@@ -328,8 +328,8 @@ export default function AiPartnerSessionPage() {
               onClick={() => void toggleCamera()}
               className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
                 cameraOn
-                  ? "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                  : "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
+                  ? "bg-white hover:bg-surface-subtle border-border text-ink"
+                  : "bg-crimson hover:bg-crimson-bright border-crimson text-white"
               }`}
               title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
             >
@@ -339,8 +339,8 @@ export default function AiPartnerSessionPage() {
               onClick={toggleMic}
               className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
                 micMuted
-                  ? "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
-                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  ? "bg-crimson hover:bg-crimson-bright border-crimson text-white"
+                  : "bg-white hover:bg-surface-subtle border-border text-ink"
               }`}
               title={micMuted ? "Unmute microphone" : "Mute microphone"}
             >
@@ -348,7 +348,7 @@ export default function AiPartnerSessionPage() {
             </button>
             <button
               onClick={() => void endCall()}
-              className="bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl px-5 py-2.5 cursor-pointer"
+              className="bg-crimson hover:bg-[#C81E2F] text-white text-xs font-black rounded-xl px-5 py-2.5 cursor-pointer"
             >
               End call
             </button>
@@ -360,7 +360,7 @@ export default function AiPartnerSessionPage() {
           ref={videoRef}
           muted
           playsInline
-          className={`fixed bottom-20 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-white/30 shadow-xl bg-black -scale-x-100 ${
+          className={`fixed bottom-20 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-border shadow-xl bg-black -scale-x-100 ${
             cameraOn ? "" : "hidden"
           }`}
         />

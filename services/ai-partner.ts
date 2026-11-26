@@ -151,7 +151,16 @@ export class PcmRecorder {
     this.context = new AudioContext({ sampleRate: 16000 });
     this.source = this.context.createMediaStreamSource(this.stream);
     const emit = (chunk: ArrayBuffer) => {
-      if (!this.muted) onChunk(chunk);
+      if (this.muted) {
+        // Keep streaming silence while muted. Dropping chunks lets the STT
+        // socket idle past its keepalive window (~10s), after which the
+        // stream is dead and unmuting leaves the AI deaf for the rest of
+        // the call. Zeroed PCM keeps the connection and its clock alive
+        // and reads as pure silence to the VAD.
+        onChunk(new ArrayBuffer(chunk.byteLength));
+        return;
+      }
+      onChunk(chunk);
     };
 
     if (this.context.audioWorklet) {
