@@ -140,7 +140,13 @@ export class PcmRecorder {
 
   async start(onChunk: (chunk: ArrayBuffer) => void): Promise<void> {
     this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+      audio: {
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+        // Steadies mic gain on laptop mics; unstable volume hurts STT accuracy.
+        autoGainControl: true,
+      },
     });
     this.context = new AudioContext({ sampleRate: 16000 });
     this.source = this.context.createMediaStreamSource(this.stream);
