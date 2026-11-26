@@ -16,8 +16,11 @@ interface Line {
   role: "ai" | "user";
   text: string;
   isFinal: boolean;
-  /** "tip" renders a Say-it-better coaching card instead of a chat bubble. */
-  kind?: "tip";
+  /** Live sentence check on the learner's own lines: ok = correct as said,
+   *  fix = the wand reveals the corrected rewrite underneath. */
+  verdict?: "ok" | "fix";
+  suggestion?: string;
+  showTip?: boolean;
 }
 
 interface Metrics {
@@ -82,7 +85,7 @@ export default function AiPartnerSessionPage() {
         if (last && last.role === role && !last.isFinal) {
           return [...prev.slice(0, -1), { ...last, text, isFinal: true }];
         }
-        if (last && last.role === role && last.isFinal && last.kind !== "tip") {
+        if (last && last.role === role && last.isFinal && !last.verdict) {
           // consecutive final pieces of one speaker merge into one bubble
           return [...prev.slice(0, -1), { ...last, text: `${last.text} ${text}` }];
         }
@@ -130,19 +133,27 @@ export default function AiPartnerSessionPage() {
       upsertLine("ai", payload.text, true);
     });
 
-    socket.on("rephrase", (payload: { original: string; suggestion: string }) => {
-      if (!payload?.suggestion) return;
-      setLines((prev) => [
-        ...prev,
-        {
-          id: ++lineIdRef.current,
-          role: "user",
-          text: payload.suggestion,
-          isFinal: true,
-          kind: "tip",
-        },
-      ]);
-    });
+    socket.on(
+      "sentence-check",
+      (payload: { original: string; ok: boolean; suggestion?: string }) => {
+        setLines((prev) => {
+          // attach the verdict to the learner's latest final bubble
+          for (let i = prev.length - 1; i >= 0; i--) {
+            const line = prev[i];
+            if (line.role === "user" && line.isFinal) {
+              const next = [...prev];
+              next[i] = {
+                ...line,
+                verdict: payload.ok ? "ok" : "fix",
+                suggestion: payload.suggestion,
+              };
+              return next;
+            }
+          }
+          return prev;
+        });
+      }
+    );
 
     socket.on(
       "reply-audio",
@@ -294,21 +305,7 @@ export default function AiPartnerSessionPage() {
               </p>
             )}
             {lines.map((line, i) => {
-              if (line.kind === "tip") {
-                return (
-                  <div
-                    key={line.id}
-                    className="self-end w-full max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-crimson-light border border-crimson/30 text-ink"
-                  >
-                    <span className="block text-[10px] font-black uppercase tracking-wide text-[#C81E2F] mb-0.5">
-                      Say it better
-                    </span>
-                    {line.text}
-                  </div>
-                );
-              }
-              const startsGroup =
-                i === 0 || lines[i - 1].role !== line.role || lines[i - 1].kind === "tip";
+              const startsGroup = i === 0 || lines[i - 1].role !== line.role;
               return (
                 <div
                   key={line.id}
@@ -330,6 +327,30 @@ export default function AiPartnerSessionPage() {
                   >
                     {line.text}
                   </div>
+                  {line.role === "user" && line.verdict === "ok" && (
+                    <span className="text-emerald-600 text-xs font-black px-1" title="Correct">
+                      ✓
+                    </span>
+                  )}
+                  {line.role === "user" && line.verdict === "fix" && (
+                    <button
+                      onClick={() =>
+                        setLines((prev) =>
+                          prev.map((l) => (l.id === line.id ? { ...l, showTip: !l.showTip } : l)),
+                        )
+                      }
+                      className="text-xs px-1 cursor-pointer"
+                      title={line.showTip ? "Hide the correction" : "Show the correction"}
+                    >
+                      🪄
+                    </button>
+                  )}
+                  {line.role === "user" && line.verdict === "fix" && line.showTip && line.suggestion && (
+                    <div className="rounded-xl bg-crimson-light border border-crimson/30 px-3 py-1.5 text-xs text-ink">
+                      <span className="text-emerald-600 font-black">✓</span>{" "}
+                      <span className="font-semibold">{line.suggestion}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
