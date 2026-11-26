@@ -17,6 +17,7 @@ interface TranscriptTurn {
   role: string;
   text: string;
   at?: number;
+  rephrase?: string;
 }
 
 function scoreColor(value: number): string {
@@ -152,6 +153,14 @@ export default function AiPartnerReportPage() {
                     <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
                       {turn.text}
                     </p>
+                    {turn.role === "user" && turn.rephrase && (
+                      <p className="mt-1 text-xs bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
+                        <span className="font-black text-[#C81E2F] uppercase tracking-wide text-[10px]">
+                          Say it better:{" "}
+                        </span>
+                        {turn.rephrase}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

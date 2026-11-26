@@ -16,6 +16,8 @@ interface Line {
   role: "ai" | "user";
   text: string;
   isFinal: boolean;
+  /** "tip" renders a Say-it-better coaching card instead of a chat bubble. */
+  kind?: "tip";
 }
 
 interface Metrics {
@@ -80,8 +82,8 @@ export default function AiPartnerSessionPage() {
         if (last && last.role === role && !last.isFinal) {
           return [...prev.slice(0, -1), { ...last, text, isFinal: true }];
         }
-        if (last && last.role === role && last.isFinal && role === "ai") {
-          // consecutive final sentences of one reply merge into one bubble
+        if (last && last.role === role && last.isFinal && last.kind !== "tip") {
+          // consecutive final pieces of one speaker merge into one bubble
           return [...prev.slice(0, -1), { ...last, text: `${last.text} ${text}` }];
         }
         return [...prev, { id: ++lineIdRef.current, role, text, isFinal: true }];
@@ -126,6 +128,20 @@ export default function AiPartnerSessionPage() {
 
     socket.on("reply-text", (payload: { sentence: number; text: string }) => {
       upsertLine("ai", payload.text, true);
+    });
+
+    socket.on("rephrase", (payload: { original: string; suggestion: string }) => {
+      if (!payload?.suggestion) return;
+      setLines((prev) => [
+        ...prev,
+        {
+          id: ++lineIdRef.current,
+          role: "user",
+          text: payload.suggestion,
+          isFinal: true,
+          kind: "tip",
+        },
+      ]);
     });
 
     socket.on(
@@ -277,18 +293,46 @@ export default function AiPartnerSessionPage() {
                 The transcript appears here while you talk.
               </p>
             )}
-            {lines.map((line) => (
-              <div
-                key={line.id}
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                  line.role === "ai"
-                    ? "self-start bg-white border border-border text-ink"
-                    : "self-end bg-crimson border border-crimson text-white"
-                } ${line.isFinal ? "" : "opacity-60"}`}
-              >
-                {line.text}
-              </div>
-            ))}
+            {lines.map((line, i) => {
+              if (line.kind === "tip") {
+                return (
+                  <div
+                    key={line.id}
+                    className="self-end w-full max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-crimson-light border border-crimson/30 text-ink"
+                  >
+                    <span className="block text-[10px] font-black uppercase tracking-wide text-[#C81E2F] mb-0.5">
+                      Say it better
+                    </span>
+                    {line.text}
+                  </div>
+                );
+              }
+              const startsGroup =
+                i === 0 || lines[i - 1].role !== line.role || lines[i - 1].kind === "tip";
+              return (
+                <div
+                  key={line.id}
+                  className={`flex flex-col gap-0.5 max-w-[85%] ${
+                    line.role === "ai" ? "self-start items-start" : "self-end items-end"
+                  }`}
+                >
+                  {startsGroup && (
+                    <span className="text-[10px] font-bold text-ink-soft px-1">
+                      {line.role === "ai" ? "Coach" : "You"}
+                    </span>
+                  )}
+                  <div
+                    className={`rounded-2xl px-4 py-2.5 text-sm ${
+                      line.role === "ai"
+                        ? "bg-white border border-border text-ink rounded-tl-md"
+                        : "bg-crimson border border-crimson text-white rounded-tr-md"
+                    } ${line.isFinal ? "" : "opacity-60 italic"}`}
+                  >
+                    {line.text}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="flex-1 min-h-0 flex items-center justify-center">
