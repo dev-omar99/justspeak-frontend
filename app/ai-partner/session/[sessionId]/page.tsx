@@ -238,50 +238,9 @@ export default function AiPartnerSessionPage() {
             <h1 className="text-base font-black">AI Partner</h1>
             <p className="text-xs text-slate-300">{stateLabel[callState]}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 tabular-nums">
-              {mm}:{ss}
-            </span>
-            <button
-              onClick={() => setShowTranscript((v) => !v)}
-              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl px-3 py-2 cursor-pointer"
-              title={showTranscript ? "Hide captions" : "Show captions"}
-            >
-              {showTranscript ? "Hide captions" : "Captions"}
-            </button>
-            {callState !== "ended" && (
-              <>
-                <button
-                  onClick={() => void toggleCamera()}
-                  className={`text-xs font-black rounded-xl px-3 py-2 cursor-pointer border ${
-                    cameraOn
-                      ? "bg-emerald-500/20 border-emerald-300/40 text-emerald-200"
-                      : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                  }`}
-                  title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
-                >
-                  {cameraOn ? "Cam on" : "Cam off"}
-                </button>
-                <button
-                  onClick={toggleMic}
-                  className={`text-xs font-black rounded-xl px-3 py-2 cursor-pointer border ${
-                    micMuted
-                      ? "bg-amber-500/20 border-amber-300/40 text-amber-200"
-                      : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                  }`}
-                  title={micMuted ? "Unmute microphone" : "Mute microphone"}
-                >
-                  {micMuted ? "Mic off" : "Mic on"}
-                </button>
-                <button
-                  onClick={() => void endCall()}
-                  className="bg-red-500 hover:bg-red-600 text-white text-xs font-black rounded-xl px-4 py-2 cursor-pointer"
-                >
-                  End call
-                </button>
-              </>
-            )}
-          </div>
+          <span className="text-xs font-bold bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 tabular-nums">
+            {mm}:{ss}
+          </span>
         </div>
 
         <div
@@ -352,12 +311,56 @@ export default function AiPartnerSessionPage() {
             ))}
           </div>
         )}
+        {callState !== "ended" && (
+          <div className="flex items-center justify-center gap-2 sm:gap-3 pt-1">
+            <button
+              onClick={() => setShowTranscript((v) => !v)}
+              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
+                showTranscript
+                  ? "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  : "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
+              }`}
+              title={showTranscript ? "Hide captions" : "Show captions"}
+            >
+              {showTranscript ? "Captions on" : "Captions off"}
+            </button>
+            <button
+              onClick={() => void toggleCamera()}
+              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
+                cameraOn
+                  ? "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  : "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
+              }`}
+              title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
+            >
+              {cameraOn ? "Cam on" : "Cam off"}
+            </button>
+            <button
+              onClick={toggleMic}
+              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
+                micMuted
+                  ? "bg-red-500/80 hover:bg-red-500 border-red-300/40 text-white"
+                  : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+              }`}
+              title={micMuted ? "Unmute microphone" : "Mute microphone"}
+            >
+              {micMuted ? "Mic off" : "Mic on"}
+            </button>
+            <button
+              onClick={() => void endCall()}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl px-5 py-2.5 cursor-pointer"
+            >
+              End call
+            </button>
+          </div>
+        )}
+
         {/* Local self-view; the video never leaves the browser */}
         <video
           ref={videoRef}
           muted
           playsInline
-          className={`fixed bottom-4 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-white/30 shadow-xl bg-black -scale-x-100 ${
+          className={`fixed bottom-20 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-white/30 shadow-xl bg-black -scale-x-100 ${
             cameraOn ? "" : "hidden"
           }`}
         />
