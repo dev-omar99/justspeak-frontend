@@ -62,8 +62,30 @@ export function startAiPartnerSession(
   });
 }
 
+export interface PronunciationAssessment {
+  engine: "azure-pronunciation-assessment";
+  utterances: number;
+  wordsAssessed: number;
+  accuracy: number;
+  fluency: number;
+  completeness: number;
+  prosody: number | null;
+  pronScore: number;
+  worstWords: {
+    word: string;
+    accuracy: number;
+    errorType: string | null;
+    weakPhonemes: string[];
+  }[];
+}
+
 export function fetchAiPartnerReport(token: string, sessionId: string) {
-  return request<{ session: any; report: any; cached: boolean }>(
+  return request<{
+    session: any;
+    report: any;
+    cached: boolean;
+    pronunciation_assessment?: PronunciationAssessment | null;
+  }>(
     `/ai-partner/sessions/${sessionId}/report`,
     token,
     { method: "POST" }

@@ -8,6 +8,7 @@ import { getToken } from "../../../../lib/auth";
 import {
   countFillersByWord,
   fetchAiPartnerReport,
+  PronunciationAssessment,
   SessionReportV2,
   setPracticeQuestion,
 } from "../../../../services/ai-partner";
@@ -44,6 +45,7 @@ export default function AiPartnerReportPage() {
   const sessionId = params.sessionId;
 
   const [report, setReport] = useState<SessionReportV2 | null>(null);
+  const [pronunciation, setPronunciation] = useState<PronunciationAssessment | null>(null);
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [level, setLevel] = useState("");
   const [mode, setMode] = useState("");
@@ -67,6 +69,9 @@ export default function AiPartnerReportPage() {
         setTranscript(turns);
         setLevel(data?.session?.level ?? "");
         setMode(data?.session?.mode ?? "");
+        if (data?.pronunciation_assessment) {
+          setPronunciation(data.pronunciation_assessment);
+        }
       })
       .catch((err) => setError(err.message || "Could not load the report."))
       .finally(() => setLoading(false));
@@ -192,6 +197,50 @@ export default function AiPartnerReportPage() {
                     })}
                   </div>
                 </div>
+
+                {/* Real phoneme-level pronunciation (Azure add-on) */}
+                {pronunciation && (
+                  <div className="bg-white border border-border rounded-2xl px-5 py-5">
+                    <h2 className="font-black text-sm mb-1">Pronunciation, sound by sound</h2>
+                    <p className="text-[11px] text-ink-soft mb-3">
+                      Measured phoneme by phoneme on {pronunciation.wordsAssessed} words you said (Azure Pronunciation Assessment).
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                      {([
+                        ["Accuracy", pronunciation.accuracy],
+                        ["Fluency", pronunciation.fluency],
+                        ["Prosody", pronunciation.prosody],
+                        ["Overall", pronunciation.pronScore],
+                      ] as [string, number | null][]).map(([label, value]) =>
+                        value === null ? null : (
+                          <div key={label} className="bg-surface rounded-xl px-3 py-2 text-center">
+                            <div className={`text-lg font-black tabular-nums ${scoreColor(value)}`}>{value}</div>
+                            <div className="text-[10px] font-bold text-ink-soft uppercase tracking-wide">{label}</div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    {pronunciation.worstWords.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold mb-2">Words to practise</p>
+                        <div className="flex flex-wrap gap-2">
+                          {pronunciation.worstWords.map((w) => (
+                            <span
+                              key={w.word}
+                              className="text-xs bg-red-50 border border-red-200 text-red-800 rounded-lg px-2.5 py-1"
+                              title={w.weakPhonemes.length ? `Weak sounds: ${w.weakPhonemes.join(", ")}` : undefined}
+                            >
+                              {w.word} · {w.accuracy}
+                              {w.weakPhonemes.length > 0 && (
+                                <span className="text-red-500"> ({w.weakPhonemes.join(" ")})</span>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Coaching cards */}
                 <div className="grid sm:grid-cols-2 gap-3">
