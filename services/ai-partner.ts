@@ -131,6 +131,12 @@ export class PcmRecorder {
   private stream: MediaStream | null = null;
   private node: AudioWorkletNode | ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
+  private muted = false;
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    this.stream?.getAudioTracks().forEach((track) => (track.enabled = !muted));
+  }
 
   async start(onChunk: (chunk: ArrayBuffer) => void): Promise<void> {
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -138,13 +144,16 @@ export class PcmRecorder {
     });
     this.context = new AudioContext({ sampleRate: 16000 });
     this.source = this.context.createMediaStreamSource(this.stream);
+    const emit = (chunk: ArrayBuffer) => {
+      if (!this.muted) onChunk(chunk);
+    };
 
     if (this.context.audioWorklet) {
       const url = URL.createObjectURL(new Blob([WORKLET_SOURCE], { type: "application/javascript" }));
       try {
         await this.context.audioWorklet.addModule(url);
         const node = new AudioWorkletNode(this.context, "pcm-processor");
-        node.port.onmessage = (event) => onChunk(event.data as ArrayBuffer);
+        node.port.onmessage = (event) => emit(event.data as ArrayBuffer);
         this.source.connect(node);
         node.connect(this.context.destination);
         this.node = node;
@@ -163,7 +172,7 @@ export class PcmRecorder {
         const s = Math.max(-1, Math.min(1, floats[i]));
         pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
       }
-      onChunk(pcm.buffer);
+      emit(pcm.buffer);
     };
     this.source.connect(fallback);
     fallback.connect(this.context.destination);

@@ -40,6 +40,13 @@ export default function AiPartnerSessionPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState("");
   const [elapsed, setElapsed] = useState(0);
+  const [micMuted, setMicMuted] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(true);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const recorderRef = useRef<PcmRecorder | null>(null);
@@ -148,6 +155,7 @@ export default function AiPartnerSessionPage() {
       socket.emit("stop-session");
       socket.disconnect();
       recorderRef.current?.stop();
+      stopCamera();
       void player.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,11 +176,47 @@ export default function AiPartnerSessionPage() {
     const socket = socketRef.current;
     socket?.emit("stop-session");
     recorderRef.current?.stop();
+    stopCamera();
     setCallState("ended");
     setTimeout(() => {
       socket?.disconnect();
       router.push(`/ai-partner/report/${sessionId}${auto ? "?auto=1" : ""}`);
     }, 800);
+  }
+
+  function toggleMic() {
+    const next = !micMuted;
+    recorderRef.current?.setMuted(next);
+    setMicMuted(next);
+  }
+
+  function stopCamera() {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraOn(false);
+  }
+
+  async function toggleCamera() {
+    if (cameraOn) {
+      stopCamera();
+      return;
+    }
+    setCameraError("");
+    try {
+      // Local self-view only: the stream never leaves the browser.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, facingMode: "user" },
+      });
+      cameraStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => undefined);
+      }
+      setCameraOn(true);
+    } catch {
+      setCameraError("Camera access was denied. Allow the camera in the browser and try again.");
+    }
   }
 
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
@@ -198,13 +242,44 @@ export default function AiPartnerSessionPage() {
             <span className="text-xs font-bold bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 tabular-nums">
               {mm}:{ss}
             </span>
+            <button
+              onClick={() => setShowTranscript((v) => !v)}
+              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-black rounded-xl px-3 py-2 cursor-pointer"
+              title={showTranscript ? "Hide captions" : "Show captions"}
+            >
+              {showTranscript ? "Hide captions" : "Captions"}
+            </button>
             {callState !== "ended" && (
-              <button
-                onClick={() => void endCall()}
-                className="bg-red-500 hover:bg-red-600 text-white text-xs font-black rounded-xl px-4 py-2 cursor-pointer"
-              >
-                End call
-              </button>
+              <>
+                <button
+                  onClick={() => void toggleCamera()}
+                  className={`text-xs font-black rounded-xl px-3 py-2 cursor-pointer border ${
+                    cameraOn
+                      ? "bg-emerald-500/20 border-emerald-300/40 text-emerald-200"
+                      : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  }`}
+                  title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
+                >
+                  {cameraOn ? "Cam on" : "Cam off"}
+                </button>
+                <button
+                  onClick={toggleMic}
+                  className={`text-xs font-black rounded-xl px-3 py-2 cursor-pointer border ${
+                    micMuted
+                      ? "bg-amber-500/20 border-amber-300/40 text-amber-200"
+                      : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                  }`}
+                  title={micMuted ? "Unmute microphone" : "Mute microphone"}
+                >
+                  {micMuted ? "Mic off" : "Mic on"}
+                </button>
+                <button
+                  onClick={() => void endCall()}
+                  className="bg-red-500 hover:bg-red-600 text-white text-xs font-black rounded-xl px-4 py-2 cursor-pointer"
+                >
+                  End call
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -221,28 +296,46 @@ export default function AiPartnerSessionPage() {
           </p>
         )}
 
-        <div
-          ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1"
-        >
-          {lines.length === 0 && (
-            <p className="text-xs text-slate-400 text-center mt-8">
-              The transcript appears here while you talk.
-            </p>
-          )}
-          {lines.map((line) => (
-            <div
-              key={line.id}
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                line.role === "ai"
-                  ? "self-start bg-white/10 border border-white/10"
-                  : "self-end bg-[#1f3d7a] border border-[#2c4f96]"
-              } ${line.isFinal ? "" : "opacity-60"}`}
-            >
-              {line.text}
-            </div>
-          ))}
-        </div>
+        {micMuted && (
+          <p className="text-xs font-semibold text-amber-200 bg-amber-500/15 border border-amber-300/30 rounded-xl px-3 py-2">
+            Microphone is off. The coach cannot hear you.
+          </p>
+        )}
+
+        {cameraError && (
+          <p className="text-xs font-semibold text-amber-200 bg-amber-500/15 border border-amber-300/30 rounded-xl px-3 py-2">
+            {cameraError}
+          </p>
+        )}
+
+        {showTranscript ? (
+          <div
+            ref={scrollRef}
+            className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1"
+          >
+            {lines.length === 0 && (
+              <p className="text-xs text-slate-400 text-center mt-8">
+                The transcript appears here while you talk.
+              </p>
+            )}
+            {lines.map((line) => (
+              <div
+                key={line.id}
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                  line.role === "ai"
+                    ? "self-start bg-white/10 border border-white/10"
+                    : "self-end bg-[#1f3d7a] border border-[#2c4f96]"
+                } ${line.isFinal ? "" : "opacity-60"}`}
+              >
+                {line.text}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <p className="text-xs text-slate-400">Captions hidden. Tap "Captions" to show them again.</p>
+          </div>
+        )}
 
         {metrics && (
           <div className="grid grid-cols-4 gap-2 text-center">
@@ -259,6 +352,15 @@ export default function AiPartnerSessionPage() {
             ))}
           </div>
         )}
+        {/* Local self-view; the video never leaves the browser */}
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          className={`fixed bottom-4 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-white/30 shadow-xl bg-black -scale-x-100 ${
+            cameraOn ? "" : "hidden"
+          }`}
+        />
       </div>
     </main>
   );
