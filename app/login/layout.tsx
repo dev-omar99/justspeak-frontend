@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/login" },
   title: "Sign In",
   description: "Sign in to your JustSpeak account to continue practicing 1-on-1 spoken English.",
   robots: { index: false, follow: false },

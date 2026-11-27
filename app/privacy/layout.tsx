@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/privacy" },
   title: "Privacy Policy",
   description: "Learn how JustSpeak protects your personal data and keeps your live 1-on-1 calls private.",
 };

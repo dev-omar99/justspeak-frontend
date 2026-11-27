@@ -3,6 +3,7 @@ import AiPartnerGate from "../../components/AiPartnerGate";
 import AiPartnerShell from "../../components/ai-partner/AiPartnerShell";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/ai-partner" },
   title: "AI Partner",
   description:
     "Live voice conversations with an AI speaking partner: free talk, interview practice, and guided lessons.",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/queue" },
   title: "Live Speaking Waiting Room",
   robots: { index: false, follow: false },
 };

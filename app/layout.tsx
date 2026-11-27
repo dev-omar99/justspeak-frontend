@@ -65,6 +65,7 @@ export const metadata: Metadata = {
       },
     ],
     locale: "en_US",
+    alternateLocale: ["ar_EG"],
     type: "website",
   },
   twitter: {
