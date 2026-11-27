@@ -48,7 +48,7 @@ interface Metrics {
   turns: number;
 }
 
-type CallState = "connecting" | "listening" | "thinking" | "time-up" | "ended" | "failed";
+type CallState = "connecting" | "listening" | "thinking" | "paused" | "time-up" | "ended" | "failed";
 
 export default function AiPartnerSessionPage() {
   const params = useParams<{ sessionId: string }>();
@@ -90,6 +90,11 @@ export default function AiPartnerSessionPage() {
   const playerRef = useRef<SentencePlayer | null>(null);
   const lineIdRef = useRef(0);
   const startedAtRef = useRef(Date.now());
+  // Pause bookkeeping: the call timer shows active time only, so paused time is subtracted.
+  const pausedRef = useRef(false);
+  const pausedAtRef = useRef(0);
+  const pausedTotalRef = useRef(0);
+  const pauseWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endingRef = useRef(false);
 
   useEffect(() => {
@@ -189,6 +194,12 @@ export default function AiPartnerSessionPage() {
 
     socket.on("error", (payload: { code?: string; message: string }) => {
       if (payload?.code === "TTS_ERROR") return; // voice hiccup, keep going
+      // Pause is optional: if the server cannot pause, the call just keeps running as before.
+      if (payload?.code === "PAUSE_FAILED") {
+        setError("Pause is not available right now. The call is still running.");
+        return;
+      }
+      if (payload?.code === "RESUME_FAILED") return; // already resumed locally
       setError(payload?.message || "Something went wrong.");
       if (payload?.code === "SESSION_ENDED" || payload?.code === "NOT_FOUND") {
         setCallState((s) => (s === "ended" ? s : "failed"));
@@ -197,10 +208,23 @@ export default function AiPartnerSessionPage() {
 
     socket.on("session-resumed", (payload: { state: CallState }) => {
       setError("");
+      // After a reconnect a local pause stays paused; the server kept it paused too.
+      if (pausedRef.current) return;
       setCallState(payload.state === "thinking" ? "thinking" : "listening");
     });
 
     socket.on("session-state", (payload: { state: CallState }) => {
+      if (payload.state === "paused") {
+        if (pauseWatchdogRef.current) clearTimeout(pauseWatchdogRef.current);
+        if (!pausedRef.current) {
+          pausedRef.current = true;
+          pausedAtRef.current = Date.now();
+        }
+        setCallState("paused");
+        return;
+      }
+      // While paused locally, ignore stale listening/thinking states; only time-up/ended count.
+      if (pausedRef.current && payload.state !== "time-up" && payload.state !== "ended") return;
       setCallState(payload.state);
       if (payload.state === "time-up" || payload.state === "ended") {
         void endCall(true);
@@ -288,7 +312,11 @@ export default function AiPartnerSessionPage() {
   }, [sessionId]);
 
   useEffect(() => {
-    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000)), 1000);
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const pausedNow = pausedRef.current ? now - pausedAtRef.current : 0;
+      setElapsed(Math.max(0, Math.floor((now - startedAtRef.current - pausedTotalRef.current - pausedNow) / 1000)));
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -355,6 +383,30 @@ export default function AiPartnerSessionPage() {
     setVoiceRate(next);
   }
 
+  /**
+   * Pause / resume the call. Pause waits for the server's 'paused' ack (3 s watchdog: if it never
+   * comes, the call just keeps running). Resume is applied locally at once so the learner is never
+   * stuck on a paused screen if the socket hiccups.
+   */
+  function togglePause() {
+    const socket = socketRef.current;
+    if (!socket || endingRef.current) return;
+    if (!pausedRef.current) {
+      if (callState !== "listening" && callState !== "thinking") return;
+      socket.emit("pause-session");
+      if (pauseWatchdogRef.current) clearTimeout(pauseWatchdogRef.current);
+      pauseWatchdogRef.current = setTimeout(() => {
+        if (!pausedRef.current) setError("Pause is not available right now. The call is still running.");
+      }, 3000);
+      return;
+    }
+    pausedTotalRef.current += Date.now() - pausedAtRef.current;
+    pausedRef.current = false;
+    setError("");
+    setCallState("listening");
+    socket.emit("resume-session");
+  }
+
   function toggleMic() {
     const next = !micMuted;
     recorderRef.current?.setMuted(next);
@@ -398,6 +450,7 @@ export default function AiPartnerSessionPage() {
     connecting: "Connecting…",
     listening: "Listening — speak freely",
     thinking: "Thinking…",
+    paused: "Paused. The timer is stopped",
     "time-up": "Time is up — wrapping up",
     ended: "Call ended",
     failed: "Connection problem",
@@ -468,6 +521,11 @@ export default function AiPartnerSessionPage() {
         {error && (
           <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             {error}
+          </p>
+        )}
+        {callState === "paused" && (
+          <p className="text-xs font-semibold text-crest-navy bg-crest-mist border border-crest-line rounded-xl px-3 py-2">
+            Session paused. The coach is silent and the timer is stopped. Tap play to continue.
           </p>
         )}
         {micMuted && (
@@ -707,6 +765,23 @@ export default function AiPartnerSessionPage() {
                   <path d="M5 10a7 7 0 0 0 14 0" />
                   <path d="M12 19v3" />
                 </svg>
+              )}
+            </button>
+            <button
+              onClick={togglePause}
+              disabled={callState !== "listening" && callState !== "thinking" && callState !== "paused"}
+              title={callState === "paused" ? "Resume" : "Pause"}
+              aria-label={callState === "paused" ? "Resume session" : "Pause session"}
+              className={`w-12 h-12 rounded-full flex items-center justify-center border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-default ${
+                callState === "paused"
+                  ? "bg-crest-navy border-crest-navy text-white"
+                  : "bg-white border-crest-line text-crest-navy hover:bg-crest-mist"
+              }`}
+            >
+              {callState === "paused" ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z" /></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
               )}
             </button>
             <span className="w-px h-8 bg-crest-line hidden sm:block" />
