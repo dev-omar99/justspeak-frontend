@@ -393,9 +393,13 @@ export default function AiPartnerPage() {
                               {/* Rubric checks: exactly what the report grades. */}
                               <span className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
                                 {rp.rubric.map((item) => (
-                                  <span key={item} className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+                                  <span
+                                    key={item.label}
+                                    title={item.hint}
+                                    className="inline-flex items-center gap-1 text-[11px] text-ink-soft"
+                                  >
                                     <span className="text-crest-crimson"><CheckIcon /></span>
-                                    {item}
+                                    {item.label}
                                   </span>
                                 ))}
                               </span>

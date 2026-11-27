@@ -17,7 +17,8 @@ export interface RoleplaySummary {
   personaRole: string;
   level: string;
   goal: string;
-  rubric: string[];
+  /** Rubric criteria: short label plus the hint the scorer expands on. */
+  rubric: { label: string; hint: string }[];
 }
 
 export interface AiPartnerStatus {
