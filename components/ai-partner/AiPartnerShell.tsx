@@ -309,7 +309,9 @@ export default function AiPartnerShell({ children }: { children: React.ReactNode
   }
 
   return (
-    <div className="min-h-screen bg-crest-mist">
+    // overflow-x-clip: nothing inside may widen the page. iOS Safari zooms the whole page out
+    // when a child is wider than the screen; clip (unlike hidden) keeps sticky headers working.
+    <div className="min-h-screen bg-crest-mist overflow-x-clip max-w-full">
       {/* Desktop sidebar */}
       <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 border-r border-crest-line z-20">
         <SidebarBody />

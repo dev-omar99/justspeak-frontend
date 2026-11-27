@@ -316,9 +316,9 @@ export default function AiPartnerPage() {
               )}
 
               {/* Yoodli-style practice setup: config left, mic gate + controls right */}
-              <div id="setup-section" className="grid lg:grid-cols-5 gap-5 items-start scroll-mt-4">
+              <div id="setup-section" className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start scroll-mt-4">
                 {/* LEFT: configuration card */}
-                <section className="lg:col-span-3 bg-white border border-crest-line rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
+                <section className="min-w-0 lg:col-span-3 bg-white border border-crest-line rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
                   <div>
                     <h2 className="text-base font-black text-crest-navy">Practice setup</h2>
                     <p className="text-xs text-ink-soft mt-0.5">
@@ -528,7 +528,7 @@ export default function AiPartnerPage() {
                 </section>
 
                 {/* RIGHT: coach tile, mic gate + controls */}
-                <div className="lg:col-span-2 flex flex-col gap-4">
+                <div className="min-w-0 lg:col-span-2 flex flex-col gap-4">
                   {/* Coach tile: who you are about to talk to, with the role
                       they play in a roleplay and the session language. */}
                   {coachPersona && (
