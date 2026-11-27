@@ -9,6 +9,7 @@ import PageTransition from "../components/PageTransition";
 import Penguin3D from "../components/Penguin3D";
 import LandingHeroView from "../components/home/LandingHeroView";
 import AcademyQuickStrip from "../components/home/AcademyQuickStrip";
+import AiPartnerHomeSection from "../components/home/AiPartnerHomeSection";
 import SavedWordsHomeCard from "../components/home/SavedWordsHomeCard";
 import {
   BlockedUsersModal,
@@ -450,6 +451,10 @@ export default function HomePage() {
               </Link>
             </div>
           </section>
+
+          {/* AI Speaking Partner: its own big, dedicated section. Renders
+              only when the feature flag is on; nothing above changes. */}
+          <AiPartnerHomeSection />
 
           {/* Balanced 2-Column Square Bento Cards: Saved Words + JustSpeak Academy */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
