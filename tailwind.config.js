@@ -42,6 +42,34 @@ module.exports = {
         },
         success: "#16A34A",
         danger: "#DC2626",
+        // Eagle Crest logo palette (AI Partner redesign)
+        crest: {
+          navy: {
+            DEFAULT: "var(--color-crest-navy)",
+            deep: "var(--color-crest-navy-deep)",
+            soft: "var(--color-crest-navy-soft)",
+          },
+          crimson: {
+            DEFAULT: "var(--color-crest-crimson)",
+            deep: "var(--color-crest-crimson-deep)",
+            light: "var(--color-crest-crimson-light)",
+          },
+          steel: {
+            DEFAULT: "var(--color-crest-steel)",
+            deep: "var(--color-crest-steel-deep)",
+            light: "var(--color-crest-steel-light)",
+          },
+          gold: {
+            DEFAULT: "var(--color-crest-gold)",
+            deep: "var(--color-crest-gold-deep)",
+            light: "var(--color-crest-gold-light)",
+          },
+          mist: {
+            DEFAULT: "var(--color-crest-mist)",
+            subtle: "var(--color-crest-mist-subtle)",
+          },
+          line: "var(--color-crest-line)",
+        },
       },
       fontFamily: {
         arabic: ["Cairo", "sans-serif"],

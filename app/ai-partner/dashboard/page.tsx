@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "../../../components/Header";
 import PageTransition from "../../../components/PageTransition";
 import { getToken } from "../../../lib/auth";
 import { AiDashboard, fetchAiPartnerDashboard } from "../../../services/ai-partner";
@@ -29,8 +28,7 @@ export default function AiPartnerDashboardPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
-        <Header />
+      <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
           <div className="bg-white border border-border rounded-[26px] px-5 py-6 sm:px-8">
             <div className="h-1.5 w-14 bg-crimson rounded-full mb-3" />

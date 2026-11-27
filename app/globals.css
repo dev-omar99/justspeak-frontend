@@ -36,6 +36,23 @@
   --color-ink: #061533;
   --color-ink-soft: #475569;
   --color-emerald-live: #10B981;
+
+  /* Eagle Crest logo palette (AI Partner redesign): exact 5 colours pulled from the JustSpeak emblem */
+  --color-crest-navy: #0B1B33;
+  --color-crest-navy-deep: #081226;
+  --color-crest-navy-soft: #3A4A66;
+  --color-crest-crimson: #D91023;
+  --color-crest-crimson-deep: #B01030;
+  --color-crest-crimson-light: #FDEAED;
+  --color-crest-steel: #60A0C0;
+  --color-crest-steel-deep: #3F7CA0;
+  --color-crest-steel-light: #EAF4F9;
+  --color-crest-gold: #E0A040;
+  --color-crest-gold-deep: #C8822A;
+  --color-crest-gold-light: #FBF3E4;
+  --color-crest-mist: #F0F2F5;
+  --color-crest-mist-subtle: #E6EAF0;
+  --color-crest-line: #DDE4EC;
 }
 
 html[dir="rtl"] body {

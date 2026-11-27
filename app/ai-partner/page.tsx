@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import { getToken } from "../../lib/auth";
 import {
@@ -85,6 +83,18 @@ export default function AiPartnerPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
+  // Deep links from the shell's Start menu: /ai-partner?start=free-talk|interview|lesson|upload
+  useEffect(() => {
+    if (!status) return;
+    const start = new URLSearchParams(window.location.search).get("start");
+    if (start === "free-talk" || start === "interview" || start === "lesson") {
+      setMode(start);
+      document.getElementById("setup-section")?.scrollIntoView({ behavior: "smooth" });
+    } else if (start === "upload") {
+      document.getElementById("upload-section")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [status]);
+
   const quotaLeft = quota ? quota.remaining > 0 : true;
 
   async function handleStart() {
@@ -126,36 +136,40 @@ export default function AiPartnerPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
-        <Header />
+      <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
-          {/* Coach hero, Yoodli-home style, JustSpeak colours */}
-          <div className="bg-[#061533] text-white rounded-[26px] px-5 py-6 sm:px-8">
-            <h1 className="text-xl sm:text-2xl font-black">Your AI speaking coach</h1>
-            <p className="text-sm text-slate-300 mt-1">
-              What is coming up that you would like to feel ready for? Start a live
-              voice session, and finish with an honest coaching report.
+          {/* Coach hero, Yoodli-home style, Eagle Crest colours */}
+          <div className="bg-white border border-crest-line rounded-[26px] px-5 py-8 sm:px-10 sm:py-10 text-center">
+            <p className="text-[11px] font-black tracking-[0.2em] text-crest-steel-deep">
+              YOUR AI SPEAKING COACH
+            </p>
+            <h1 className="text-2xl sm:text-4xl font-black text-crest-navy mt-2 leading-tight">
+              What&apos;s coming up that you&apos;d like to feel ready for?
+            </h1>
+            <p className="text-sm text-ink-soft mt-3 max-w-xl mx-auto">
+              Start a live voice session, and finish with an honest coaching
+              report: every mistake quoted, corrected, and turned into practice.
             </p>
             {quota && (
-              <p className="text-xs mt-3 inline-block bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 font-bold">
+              <p className="text-xs mt-4 inline-block bg-crest-mist border border-crest-line text-crest-navy rounded-xl px-3 py-1.5 font-bold">
                 {quota.kind === "lifetime"
                   ? `${quota.remaining} of ${quota.limit} free sessions left`
                   : `${quota.remaining} of ${quota.limit} sessions left today`}
               </p>
             )}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Link
-                href="/ai-partner/recordings"
-                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl"
-              >
-                🎧 My recordings
-              </Link>
-              <Link
-                href="/ai-partner/dashboard"
-                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl"
-              >
-                📈 My progress
-              </Link>
+            <div className="flex flex-wrap justify-center gap-2 mt-5">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setMode(m.id);
+                    document.getElementById("setup-section")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-white border border-crest-steel/50 text-crest-steel-deep hover:bg-crest-steel-light text-xs font-bold px-4 py-2 rounded-full cursor-pointer transition-colors"
+                >
+                  {m.icon} {m.title}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -189,7 +203,7 @@ export default function AiPartnerPage() {
                 </div>
               )}
 
-              <section>
+              <section id="setup-section" className="scroll-mt-4">
                 <h2 className="text-sm font-black mb-2">1 · Choose a mode</h2>
                 <div className="grid sm:grid-cols-3 gap-3">
                   {MODES.map((m) => (
@@ -303,7 +317,7 @@ export default function AiPartnerPage() {
               </button>
 
               {/* Upload analysis */}
-              <section className="bg-white border border-dashed border-border rounded-2xl px-5 py-5 text-center">
+              <section id="upload-section" className="bg-white border border-dashed border-border rounded-2xl px-5 py-5 text-center scroll-mt-4">
                 <h2 className="text-sm font-black">Have a recording already?</h2>
                 <p className="text-xs text-ink-soft mt-1 mb-3">
                   Upload any English audio of yourself and get the same honest

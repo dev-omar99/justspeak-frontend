@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AiPartnerGate from "../../components/AiPartnerGate";
+import AiPartnerShell from "../../components/ai-partner/AiPartnerShell";
 
 export const metadata: Metadata = {
   title: "AI Partner",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function AiPartnerLayout({ children }: { children: React.ReactNode }) {
-  return <AiPartnerGate>{children}</AiPartnerGate>;
+  return (
+    <AiPartnerGate>
+      <AiPartnerShell>{children}</AiPartnerShell>
+    </AiPartnerGate>
+  );
 }
