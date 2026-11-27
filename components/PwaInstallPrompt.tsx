@@ -23,7 +23,7 @@ export default function PwaInstallPrompt() {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((reg) => console.log("[PWA] Service Worker registered:", reg.scope))
+        .then(() => undefined) // SW registered; nothing to surface to the user.
         .catch((err) => console.warn("[PWA] Service Worker registration failed:", err));
     }
 
