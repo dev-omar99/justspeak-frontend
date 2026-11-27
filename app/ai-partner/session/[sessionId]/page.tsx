@@ -62,6 +62,10 @@ export default function AiPartnerSessionPage() {
   const [elapsed, setElapsed] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
+  // Read-only "what to do" card shown above the stage (roleplay sessions only). Display only,
+  // it never touches the mic, socket or recorder.
+  const [lessonInfo, setLessonInfo] = useState<{ title: string; goal: string; rubric: string[] } | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(true);
   const [voiceRate, setVoiceRate] = useState(1);
   const [coach, setCoach] = useState<{ id: string; name: string; level: string }>({ id: "", name: "Coach", level: "" });
   // Read after mount: localStorage is not available during server render (avoids a hydration mismatch).
@@ -299,7 +303,9 @@ export default function AiPartnerSessionPage() {
           fetchAiPartnerSession(token, sessionId),
           fetchAiPartnerStatus(token),
         ]);
-        const session = (data?.session ?? data) as { personaId?: string; level?: string };
+        const session = (data?.session ?? data) as { personaId?: string; level?: string; roleplayId?: string | null };
+        const rp = status.roleplays?.find((r) => r.id === session?.roleplayId);
+        if (rp) setLessonInfo({ title: rp.title, goal: rp.goal, rubric: rp.rubric.map((x) => x.label) });
         const persona = status.personas.find((p) => p.id === session?.personaId);
         setCoach({
           id: session?.personaId ?? "",
@@ -473,6 +479,31 @@ export default function AiPartnerSessionPage() {
           <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             {cameraError}
           </p>
+        )}
+
+        {/* Goal fold, like Yoodli's "Hide details": what to achieve and what is checked */}
+        {lessonInfo && callState !== "ended" && (
+          <div className="bg-white border border-crest-line rounded-2xl px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setDetailsOpen((v) => !v)}
+              aria-expanded={detailsOpen}
+              className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+            >
+              <span className="text-sm font-black text-crest-navy">{lessonInfo.title}</span>
+              <span className="text-xs font-bold text-crest-crimson whitespace-nowrap shrink-0">{detailsOpen ? "Hide details" : "Show details"}</span>
+            </button>
+            {detailsOpen && (
+              <div className="mt-2 flex flex-col gap-2">
+                <p className="text-xs text-ink-soft leading-relaxed"><span className="font-black text-crest-navy">Goal: </span>{lessonInfo.goal}</p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {lessonInfo.rubric.map((r) => (
+                    <li key={r} className="text-[11px] font-bold text-crest-navy bg-crest-mist border border-crest-line rounded-full px-2.5 py-1">{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Stage: light card like Yoodli - coach tile top-left, waveform center, timer + name in corners */}
