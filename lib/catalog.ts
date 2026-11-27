@@ -107,3 +107,23 @@ export function shortDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+/** Most recent attempt time (ISO) across a programme, or null when nothing was practised yet. */
+export function lastPracticeOf(programme: CatalogProgramme): string | null {
+  let last: string | null = null;
+  for (const l of programme.levels)
+    for (const x of l.lessons)
+      for (const a of x.attempts) if (!last || a.at > last) last = a.at;
+  return last;
+}
+
+/** Lessons of the programme not yet passed ("N steps to go"). */
+export function stepsToGo(programme: CatalogProgramme): number {
+  return Math.max(0, programme.totalLessons - programme.passedLessons);
+}
+
+/** Programme state shown on cards: not started, in progress, or completed (all lessons passed). */
+export function programmeState(programme: CatalogProgramme): "not_started" | "in_progress" | "completed" {
+  if (programme.totalLessons > 0 && programme.passedLessons >= programme.totalLessons) return "completed";
+  return lastPracticeOf(programme) ? "in_progress" : "not_started";
+}

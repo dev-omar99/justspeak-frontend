@@ -4,7 +4,7 @@ import Link from "next/link";
 import PageTransition from "../../../components/PageTransition";
 import LoadError from "../../../components/ai-partner/programmes/LoadError";
 import { useCatalog } from "../../../components/ai-partner/catalog/useCatalog";
-import { fieldSubtitle } from "../../../lib/catalog";
+import { fieldSubtitle, lastPracticeOf, lessonHref, programmeState, shortDate } from "../../../lib/catalog";
 
 /** Short mark shown in the navy tile of each field card (our own, no artwork). */
 const MARK: Record<string, string> = { work: "W", travel: "T", academic: "A", interviews: "I", "daily-life": "D" };
@@ -15,13 +15,43 @@ const MARK: Record<string, string> = { work: "W", travel: "T", academic: "A", in
  */
 export default function LearningPage() {
   const { fields, error, retry } = useCatalog();
+  // Programmes with at least one attempt, shown first as progress cards.
+  const started = (fields ?? []).flatMap((f) => f.programmes).filter((p) => lastPracticeOf(p) !== null);
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
-          <h1 className="text-2xl font-black">Choose a field</h1>
           {error && <LoadError message={error} onRetry={retry} />}
           {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {started.length > 0 && (
+            <>
+              <h2 className="text-lg font-black">Your programmes</h2>
+              {started.map((p) => {
+                const pct = p.totalLessons ? Math.round((p.passedLessons / p.totalLessons) * 100) : 0;
+                const last = lastPracticeOf(p);
+                const next = p.levels.flatMap((l) => l.lessons).find((l) => l.id === p.nextLessonId);
+                return (
+                  <div key={p.id} className="bg-white border-[1.5px] border-border border-t-4 border-t-crest-navy rounded-2xl p-4 flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-black text-base leading-snug">{p.title}</p>
+                      <span className="text-[10px] font-black uppercase text-ink-soft whitespace-nowrap">{programmeState(p) === "completed" ? "Completed" : "In progress"}</span>
+                    </div>
+                    {last && <p className="text-xs text-ink-soft">Last practice {shortDate(last)}</p>}
+                    <p className="text-xs text-ink-soft">{p.description}</p>
+                    <p className="text-xs font-bold">{p.passedLessons}/{p.totalLessons} activities complete</p>
+                    <span className="block h-1.5 rounded-full bg-slate-100 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                      <span className="block h-full bg-crimson rounded-full" style={{ width: `${pct}%` }} />
+                    </span>
+                    <div className="flex items-center gap-4 pt-1">
+                      {next && <Link href={lessonHref(next.id)} className="border-[1.5px] border-crimson text-crimson font-black text-sm rounded-full px-5 py-1.5">Continue</Link>}
+                      <Link href={`/ai-partner/path/${encodeURIComponent(p.id)}`} className="text-sm font-bold text-crimson">View programme</Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+          <h1 className="text-2xl font-black pt-1">Choose a field</h1>
           {fields?.map((f) => (
             <Link
               key={f.id}

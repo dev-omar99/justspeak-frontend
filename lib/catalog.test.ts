@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { attemptDeltas, chipFor, toUnits, trendOf, trendText } from "./catalog.ts";
+import { attemptDeltas, chipFor, lastPracticeOf, programmeState, stepsToGo, toUnits, trendOf, trendText } from "./catalog.ts";
 
 const a = (score: number | null, id = "s") => ({ sessionId: id, at: "2026-11-27T10:00:00.000Z", score });
 
@@ -33,4 +33,21 @@ test("trend text", () => {
 test("units of five", () => {
   const lessons = Array.from({ length: 12 }, (_, i) => ({ id: String(i) })) as never[];
   assert.deepEqual(toUnits(lessons).map((u) => u.length), [5, 5, 2]);
+});
+
+// Programme card helpers (cast: only the fields the helpers read are filled in).
+const prog = (passed: number, total: number, ats: string[]) =>
+  ({
+    totalLessons: total,
+    passedLessons: passed,
+    levels: [{ lessons: [{ attempts: ats.map((at) => ({ at, sessionId: at, score: 50 })) }] }],
+  }) as never;
+
+test("programme helpers: last practice, steps to go, state", () => {
+  assert.equal(lastPracticeOf(prog(0, 5, [])), null);
+  assert.equal(lastPracticeOf(prog(1, 5, ["2026-11-24T10:00:00Z", "2026-11-26T10:00:00Z"])), "2026-11-26T10:00:00Z");
+  assert.equal(stepsToGo(prog(2, 9, [])), 7);
+  assert.equal(programmeState(prog(0, 5, [])), "not_started");
+  assert.equal(programmeState(prog(1, 5, ["2026-11-24T10:00:00Z"])), "in_progress");
+  assert.equal(programmeState(prog(5, 5, ["2026-11-24T10:00:00Z"])), "completed");
 });
