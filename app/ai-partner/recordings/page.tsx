@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageTransition from "../../../components/PageTransition";
 import { getToken } from "../../../lib/auth";
-import { AiSessionListItem, fetchAiPartnerSessions } from "../../../services/ai-partner";
+import { AiSessionListItem, fetchAiPartnerSessions, fetchAiPartnerStatus, RoleplaySummary } from "../../../services/ai-partner";
 import {
   fetchRecordingPlayback,
   fetchSessionRecordings,
@@ -100,6 +100,8 @@ function RecordingPlayer({ sessionId, token }: { sessionId: string; token: strin
 export default function AiPartnerRecordingsPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<AiSessionListItem[] | null>(null);
+  // Scenario catalog, to name roleplay rows by their title, not a raw id.
+  const [roleplays, setRoleplays] = useState<RoleplaySummary[]>([]);
   const [error, setError] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [token, setToken] = useState("");
@@ -114,7 +116,21 @@ export default function AiPartnerRecordingsPage() {
     fetchAiPartnerSessions(savedToken)
       .then(setSessions)
       .catch((err) => setError(err.message || "Could not load your recordings."));
+    fetchAiPartnerStatus(savedToken)
+      .then((statusData) => setRoleplays(statusData.roleplays ?? []))
+      .catch(() => undefined); // titles fall back to the raw id
   }, [router]);
+
+  /** Row title: the scenario name for roleplays, the mode label otherwise. */
+  function sessionTitle(session: AiSessionListItem, index: number, total: number): string {
+    const base = `#${total - index} · `;
+    if (session.roleplayId) {
+      const rp = roleplays.find((r) => r.id === session.roleplayId);
+      return `${base}Roleplay · ${rp ? rp.title : session.roleplayId}`;
+    }
+    const meta = MODE_LABELS[session.mode] ?? { icon: "🎙️", label: session.mode };
+    return `${base}${meta.label}${session.lessonId ? ` · ${session.lessonId}` : ""}`;
+  }
 
   return (
     <PageTransition>
@@ -147,73 +163,129 @@ export default function AiPartnerRecordingsPage() {
             </div>
           )}
 
-          {sessions?.map((session, idx) => {
-            const meta = MODE_LABELS[session.mode] ?? { icon: "🎙️", label: session.mode };
-            const report = session.report;
-            const scored = report && report.status === "OK";
-            const open = openId === session.id;
-            return (
-              <div key={session.id} className="bg-white border border-border rounded-2xl px-5 py-4 flex flex-col gap-3">
-                <div className="flex items-center gap-4">
-                  <Link href={`/ai-partner/report/${session.id}`} className="flex-1 min-w-0 flex items-center gap-4 group">
-                    <span className="text-2xl">{meta.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black truncate group-hover:text-crimson transition-colors">
-                        #{sessions.length - idx} · {meta.label}
-                        {session.lessonId ? ` · ${session.lessonId}` : ""}
-                      </p>
-                      <p className="text-xs text-ink-soft">
-                        {formatDate(session.createdAt)} · {formatDuration(session.durationSec)} ·{" "}
-                        {session.level}
-                        {session.status === "active" ? " · unfinished" : ""}
-                        {scored && report!.corrections.length > 0
-                          ? ` · ${report!.corrections.length} corrections`
-                          : ""}
-                      </p>
-                    </div>
-                  </Link>
-                  {session.hasRecordings && (
-                    <button
-                      type="button"
-                      onClick={() => setOpenId(open ? null : session.id)}
-                      className={`text-xs font-bold rounded-xl px-3 py-1.5 border transition-all ${
-                        open
-                          ? "bg-crimson text-white border-crimson"
-                          : "bg-crimson-light text-[#C81E2F] border-crimson/30"
-                      }`}
-                    >
-                      {open ? "Close" : "▶ Play"}
-                    </button>
-                  )}
-                  {scored ? (
-                    <Link
-                      href={`/ai-partner/report/${session.id}`}
-                      className={`text-lg font-black tabular-nums ${
-                        report!.overall_score >= 80
-                          ? "text-emerald-600"
-                          : report!.overall_score >= 60
-                            ? "text-amber-600"
-                            : "text-red-600"
-                      }`}
-                    >
-                      {report!.overall_score}
-                    </Link>
-                  ) : (
-                    <Link href={`/ai-partner/report/${session.id}`} className="text-[11px] font-bold text-ink-soft">
-                      {report ? "No score" : "Report →"}
-                    </Link>
-                  )}
-                </div>
-                {open && token && (
-                  <div className="border-t border-border pt-3">
-                    <RecordingPlayer sessionId={session.id} token={token} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {sessions && sessions.length > 0 && (
+            /* Yoodli-style library table: one row per session, expandable
+               for inline playback. min-w keeps columns honest on phones. */
+            <div className="bg-white border border-border rounded-2xl overflow-x-auto">
+              <table className="w-full min-w-[680px] text-sm">
+                <thead>
+                  <tr className="text-left text-[10px] font-black tracking-wider text-ink-soft border-b border-border">
+                    <th className="px-4 py-3">SESSION</th>
+                    <th className="px-3 py-3">DATE</th>
+                    <th className="px-3 py-3">DURATION</th>
+                    <th className="px-3 py-3">LEVEL</th>
+                    <th className="px-3 py-3 text-right">SCORE</th>
+                    <th className="px-4 py-3 text-right">PLAY</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session, idx) => {
+                    const meta = MODE_LABELS[session.mode] ?? { icon: "🎙️", label: session.mode };
+                    const report = session.report;
+                    const scored = report && report.status === "OK";
+                    const open = openId === session.id;
+                    return (
+                      <FragmentRow
+                        key={session.id}
+                        session={session}
+                        icon={session.roleplayId ? "🎭" : meta.icon}
+                        title={sessionTitle(session, idx, sessions.length)}
+                        scored={!!scored}
+                        score={report?.overall_score ?? null}
+                        corrections={scored ? report!.corrections.length : 0}
+                        open={open}
+                        token={token}
+                        onToggle={() => setOpenId(open ? null : session.id)}
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
     </PageTransition>
+  );
+}
+
+/** One library row plus its expandable playback row. */
+function FragmentRow({
+  session,
+  icon,
+  title,
+  scored,
+  score,
+  corrections,
+  open,
+  token,
+  onToggle,
+}: {
+  session: AiSessionListItem;
+  icon: string;
+  title: string;
+  scored: boolean;
+  score: number | null;
+  corrections: number;
+  open: boolean;
+  token: string;
+  onToggle: () => void;
+}) {
+  return (
+    <>
+      <tr className="border-b border-border last:border-0 hover:bg-surface/60 transition-colors">
+        <td className="px-4 py-3">
+          <Link href={`/ai-partner/report/${session.id}`} className="flex items-center gap-3 group min-w-0">
+            <span className="text-xl">{icon}</span>
+            <span className="min-w-0">
+              <span className="block font-black truncate group-hover:text-crimson transition-colors">{title}</span>
+              <span className="block text-[11px] text-ink-soft">
+                {session.status === "active" ? "unfinished" : ""}
+                {session.status === "active" && corrections > 0 ? " · " : ""}
+                {corrections > 0 ? `${corrections} corrections` : ""}
+              </span>
+            </span>
+          </Link>
+        </td>
+        <td className="px-3 py-3 text-xs text-ink-soft whitespace-nowrap">{formatDate(session.createdAt)}</td>
+        <td className="px-3 py-3 text-xs tabular-nums">{formatDuration(session.durationSec)}</td>
+        <td className="px-3 py-3 text-xs font-bold">{session.level}</td>
+        <td className="px-3 py-3 text-right">
+          {scored && score !== null ? (
+            <span
+              className={`text-base font-black tabular-nums ${
+                score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-red-600"
+              }`}
+            >
+              {score}
+            </span>
+          ) : (
+            <span className="text-[11px] font-bold text-ink-soft">{session.report ? "No score" : "—"}</span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-right">
+          {session.hasRecordings ? (
+            <button
+              type="button"
+              onClick={onToggle}
+              className={`text-xs font-bold rounded-xl px-3 py-1.5 border transition-all ${
+                open ? "bg-crimson text-white border-crimson" : "bg-crimson-light text-[#C81E2F] border-crimson/30"
+              }`}
+            >
+              {open ? "Close" : "▶ Play"}
+            </button>
+          ) : (
+            <span className="text-[11px] text-ink-soft">—</span>
+          )}
+        </td>
+      </tr>
+      {open && token && (
+        <tr className="border-b border-border last:border-0">
+          <td colSpan={6} className="px-4 py-3 bg-surface/40">
+            <RecordingPlayer sessionId={session.id} token={token} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }

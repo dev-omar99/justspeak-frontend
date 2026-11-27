@@ -10,17 +10,29 @@ import {
   AiSessionMode,
   fetchAiPartnerQuota,
   fetchAiPartnerStatus,
+  RoleplaySummary,
   startAiPartnerSession,
   takePracticeQuestion,
   uploadAiPartnerAudio,
 } from "../../services/ai-partner";
 
-const MODES: { id: AiSessionMode; icon: string; title: string; blurb: string }[] = [
+/** Practice types shown on the setup screen. A roleplay starts on the
+ *  backend as a free-talk session carrying a roleplayId, so the session
+ *  pipeline needs no new mode. */
+type PracticeType = AiSessionMode | "roleplay";
+
+const MODES: { id: PracticeType; icon: string; title: string; blurb: string }[] = [
   {
     id: "free-talk",
     icon: "💬",
     title: "Free talk",
     blurb: "Open conversation on everyday topics. Warm up, ramble, experiment.",
+  },
+  {
+    id: "roleplay",
+    icon: "🎭",
+    title: "Roleplay",
+    blurb: "A real situation with a goal: order, negotiate, apologise, check in.",
   },
   {
     id: "interview",
@@ -64,10 +76,13 @@ export default function AiPartnerPage() {
   const router = useRouter();
   const [status, setStatus] = useState<AiPartnerStatus | null>(null);
   const [quota, setQuota] = useState<AiPartnerQuota | null>(null);
-  const [mode, setMode] = useState<AiSessionMode>("free-talk");
+  const [mode, setMode] = useState<PracticeType>("free-talk");
   const [personaId, setPersonaId] = useState<string>("tutor");
   const [fieldId, setFieldId] = useState<string>("software");
   const [lessonId, setLessonId] = useState<string>("");
+  // Roleplay picker: chosen scenario + the active category tab.
+  const [roleplayId, setRoleplayId] = useState<string>("");
+  const [roleplayCat, setRoleplayCat] = useState<string>("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [starting, setStarting] = useState(false);
@@ -102,6 +117,10 @@ export default function AiPartnerPage() {
         if (statusData.personas.length) setPersonaId(statusData.personas[0].id);
         if (statusData.interviewFields.length) setFieldId(statusData.interviewFields[0].id);
         if (statusData.availableLessons.length) setLessonId(statusData.availableLessons[0].id);
+        if (statusData.roleplays?.length) {
+          setRoleplayId(statusData.roleplays[0].id);
+          setRoleplayCat(statusData.roleplays[0].category);
+        }
       })
       .catch((err) => setError(err.message || "Could not load AI Partner."))
       .finally(() => setLoading(false));
@@ -111,7 +130,7 @@ export default function AiPartnerPage() {
   useEffect(() => {
     if (!status) return;
     const start = new URLSearchParams(window.location.search).get("start");
-    if (start === "free-talk" || start === "interview" || start === "lesson") {
+    if (start === "free-talk" || start === "interview" || start === "lesson" || start === "roleplay") {
       setMode(start);
       document.getElementById("setup-section")?.scrollIntoView({ behavior: "smooth" });
     } else if (start === "upload") {
@@ -179,11 +198,14 @@ export default function AiPartnerPage() {
     setStarting(true);
     setError("");
     try {
+      // A roleplay fixes its coach: the scenario's persona plays the part.
+      const scenario = mode === "roleplay" ? roleplays.find((r) => r.id === roleplayId) : undefined;
       const { sessionId } = await startAiPartnerSession(token, {
-        mode,
-        personaId,
+        mode: mode === "roleplay" ? "free-talk" : mode,
+        personaId: scenario ? scenario.persona : personaId,
         ...(mode === "interview" ? { fieldId } : {}),
         ...(mode === "lesson" ? { lessonId } : {}),
+        ...(scenario ? { roleplayId: scenario.id } : {}),
       });
       if (practiceQ && mode === "free-talk") {
         sessionStorage.setItem("ai_partner_practice_q", practiceQ);
@@ -211,6 +233,17 @@ export default function AiPartnerPage() {
   }
 
   const selectedMode = MODES.find((m) => m.id === mode)!;
+  // Roleplay catalog helpers: category tabs in catalog order, the visible
+  // slice, and the full selected scenario (for the persona tile + start).
+  const roleplays = status?.roleplays ?? [];
+  const roleplayCats = roleplays.map((r) => r.category).filter((c, i, all) => all.indexOf(c) === i);
+  const visibleRoleplays = roleplays.filter((r) => !roleplayCat || r.category === roleplayCat);
+  const selectedRoleplay = roleplays.find((r) => r.id === roleplayId);
+  /** Display facts for the coach tile: the scenario's persona in a
+   *  roleplay, the picked persona otherwise. */
+  const coachPersonaId = mode === "roleplay" && selectedRoleplay ? selectedRoleplay.persona : personaId;
+  const coachPersona = status?.personas.find((p) => p.id === coachPersonaId);
+  const coachRole = mode === "roleplay" && selectedRoleplay ? selectedRoleplay.personaRole : null;
 
   return (
     <PageTransition>
@@ -228,13 +261,6 @@ export default function AiPartnerPage() {
               Start a live voice session, and finish with an honest coaching
               report: every mistake quoted, corrected, and turned into practice.
             </p>
-            {quota && (
-              <p className="text-xs mt-4 inline-block bg-crest-mist border border-crest-line text-crest-navy rounded-xl px-3 py-1.5 font-bold">
-                {quota.kind === "lifetime"
-                  ? `${quota.remaining} of ${quota.limit} free sessions left`
-                  : `${quota.remaining} of ${quota.limit} sessions left today`}
-              </p>
-            )}
             <div className="flex flex-wrap justify-center gap-2 mt-5">
               {MODES.map((m) => (
                 <button
@@ -318,6 +344,71 @@ export default function AiPartnerPage() {
                     </div>
                   </div>
 
+                  {mode === "roleplay" && (
+                    <div>
+                      <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">SCENARIO</p>
+                      {/* Category tabs, in catalog order */}
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {roleplayCats.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setRoleplayCat(cat);
+                              const first = roleplays.find((r) => r.category === cat);
+                              if (first) setRoleplayId(first.id);
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold border cursor-pointer transition-colors ${
+                              roleplayCat === cat
+                                ? "bg-crest-navy text-white border-transparent"
+                                : "bg-white border-crest-line text-ink hover:border-crest-steel"
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {visibleRoleplays.map((rp) => (
+                          <button
+                            key={rp.id}
+                            onClick={() => setRoleplayId(rp.id)}
+                            className={`flex items-start gap-3 text-left border rounded-xl px-4 py-3 cursor-pointer transition-all ${
+                              roleplayId === rp.id
+                                ? "border-crest-crimson ring-2 ring-crest-crimson/15 bg-crest-crimson-light/40"
+                                : "border-crest-line hover:border-crest-steel"
+                            }`}
+                          >
+                            <span className="flex-1 min-w-0">
+                              <span className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-black text-crest-navy">{rp.title}</span>
+                                <span className="text-[10px] font-black tracking-wide text-crest-steel-deep bg-crest-steel-light rounded-md px-1.5 py-0.5">
+                                  {rp.level}
+                                </span>
+                              </span>
+                              <span className="block text-xs text-ink-soft mt-0.5">{rp.description}</span>
+                              <span className="block text-xs mt-1">
+                                <span className="font-bold text-crest-navy">Your goal: </span>
+                                <span className="text-ink-soft">{rp.goal}</span>
+                              </span>
+                              {/* Rubric checks: exactly what the report grades. */}
+                              <span className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                                {rp.rubric.map((item) => (
+                                  <span key={item} className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+                                    <span className="text-crest-crimson"><CheckIcon /></span>
+                                    {item}
+                                  </span>
+                                ))}
+                              </span>
+                            </span>
+                            {roleplayId === rp.id && (
+                              <span className="text-crest-crimson mt-1"><CheckIcon /></span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {mode === "interview" && (
                     <div>
                       <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">FIELD</p>
@@ -367,6 +458,9 @@ export default function AiPartnerPage() {
                     </div>
                   )}
 
+                  {/* Coach picker: hidden for roleplays, where the scenario
+                      itself decides who plays opposite the learner. */}
+                  {mode !== "roleplay" && (
                   <div>
                     <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">COACH</p>
                     <div className="flex flex-col gap-2">
@@ -399,6 +493,7 @@ export default function AiPartnerPage() {
                       ))}
                     </div>
                   </div>
+                  )}
 
                   <div>
                     <p className="text-[11px] font-black tracking-wider text-ink-soft mb-1">HOW YOU WILL BE SCORED</p>
@@ -420,8 +515,29 @@ export default function AiPartnerPage() {
                   </div>
                 </section>
 
-                {/* RIGHT: mic gate + controls */}
+                {/* RIGHT: coach tile, mic gate + controls */}
                 <div className="lg:col-span-2 flex flex-col gap-4">
+                  {/* Coach tile: who you are about to talk to, with the role
+                      they play in a roleplay and the session language. */}
+                  {coachPersona && (
+                    <section className="bg-white border border-crest-line rounded-2xl px-5 py-4 flex items-center gap-3">
+                      <span className="w-11 h-11 rounded-full bg-crest-navy text-white text-base font-black flex items-center justify-center flex-shrink-0">
+                        {coachPersona.displayName.trim().charAt(0)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-crest-navy">
+                          {coachPersona.displayName}
+                          {coachRole && (
+                            <span className="text-ink-soft font-semibold"> · your {coachRole}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-ink-soft italic truncate">{coachPersona.bestFor}</p>
+                      </div>
+                      <span className="text-[10px] font-black tracking-wide text-crest-steel-deep bg-crest-steel-light rounded-md px-2 py-1 flex-shrink-0">
+                        ENGLISH
+                      </span>
+                    </section>
+                  )}
                   <section className="bg-white border border-crest-line rounded-2xl p-5 text-center">
                     <p className="text-sm font-black text-crest-navy">
                       {micReady ? "Your microphone is ready" : "Grant JustSpeak microphone access"}
@@ -501,13 +617,22 @@ export default function AiPartnerPage() {
                     </button>
                     <button
                       onClick={handleStart}
-                      disabled={starting || !quotaLeft || !micReady}
+                      disabled={starting || !quotaLeft || !micReady || (mode === "roleplay" && !selectedRoleplay)}
                       title={micReady ? undefined : "Allow microphone access first"}
                       className="flex-1 bg-crest-crimson hover:bg-crest-crimson-deep text-white font-black rounded-xl px-6 py-3 text-base disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                     >
                       {starting ? "Starting…" : !quotaLeft ? "No sessions left" : micReady ? "Start" : "Allow the mic to start"}
                     </button>
                   </div>
+                  {/* Quota row under Start: what this session costs the plan. */}
+                  {quota && (
+                    <p className="text-[11px] text-ink-soft text-center -mt-1">
+                      {quota.kind === "lifetime"
+                        ? `${quota.remaining} of ${quota.limit} free sessions left`
+                        : `${quota.remaining} of ${quota.limit} sessions left today`}
+                      {" · 1 session per practice"}
+                    </p>
+                  )}
 
                   {/* Upload analysis */}
                   <section id="upload-section" className="bg-white border border-dashed border-crest-line rounded-2xl px-5 py-4 text-center scroll-mt-4">

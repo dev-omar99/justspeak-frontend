@@ -8,6 +8,18 @@ import { getApiBaseUrl } from "./api";
  * (PCM linear16 @ 16 kHz) and sentence-queued MP3 playback with barge-in.
  */
 
+export interface RoleplaySummary {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  persona: string;
+  personaRole: string;
+  level: string;
+  goal: string;
+  rubric: string[];
+}
+
 export interface AiPartnerStatus {
   enabled: boolean;
   /** True when recording storage is configured server-side; uploads persist. */
@@ -17,6 +29,8 @@ export interface AiPartnerStatus {
   halfLevels: string[];
   lessonsPerHalfLevel: number;
   availableLessons: { id: string; halfLevel: string; title: string; goal: string }[];
+  /** Roleplay scenario catalog (absent on older backends: treat as empty). */
+  roleplays?: RoleplaySummary[];
 }
 
 export interface AiPartnerQuota {
@@ -56,7 +70,7 @@ export function fetchAiPartnerQuota(token: string) {
 
 export function startAiPartnerSession(
   token: string,
-  payload: { mode: AiSessionMode; personaId: string; fieldId?: string; lessonId?: string; level?: string }
+  payload: { mode: AiSessionMode; personaId: string; fieldId?: string; lessonId?: string; roleplayId?: string; level?: string }
 ) {
   return request<{ sessionId: string; quota: AiPartnerQuota }>("/ai-partner/sessions", token, {
     method: "POST",
@@ -340,6 +354,22 @@ export class SentencePlayer {
 /* v2: Yoodli-parity surfaces (report, library, dashboard, upload).    */
 /* ------------------------------------------------------------------ */
 
+export interface WordStat {
+  word: string;
+  count: number;
+  pct: number;
+}
+
+/** Mirrors the backend's deterministic word-choice analytics. */
+export interface WordChoiceStats {
+  totalWords: number;
+  fillers: { count: number; pct: number; top: WordStat[] };
+  weakWords: WordStat[];
+  repetition: { count: number; words: WordStat[] };
+  conciseness: { avgWordsPerTurn: number; excessPct: number };
+  sentenceStarters: WordStat[];
+}
+
 export interface ReportCorrection {
   said: string;
   better: string;
@@ -353,7 +383,14 @@ export interface SessionReportV2 {
   cefr_estimate: string;
   summary: string;
   dimensions: { grammar: number; vocabulary: number; fluency: number; pronunciation: number; interaction: number };
-  metrics_echo: { student_speech_sec: number; words_per_minute: number; fillers_per_minute: number; student_talk_ratio: number };
+  metrics_echo: {
+    student_speech_sec: number;
+    words_per_minute: number;
+    fillers_per_minute: number;
+    student_talk_ratio: number;
+    /** Exact delivery numbers computed server-side; absent on older reports. */
+    word_choice?: WordChoiceStats;
+  };
   corrections: ReportCorrection[];
   recasts: { said: string; natural: string }[];
   strengths: string[];
@@ -376,6 +413,7 @@ export interface AiSessionListItem {
   personaId: string;
   fieldId: string | null;
   lessonId: string | null;
+  roleplayId?: string | null;
   level: string;
   status: string;
   durationSec: number;

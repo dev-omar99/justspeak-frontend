@@ -11,6 +11,8 @@ import {
   PronunciationAssessment,
   SessionReportV2,
   setPracticeQuestion,
+  WordChoiceStats,
+  WordStat,
 } from "../../../../services/ai-partner";
 
 interface TranscriptTurn {
@@ -24,6 +26,109 @@ function scoreColor(value: number): string {
   if (value >= 80) return "text-emerald-600";
   if (value >= 60) return "text-amber-600";
   return "text-red-600";
+}
+
+/** Small labeled chip used across the word-choice blocks. */
+function WordChip({ stat, unit }: { stat: WordStat; unit: string }) {
+  return (
+    <span className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
+      “{stat.word}” × {stat.count}
+      <span className="text-ink-soft font-semibold"> · {stat.pct}%{unit}</span>
+    </span>
+  );
+}
+
+/**
+ * Yoodli-style word-choice analytics: filler rate, weak words, content
+ * repetition, answer-length discipline and sentence starters. All numbers
+ * arrive computed from the transcript (metrics_echo.word_choice); this
+ * component only renders them.
+ */
+function WordChoiceSection({ wc }: { wc: WordChoiceStats }) {
+  return (
+    <section className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-4">
+      <div>
+        <h2 className="font-black text-sm">Word choice</h2>
+        <p className="text-[11px] text-ink-soft mt-0.5">
+          Exact counts over the {wc.totalWords} words you said.
+        </p>
+      </div>
+
+      {/* Filler rate: the headline percentage plus the worst offenders. */}
+      <div>
+        <div className="flex items-baseline gap-2">
+          <span className={`text-2xl font-black tabular-nums ${wc.fillers.pct <= 2 ? "text-emerald-600" : wc.fillers.pct <= 5 ? "text-amber-600" : "text-red-600"}`}>
+            {wc.fillers.pct}%
+          </span>
+          <span className="text-xs text-ink-soft font-semibold">
+            of your words were fillers ({wc.fillers.count} total)
+          </span>
+        </div>
+        {wc.fillers.top.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {wc.fillers.top.map((f) => (
+              <WordChip key={f.word} stat={f} unit=" of words" />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Weak words: hedging that softens every statement it touches. */}
+      {wc.weakWords.length > 0 && (
+        <div>
+          <p className="text-xs font-black text-ink-soft mb-1.5">WEAK WORDS</p>
+          <div className="flex flex-wrap gap-2">
+            {wc.weakWords.map((w) => (
+              <WordChip key={w.word} stat={w} unit=" of words" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Repetition: content words leaned on 3+ times. */}
+      {wc.repetition.count > 0 && (
+        <div>
+          <p className="text-xs font-black text-ink-soft mb-1.5">
+            REPEATED WORDS · {wc.repetition.count} used 3+ times
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {wc.repetition.words.map((w) => (
+              <WordChip key={w.word} stat={w} unit=" of words" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Conciseness: average answer length vs the spoken-answer ceiling. */}
+      <div>
+        <p className="text-xs font-black text-ink-soft mb-1.5">CONCISENESS</p>
+        <p className="text-sm">
+          <span className="font-black tabular-nums">{wc.conciseness.avgWordsPerTurn}</span>{" "}
+          <span className="text-ink-soft">words per answer on average.</span>{" "}
+          {wc.conciseness.excessPct > 0 ? (
+            <span className="text-amber-700 font-semibold">
+              {wc.conciseness.excessPct}% over the 40-word spoken-answer ceiling — try landing
+              the point, then stopping.
+            </span>
+          ) : (
+            <span className="text-emerald-700 font-semibold">Inside the 40-word ceiling. Nice and tight.</span>
+          )}
+        </p>
+      </div>
+
+      {/* Sentence starters: how answers begin, most frequent first. */}
+      {wc.sentenceStarters.length > 0 && (
+        <div>
+          <p className="text-xs font-black text-ink-soft mb-1.5">SENTENCE STARTERS</p>
+          <div className="flex flex-wrap gap-2">
+            {wc.sentenceStarters.map((s) => (
+              <WordChip key={s.word} stat={s} unit=" of sentences" />
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function barColor(value: number): string {
@@ -496,7 +601,9 @@ export default function AiPartnerReportPage() {
                           </div>
                         ))}
                       </div>
-                      {fillers.length > 0 && (
+                      {/* Prefer server-exact filler stats when the report has them;
+                          older reports fall back to client-side counting above. */}
+                      {fillers.length > 0 && !report.metrics_echo.word_choice && (
                         <div className="flex flex-wrap gap-2">
                           {fillers.map((f) => (
                             <span key={f.word} className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
@@ -506,6 +613,13 @@ export default function AiPartnerReportPage() {
                         </div>
                       )}
                     </section>
+
+                    {/* Word choice depth: weak words, repetition, conciseness,
+                        sentence starters. Numbers are computed server-side from
+                        the transcript, never generated by the model. */}
+                    {report.metrics_echo.word_choice && (
+                      <WordChoiceSection wc={report.metrics_echo.word_choice} />
+                    )}
 
                     {/* Per-sentence corrections, mirrored here so Analytics stands alone */}
                     {report.corrections.length > 0 && (
