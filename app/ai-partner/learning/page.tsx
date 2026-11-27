@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SourceNote from "../../../components/ai-partner/programmes/SourceNote";
 import PageTransition from "../../../components/PageTransition";
 import { getToken } from "../../../lib/auth";
 import { nextTask, programmeStatus, progressPct, startHref, STATUS_LABEL } from "../../../lib/programmes";
@@ -52,6 +53,7 @@ export default function LearningPage() {
                   <div className="flex-1 min-w-0">
                     <h2 className="font-black text-base">{p.title}</h2>
                     <p className="text-sm text-ink-soft mt-2">{p.description}</p>
+                    <div className="mt-1"><SourceNote source={p.source} /></div>
                     <div className="flex items-center gap-4 mt-4">
                       {task ? (
                         <Link href={startHref(task)} className="border-2 border-indigo-500 text-indigo-600 font-bold text-sm rounded-full px-5 py-1.5 hover:bg-indigo-50 transition-colors">

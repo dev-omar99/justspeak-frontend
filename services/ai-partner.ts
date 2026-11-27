@@ -441,11 +441,23 @@ export function fetchAiPartnerSessions(token: string) {
 /** Programme task progress is derived server-side from the learner's own sessions. */
 export type ProgrammeTaskStatus = "not_started" | "in_progress" | "passed";
 
+/** Provenance of a content item: only self-written or verified open-licence material is used. */
+export interface ContentSource {
+  origin: "self-written" | "open-licence";
+  licence: string;
+  basedOn: string[];
+  /** Shown to the learner when the licence requires attribution. */
+  attribution?: string;
+}
+
 export interface ProgrammeTask {
+  source: ContentSource;
   id: string;
   title: string;
   description: string;
   goal: string;
+  /** Warm one-liner the coach says before the scene. */
+  coachLine: string;
   roleplayId: string;
   level: string;
   /** Pass mark on the 0-100 scale. */
@@ -458,6 +470,7 @@ export interface ProgrammeTask {
 }
 
 export interface Programme {
+  source: ContentSource;
   id: string;
   title: string;
   description: string;

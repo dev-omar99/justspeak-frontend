@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import CoachAvatar from "../CoachAvatar";
+import SourceNote from "./SourceNote";
 import { passMarkText, startHref, stepsToGoText, STATUS_LABEL } from "../../../lib/programmes";
 import { toTen } from "../../../lib/score-scale";
 import type { Programme, ProgrammeTask } from "../../../services/ai-partner";
@@ -73,9 +74,13 @@ export default function TaskCard({ programme, task }: { programme: Programme; ta
             )}
           </div>
         </div>
+        <p className="text-sm italic text-ink bg-indigo-50/60 rounded-xl rounded-tl-sm px-3 py-2">
+          &ldquo;{task.coachLine}&rdquo;
+        </p>
         <p className="text-xs font-semibold text-ink-soft border-t border-dashed border-border pt-3">
           {stepsToGoText(programme.stepsToGo)}
         </p>
+        <SourceNote source={task.source} />
       </div>
     </div>
   );
