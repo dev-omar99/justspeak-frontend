@@ -49,7 +49,7 @@ export default function TodayPage() {
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
-        <div className="max-w-xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-4">
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-4">
           <h1 className="text-2xl font-black leading-tight">
             Hi{firstName ? ` ${firstName}` : ""}, take a look at your tasks for today:
           </h1>

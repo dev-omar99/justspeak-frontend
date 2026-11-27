@@ -15,7 +15,7 @@ export default function FieldPage() {
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
-        <div className="max-w-xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
+        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
           <Back href="/ai-partner/learning" label="Fields" />
           <h1 className="text-2xl font-black">{field ? `${field.title}: choose a programme` : "Choose a programme"}</h1>
           {error && <LoadError message={error} onRetry={retry} />}

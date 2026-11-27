@@ -363,7 +363,8 @@ export default function AiPartnerShell({ children }: { children: React.ReactNode
         </div>
       )}
 
-      <div className="lg:pl-64">{children}</div>
+      {/* body already has 15rem left padding for the global sidebar (globals.css); this shell has its own 16rem sidebar, so pull the content back out by 15rem or it sits 240px too far right (not centred). */}
+      <div className="lg:-ml-60 lg:pl-64">{children}</div>
     </div>
   );
 }
