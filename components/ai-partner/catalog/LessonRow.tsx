@@ -8,7 +8,9 @@ import ScoreChip from "./ScoreChip";
 import Trend from "./Trend";
 
 /**
- * One lesson on the connected path: a numbered step (check = passed, red = next, grey = later),
+ * One lesson on the connected path. Colour only ever reports what the learner DID (Omar's rule):
+ * green check = passed, red = tried but below the pass mark, plain grey = not tried yet.
+ * The "next" lesson gets a small grey tag, never a colour. Numbered step,
  * the title, a Practise button, the attempt chips with a trend, and a chevron that opens the
  * list of attempts (date, score, report link). Nothing is locked: every lesson can be practised.
  */
@@ -25,6 +27,8 @@ export default function LessonRow({
   const chips = lesson.attempts.map(chipFor);
   const deltas = attemptDeltas(lesson.attempts);
   const passed = lesson.status === "passed";
+  // Tried at least once and not passed: shown red. Never guessed for untried lessons.
+  const failed = !passed && lesson.attempts.length > 0;
 
   return (
     <li className="flex gap-3 relative">
@@ -35,14 +39,14 @@ export default function LessonRow({
         className={`z-10 shrink-0 w-[30px] h-[30px] rounded-full grid place-items-center text-[13px] font-black border-2 ${
           passed
             ? "bg-emerald-600 border-emerald-600 text-white"
-            : isNext
+            : failed
               ? "bg-crimson border-crimson text-white"
               : "bg-white border-slate-300 text-slate-400"
         }`}
       >
         {passed ? "✓" : lesson.order}
       </span>
-      <div className={`flex-1 min-w-0 mb-3 bg-white rounded-2xl border-[1.5px] px-3 py-2.5 ${isNext ? "border-crimson" : "border-border"}`}>
+      <div className={`flex-1 min-w-0 mb-3 bg-white rounded-2xl border-[1.5px] px-3 py-2.5 ${passed ? "border-emerald-400" : failed ? "border-red-300" : "border-border"}`}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -59,7 +63,7 @@ export default function LessonRow({
           <Link
             href={lessonHref(lesson.id)}
             className={`shrink-0 text-xs font-black rounded-full px-4 py-1.5 ${
-              isNext ? "bg-crimson text-white" : "border-[1.5px] border-crimson text-crimson bg-white"
+              "border-[1.5px] border-slate-300 text-ink bg-white"
             }`}
           >
             Practise
@@ -67,7 +71,7 @@ export default function LessonRow({
         </div>
         <div className="flex items-center gap-1.5 mt-2 pl-8 flex-wrap">
           {chips.length === 0 ? (
-            <span className="text-[11px] text-slate-400">Not tried</span>
+            <span className="text-[11px] text-slate-400">{isNext ? "Not tried · next" : "Not tried"}</span>
           ) : (
             <>
               {chips.map((c) => (

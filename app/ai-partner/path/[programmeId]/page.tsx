@@ -23,7 +23,11 @@ export default function PathPage() {
   const [shownUnits, setShownUnits] = useState(1);
   useEffect(() => setShownUnits(1), [picked]);
 
-  const levelId = picked ?? programme?.recommendedLevel ?? "A1";
+  // Open on the recommended level, but never on an empty one: fall back to the first level that has lessons.
+  const firstWithLessons = programme?.levels.find((l) => l.totalLessons > 0)?.level;
+  const recommended = programme?.levels.find((l) => l.level === programme.recommendedLevel);
+  const defaultLevel = recommended && recommended.totalLessons > 0 ? recommended.level : firstWithLessons ?? programme?.recommendedLevel ?? "A1";
+  const levelId = picked ?? defaultLevel;
   const level = programme?.levels.find((l) => l.level === levelId);
   const next = level ? nextLessonOf(level) : null;
   const units = level ? toUnits(level.lessons) : [];
@@ -47,8 +51,14 @@ export default function PathPage() {
                     role="tab"
                     aria-selected={l.level === levelId}
                     onClick={() => setPicked(l.level)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-black cursor-pointer border-[1.5px] ${
-                      l.level === levelId ? "bg-crimson border-crimson text-white" : "bg-white border-border text-ink"
+                    disabled={l.totalLessons === 0}
+                    title={l.totalLessons === 0 ? "Lessons coming soon" : undefined}
+                    className={`rounded-full px-4 py-1.5 text-sm font-black border-[1.5px] ${
+                      l.totalLessons === 0
+                        ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed"
+                        : l.level === levelId
+                          ? "bg-[#0F295A] border-[#0F295A] text-white cursor-pointer"
+                          : "bg-white border-border text-ink cursor-pointer"
                     }`}
                   >
                     {l.level}

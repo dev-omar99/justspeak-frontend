@@ -59,6 +59,8 @@ export default function AiPartnerSessionPage() {
   const [lines, setLines] = useState<Line[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState("");
+  // Set when the coach's voice failed for a sentence: the text still shows, the audio does not.
+  const [voiceIssue, setVoiceIssue] = useState<null | "quota" | "busy" | "other">(null);
   const [elapsed, setElapsed] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
@@ -192,8 +194,16 @@ export default function AiPartnerSessionPage() {
       setCallState("failed");
     });
 
-    socket.on("error", (payload: { code?: string; message: string }) => {
-      if (payload?.code === "TTS_ERROR") return; // voice hiccup, keep going
+    socket.on("error", (payload: { code?: string; message: string; reason?: string; replyId?: number; sentence?: number }) => {
+      if (payload?.code === "TTS_ERROR") {
+        // Skip the sentence that has no audio so the next ones still play, and
+        // say so: the text keeps coming but the learner must know why it is silent.
+        if (typeof payload.replyId === "number" && typeof payload.sentence === "number") {
+          playerRef.current?.abandonSentence(payload.replyId, payload.sentence);
+        }
+        setVoiceIssue(payload.reason === "quota_or_plan" ? "quota" : payload.reason === "rate_limited" ? "busy" : "other");
+        return;
+      }
       // Pause is optional: if the server cannot pause, the call just keeps running as before.
       if (payload?.code === "PAUSE_FAILED") {
         setError("Pause is not available right now. The call is still running.");
@@ -521,6 +531,15 @@ export default function AiPartnerSessionPage() {
         {error && (
           <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             {error}
+          </p>
+        )}
+        {voiceIssue && (
+          <p className="text-xs font-semibold text-crest-navy bg-crest-mist border border-crest-line rounded-xl px-3 py-2">
+            {voiceIssue === "quota"
+              ? "The coach's voice service is out of quota right now, so replies show as text only. The call itself is still running."
+              : voiceIssue === "busy"
+                ? "The voice service is busy, so some replies show as text only. Try again in a minute."
+                : "The coach's voice failed for some replies, so they show as text only."}
           </p>
         )}
         {callState === "paused" && (

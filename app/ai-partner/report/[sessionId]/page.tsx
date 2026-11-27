@@ -19,6 +19,13 @@ import {
   WordStat,
 } from "../../../../services/ai-partner";
 
+/** What the session was for (roleplay or lesson). Null for open practice. */
+interface SessionGoal {
+  title: string;
+  goal: string;
+  rubric: string[];
+}
+
 interface TranscriptTurn {
   role: string;
   text: string;
@@ -221,6 +228,7 @@ export default function AiPartnerReportPage() {
   const [mode, setMode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [goal, setGoal] = useState<SessionGoal | null>(null);
   const [tab, setTab] = useState<"coaching" | "analytics" | "transcript">("coaching");
   const [practicing, setPracticing] = useState<string | null>(null);
 
@@ -235,8 +243,12 @@ export default function AiPartnerReportPage() {
         const body = data?.report as SessionReportV2;
         if (body) setReport(body);
         else setError("The report is not ready yet.");
-        const turns = (data?.session?.transcript as TranscriptTurn[]) ?? [];
+        // Hide internal "[system]" cues the engine stores: they are not anyone's speech.
+        const turns = ((data?.session?.transcript as TranscriptTurn[]) ?? []).filter(
+          (t) => !(typeof t.text === "string" && t.text.startsWith("[system]")),
+        );
         setTranscript(turns);
+        setGoal((data as { goal?: SessionGoal | null })?.goal ?? null);
         setLevel(data?.session?.level ?? "");
         setMode(data?.session?.mode ?? "");
         if (data?.pronunciation_assessment) {
@@ -275,6 +287,29 @@ export default function AiPartnerReportPage() {
             {mode ? ` · ${mode.replace("-", " ")}` : ""}. Every note quotes your own words.
           </p>
         </div>
+
+        {!loading && (
+          <div className="bg-white border border-border rounded-2xl px-5 py-4">
+            <p className="text-[11px] font-black uppercase tracking-wide text-crimson">Session goal</p>
+            {goal ? (
+              <>
+                <p className="text-sm font-bold mt-1">{goal.title}</p>
+                <p className="text-sm text-ink-soft mt-0.5">{goal.goal}</p>
+                {goal.rubric.length > 0 && (
+                  <p className="text-xs text-ink-soft mt-1.5">Checked: {goal.rubric.join(" · ")}</p>
+                )}
+                {report?.lesson_result?.goal_met && (
+                  <p className="text-sm font-bold mt-2">
+                    Goal met: {report.lesson_result.goal_met}
+                    {report.lesson_result.note ? <span className="font-normal text-ink-soft"> · {report.lesson_result.note}</span> : null}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-ink-soft mt-1">Open practice. This session had no set goal.</p>
+            )}
+          </div>
+        )}
 
         {loading && (
           <p className="text-sm text-ink-soft">Generating your report — this takes a few seconds…</p>

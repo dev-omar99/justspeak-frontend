@@ -10,6 +10,7 @@ import Penguin3D from "../components/Penguin3D";
 import LandingHeroView from "../components/home/LandingHeroView";
 import AcademyQuickStrip from "../components/home/AcademyQuickStrip";
 import AiPartnerHomeSection from "../components/home/AiPartnerHomeSection";
+import HomeSideColumn from "../components/home/HomeSideColumn";
 import SavedWordsHomeCard from "../components/home/SavedWordsHomeCard";
 import {
   BlockedUsersModal,
@@ -386,7 +387,8 @@ export default function HomePage() {
       </button>
 
       <PageTransition>
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-7 pb-10 flex flex-col gap-5">
+        <div className="max-w-4xl xl:max-w-[72rem] mx-auto w-full px-4 sm:px-6 pt-7 pb-10 xl:grid xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-6">
+        <div className="flex flex-col gap-5 min-w-0">
           {/* Top Hero Card: Architectural Deep Navy Live Speaking Entry */}
           <section className="rounded-2xl bg-[#061533] text-white shadow-[0_8px_24px_rgba(6,21,51,0.12)] border border-slate-800 overflow-hidden">
             {/* Signature JustSpeak Crimson Top Accent Rule */}
@@ -833,6 +835,8 @@ export default function HomePage() {
               Log Out
             </button>
           </footer>
+        </div>
+        <HomeSideColumn />
         </div>
       </PageTransition>
 

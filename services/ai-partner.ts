@@ -8,6 +8,8 @@ import { getApiBaseUrl } from "./api";
  * (PCM linear16 @ 16 kHz) and sentence-queued MP3 playback with barge-in.
  */
 
+import { countLikeFillers } from "../lib/fillers";
+
 export interface RoleplaySummary {
   id: string;
   category: string;
@@ -299,6 +301,22 @@ export class SentencePlayer {
     }
   }
 
+  /**
+   * The server could not voice one sentence. Drop it so the sentences after it
+   * still play, instead of waiting forever for audio that will never come.
+   */
+  abandonSentence(replyId: number, sentence: number): void {
+    const key = `${replyId}:${sentence}`;
+    this.chunks.delete(key);
+    this.ready.delete(key);
+    const at = this.order.indexOf(key);
+    if (at >= 0) {
+      this.order.splice(at, 1);
+      if (at < this.playIndex) this.playIndex -= 1;
+    }
+    void this.pump();
+  }
+
   interrupt(): void {
     this.currentReplyId += 1;
     this.resetForReply(this.currentReplyId);
@@ -522,12 +540,14 @@ export async function uploadAiPartnerAudio(token: string, file: File) {
 /** Per-word filler counts from the student's own transcript text. */
 export function countFillersByWord(text: string): { word: string; count: number }[] {
   const counts = new Map<string, number>();
-  const pattern = /\b(um+|uh+|er+|erm|like|you know|actually|basically|literally)\b/gi;
+  const pattern = /\b(um+|uh+|er+|erm|you know|actually|basically|literally)\b/gi;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
     const word = match[1].toLowerCase();
     counts.set(word, (counts.get(word) ?? 0) + 1);
   }
+  const likes = countLikeFillers(text);
+  if (likes > 0) counts.set("like", likes);
   const list: { word: string; count: number }[] = [];
   counts.forEach((count, word) => list.push({ word, count }));
   return list.sort((a, b) => b.count - a.count);
