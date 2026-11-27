@@ -362,13 +362,13 @@ export default function AdminPage() {
                 </h2>
                 {!live ? (
                   <p className="text-sm text-slate-400">Loading…</p>
-                ) : live.liveRooms.length === 0 && live.activeAiSessions.length === 0 ? (
+                ) : (live.liveRooms ?? []).length === 0 && (live.activeAiSessions ?? []).length === 0 ? (
                   <p className="text-sm text-slate-400">
                     No live P2P rooms or active AI sessions at the moment.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {live.liveRooms.map((room) => (
+                    {(live.liveRooms ?? []).map((room) => (
                       <div
                         key={room.roomName}
                         className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2"
@@ -381,7 +381,7 @@ export default function AdminPage() {
                         </span>
                       </div>
                     ))}
-                    {live.activeAiSessions.map((s) => (
+                    {(live.activeAiSessions ?? []).map((s) => (
                       <div
                         key={s.id}
                         className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2"

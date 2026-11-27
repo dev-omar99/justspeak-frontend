@@ -235,6 +235,11 @@ export default function LeaderboardPage() {
               {/* Remaining Users Table */}
               <div className="bg-white rounded-3xl p-6 shadow-xl shadow-primary/5 border border-border/60">
                 <h3 className="text-sm font-bold text-ink mb-4">All Global Learners</h3>
+                {currentList.length === 0 && (
+                  <p className="text-sm text-ink-soft font-semibold py-6 text-center">
+                    No ranks yet. Finish a 7-minute call to join the board.
+                  </p>
+                )}
                 <div className="divide-y divide-border/50">
                   {currentList.map((learner, idx) => {
                     const isMe = learner.id === user?.id;

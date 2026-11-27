@@ -231,7 +231,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         {quota && (
           <div className="bg-crest-navy rounded-2xl p-3.5 text-white">
             <p className="text-[13px] font-black">
-              {quota.planTier === "free" ? "You're on the Free plan" : `${quota.planTier} plan`}
+              {!quota.planTier || quota.planTier === "free" ? "You're on the Free plan" : `${quota.planTier} plan`}
             </p>
             <p className="text-xs text-white/70 mt-0.5 font-semibold">
               {quota.kind === "lifetime"
