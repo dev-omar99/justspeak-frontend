@@ -467,7 +467,7 @@ export default function AiPartnerSessionPage() {
               ) : (
                 <div className="flex items-center gap-2.5">
                   {Array.from({ length: 9 }).map((_, i) => (
-                    <span key={i} className="w-1.5 h-1.5 rounded-full bg-crest-navy/35" />
+                    <span key={i} className="w-2 h-2 rounded-full bg-crest-navy/50" />
                   ))}
                 </div>
               )}
