@@ -144,7 +144,7 @@ export default function AcademyHubPage() {
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-black px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white">
-                  🎓 CEFR {meta.level} — {meta.title} ({meta.titleAr})
+                  🎓 CEFR {meta.level} — {meta.title} · {meta.titleAr}
                 </span>
                 <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#FFF0F2]/15 text-[#FFB3C1] border border-[#E11D48]/40">
                   Practice score (not official IELTS): {ieltsEstimate}

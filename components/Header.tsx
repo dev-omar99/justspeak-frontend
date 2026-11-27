@@ -105,14 +105,14 @@ export default function Header({
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-border/90 shadow-xs transition-all">
         {/* Official American Flag Tri-Color Top Ribbon (Navy • White • Crimson Red) */}
         <div className="h-1 w-full bg-gradient-to-r from-[#002868] via-[#E11D48] to-[#002868]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2.5 flex justify-between items-center min-h-[52px]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-8 py-2.5 flex justify-between items-center min-h-[52px]">
           {/* Left: Official Eagle Crest Brand Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {showBackButton && (
               <Link
                 href="/"
                 aria-label={t("nav.backHome")}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-subtle hover:bg-border/60 text-primary transition-all mr-1 active:scale-95"
+                className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 flex items-center justify-center rounded-xl bg-surface-subtle hover:bg-border/60 text-primary transition-all active:scale-95"
               >
                 <svg
                   width="20"
