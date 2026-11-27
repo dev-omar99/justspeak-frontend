@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLoader from "../../components/BrandLoader";
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1036,9 +1037,7 @@ export default function QueuePage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen flex items-center justify-center bg-[#121316] text-white">
-          <div className="w-9 h-9 rounded-full border-4 border-white/20 border-t-white animate-spin" />
-        </main>
+        <BrandLoader dark label="" />
       }
     >
       <QueueContent />

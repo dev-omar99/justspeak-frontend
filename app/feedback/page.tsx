@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLoader from "../../components/BrandLoader";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PageTransition from "../../components/PageTransition";
@@ -580,9 +581,7 @@ export default function FeedbackPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen flex items-center justify-center bg-[#F4F5F7]">
-          <div className="w-9 h-9 rounded-full border-4 border-slate-300 border-t-[#0B2559] animate-spin" />
-        </main>
+        <BrandLoader label="" />
       }
     >
       <FeedbackContent />

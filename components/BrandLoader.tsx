@@ -7,6 +7,8 @@ type BrandLoaderProps = {
   label?: string;
   /** Fill the whole screen (route loading) or just the parent box (inline). */
   fullScreen?: boolean;
+  /** Dark surface variant for pages with a dark background (e.g. the queue). */
+  dark?: boolean;
 };
 
 /**
@@ -19,6 +21,7 @@ type BrandLoaderProps = {
 export default function BrandLoader({
   label = "Loading",
   fullScreen = true,
+  dark = false,
 }: BrandLoaderProps) {
   return (
     <div
@@ -26,7 +29,9 @@ export default function BrandLoader({
       aria-live="polite"
       className={`${
         fullScreen ? "min-h-screen" : "min-h-[240px]"
-      } flex flex-col items-center justify-center gap-5 bg-surface`}
+      } flex flex-col items-center justify-center gap-5 ${
+        dark ? "bg-[#121316]" : "bg-surface"
+      }`}
     >
       <div className="brand-loader-crest relative flex items-center justify-center w-24 h-24">
         <span className="brand-loader-ring" aria-hidden="true" />
@@ -50,7 +55,7 @@ export default function BrandLoader({
         ))}
       </div>
       {label ? (
-        <span className="text-xs font-extrabold uppercase tracking-wider text-ink-soft">
+        <span className={`text-xs font-extrabold uppercase tracking-wider ${dark ? "text-white/70" : "text-ink-soft"}`}>
           {label}
         </span>
       ) : (
