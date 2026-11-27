@@ -33,6 +33,14 @@ export default function AdminPage() {
       return;
     }
 
+    // Client-side convenience gate: non-admins are sent back to their profile.
+    // The real enforcement is server-side (AdminGuard + ADMIN_EMAIL policy);
+    // this only keeps the admin UI out of sight for regular users.
+    if (!user.isAdmin) {
+      router.push("/profile");
+      return;
+    }
+
     Promise.all([getUsers(token), getAdminStats(token)])
       .then(([usersData, statsData]) => {
         setUsers(usersData);

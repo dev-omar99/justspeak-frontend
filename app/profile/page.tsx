@@ -418,7 +418,17 @@ export default function ProfilePage() {
                   >
                     {displayName}
                   </span>
+                  {user.isAdmin && (
+                    <span className="text-[10px] font-extrabold uppercase tracking-wide text-amber-700 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
+                      Admin
+                    </span>
+                  )}
                 </div>
+                {user.email && (
+                  <p className="text-xs text-slate-600 font-medium" dir="ltr">
+                    {user.email}
+                  </p>
+                )}
                 <p className="text-xs text-slate-500">
                   {country ? `📍 ${country} • ` : ""}
                   {englishLevel}
@@ -625,6 +635,40 @@ export default function ProfilePage() {
               </div>
               <span className="text-slate-400 text-lg font-bold">›</span>
             </button>
+
+            {/* Admin dashboard — only rendered for admin accounts.
+                Server-side AdminGuard + ADMIN_EMAIL policy still enforce access. */}
+            {user.isAdmin && (
+              <Link
+                href="/admin"
+                className="w-full bg-gradient-to-r from-[#1E2548] via-[#232D5A] to-[#2B376E] hover:brightness-110 text-white rounded-2xl px-5 py-4 shadow-md flex items-center justify-between transition-all"
+              >
+                <div className="flex items-center gap-3.5">
+                  <span className="w-10 h-10 rounded-xl bg-amber-400/20 flex items-center justify-center text-amber-300">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 17v-2a4 4 0 00-4-4H3m9 6a9 9 0 019-9m-9 9a9 9 0 00-9-9m9 9v-4m0-4a4 4 0 014-4h2"
+                      />
+                    </svg>
+                  </span>
+                  <div className="text-left">
+                    <p className="text-[15px] font-extrabold">Admin dashboard</p>
+                    <p className="text-xs text-slate-300">
+                      Users, stats and subscriptions
+                    </p>
+                  </div>
+                </div>
+                <span className="text-white/80 text-lg font-bold">›</span>
+              </Link>
+            )}
           </div>
 
           {/* Quick Summary Footer Card */}
