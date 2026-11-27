@@ -64,7 +64,9 @@ export default function AiPartnerSessionPage() {
   const [showTranscript, setShowTranscript] = useState(true);
   const [voiceRate, setVoiceRate] = useState(1);
   const [coach, setCoach] = useState<{ id: string; name: string; level: string }>({ id: "", name: "Coach", level: "" });
-  const [userName] = useState(() => getUser()?.name || "");
+  // Read after mount: localStorage is not available during server render (avoids a hydration mismatch).
+  const [userName, setUserName] = useState("");
+  useEffect(() => setUserName(getUser()?.name || ""), []);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("off");

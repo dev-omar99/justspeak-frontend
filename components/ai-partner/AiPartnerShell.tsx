@@ -123,7 +123,11 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const startRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
-  const user = getUser();
+  // The user lives in localStorage, which the server cannot read. Reading it during
+  // render made the server HTML (fallback initial) differ from the client (real
+  // initial): a React hydration mismatch. Read it after mount instead.
+  const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
+  useEffect(() => setUser(getUser()), []);
 
   useEffect(() => {
     const token = getToken();

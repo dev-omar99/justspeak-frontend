@@ -76,7 +76,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-border px-2 py-2 flex items-center justify-around shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-border px-2 py-2 flex items-center justify-around shadow-lg">
       {navItems.map((item) => {
         const isActive = item.match(pathname || "/");
         return (

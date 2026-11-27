@@ -15,7 +15,9 @@ export default function TodayPage() {
   const [programmes, setProgrammes] = useState<Programme[] | null>(null);
   const [error, setError] = useState("");
   const [index, setIndex] = useState(0);
-  const firstName = (getUser()?.name || "").split(" ")[0];
+  // Read after mount: localStorage is not available on the server (avoids a hydration mismatch).
+  const [firstName, setFirstName] = useState("");
+  useEffect(() => setFirstName((getUser()?.name || "").split(" ")[0]), []);
 
   useEffect(() => {
     const token = getToken();
