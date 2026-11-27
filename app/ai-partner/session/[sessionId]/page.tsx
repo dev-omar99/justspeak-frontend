@@ -121,8 +121,15 @@ export default function AiPartnerSessionPage() {
     }
 
     socket.on("connect", async () => {
+      // Fires on the first connect AND every auto-reconnect. The backend
+      // holds the live session for a grace window, so re-sending
+      // start-session re-attaches this socket to the SAME call.
       const practiceQ = takePracticeQuestion();
       socket.emit("start-session", practiceQ ? { sessionId, topicSeed: practiceQ } : { sessionId });
+      if (recorderRef.current) {
+        // Reconnect: mic capture is already running, nothing else to redo.
+        return;
+      }
       const recorder = new PcmRecorder();
       recorderRef.current = recorder;
       try {
@@ -167,6 +174,14 @@ export default function AiPartnerSessionPage() {
     socket.on("error", (payload: { code?: string; message: string }) => {
       if (payload?.code === "TTS_ERROR") return; // voice hiccup, keep going
       setError(payload?.message || "Something went wrong.");
+      if (payload?.code === "SESSION_ENDED" || payload?.code === "NOT_FOUND") {
+        setCallState((s) => (s === "ended" ? s : "failed"));
+      }
+    });
+
+    socket.on("session-resumed", (payload: { state: CallState }) => {
+      setError("");
+      setCallState(payload.state === "thinking" ? "thinking" : "listening");
     });
 
     socket.on("session-state", (payload: { state: CallState }) => {
@@ -225,7 +240,12 @@ export default function AiPartnerSessionPage() {
     socket.on("metrics", (payload: Metrics) => setMetrics(payload));
 
     socket.on("disconnect", () => {
-      if (!endingRef.current) setCallState((s) => (s === "ended" || s === "failed" ? s : "failed"));
+      if (endingRef.current) return;
+      setCallState((s) => {
+        if (s === "ended" || s === "failed") return s;
+        return "connecting";
+      });
+      setError((prev) => prev || "Connection dropped. Reconnecting…");
     });
 
     return () => {
