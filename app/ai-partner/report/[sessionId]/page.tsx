@@ -1,7 +1,7 @@
 "use client";
 
 import RingGauge from "../../../../components/ai-partner/RingGauge";
-import { overallTen, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
+import { overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -378,22 +378,30 @@ export default function AiPartnerReportPage() {
                   <>
                     {/* Overall rating out of 10 + CEFR */}
                     {(() => {
-                      const dims = DIMENSION_LABELS.map(({ key }) => report.dimensions[key]);
-                      const overall = overallTen(dims) ?? toTen(report.overall_score);
-                      const overallStatus = scoreStatus(overall * 10, true);
+                      // Known skip = the learner said nothing at all (older reports store 0s with INSUFFICIENT_DATA).
+                      const knownSkip = insufficient && Number(report.metrics_echo?.student_speech_sec ?? 0) === 0;
+                      const summary = overallSummary(
+                        DIMENSION_LABELS.map(({ key }) => ({
+                          score100: insufficient ? null : report.dimensions[key],
+                          skipped: knownSkip,
+                        })),
+                      );
+                      const overall = summary.value;
+                      const overallStatus = scoreStatus(overall === null ? null : overall * 10, true);
                       return (
                         <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
                           <RingGauge
-                            pct={overall * 10}
-                            value={`${overall}`}
-                            unit="/10"
+                            pct={(overall ?? 0) * 10}
+                            value={overall === null ? "–" : `${overall}`}
+                            unit={overall === null ? "" : "/10"}
                             size={84}
                             status={overallStatus}
                             minPct={PASS_MIN_100}
                           />
                           <div className="flex-1">
-                            <p className={`text-xs font-black mb-1 ${overallStatus === "pass" ? "text-emerald-600" : "text-red-600"}`}>
-                              {overallStatus === "pass" ? "Passed" : "Below the minimum"} · required {PASS_MIN_10}/10
+                            <p className={`text-xs font-black mb-1 ${overallStatus === "pass" ? "text-emerald-600" : overallStatus === "fail" ? "text-red-600" : "text-ink-soft"}`}>
+                              {overallStatus === "pass" ? "Passed" : overallStatus === "fail" ? "Below the minimum" : "Incomplete"} · required {PASS_MIN_10}/10
+                              {overall !== null && summary.counted < summary.total ? ` · based on ${summary.counted} of ${summary.total} skills` : ""}
                             </p>
                             {report.cefr_estimate && (
                               <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
@@ -414,21 +422,23 @@ export default function AiPartnerReportPage() {
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
                         {DIMENSION_LABELS.map(({ key, label }) => {
-                          const value = report.dimensions[key];
-                          const status = scoreStatus(value, true);
+                          const knownSkip = insufficient && Number(report.metrics_echo?.student_speech_sec ?? 0) === 0;
+                          const value = insufficient ? null : report.dimensions[key];
+                          const status = scoreStatus(value, true, knownSkip);
+                          const noNumber = value === null || status === "skipped";
                           return (
                             <div key={key} className="flex flex-col items-center gap-1.5">
                               <RingGauge
-                                pct={status === "not-attempted" ? 0 : value}
-                                value={status === "not-attempted" ? "–" : `${toTen(value)}`}
-                                unit={status === "not-attempted" ? "" : "/10"}
+                                pct={value ?? 0}
+                                value={noNumber ? "–" : `${toTen(value)}`}
+                                unit={noNumber ? "" : "/10"}
                                 size={72}
                                 status={status}
                                 minPct={PASS_MIN_100}
                               />
                               <span className="text-[11px] font-black uppercase tracking-wide text-center">{label}</span>
-                              <span className={`text-[10px] font-bold ${status === "pass" ? "text-emerald-600" : "text-red-600"}`}>
-                                {status === "not-attempted" ? "Not attempted" : `min ${PASS_MIN_10}`}
+                              <span className={`text-[10px] font-bold ${status === "pass" ? "text-emerald-600" : status === "unavailable" ? "text-ink-soft" : "text-red-600"}`}>
+                                {status === "skipped" ? "Not attempted" : status === "unavailable" ? "Unavailable" : `min ${PASS_MIN_10}`}
                               </span>
                             </div>
                           );

@@ -383,7 +383,8 @@ export interface SessionReportV2 {
   overall_score: number;
   cefr_estimate: string;
   summary: string;
-  dimensions: { grammar: number; vocabulary: number; fluency: number; pronunciation: number; interaction: number };
+  /** null = could not be measured (not a zero). Older stored reports may hold 0 with INSUFFICIENT_DATA. */
+  dimensions: { grammar: number | null; vocabulary: number | null; fluency: number | null; pronunciation: number | null; interaction: number | null };
   metrics_echo: {
     student_speech_sec: number;
     words_per_minute: number;

@@ -579,7 +579,7 @@ export default function AiPartnerSessionPage() {
                         status === "pass" ? "text-emerald-600" : status === "fail" ? "text-red-600" : "text-ink-soft"
                       }`}
                     >
-                      {status === "pending" ? "no data yet" : `min ${PASS_MIN_10}`}
+                      {status === "pending" ? "no data yet" : status === "unavailable" ? "Unavailable" : `min ${PASS_MIN_10}`}
                     </p>
                   </div>
                 );

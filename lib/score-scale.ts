@@ -8,7 +8,14 @@
 /** Required minimum on the 0-100 scale (shown to the learner as 6/10). */
 export const PASS_MIN_100 = 60;
 
-export type ScoreStatus = "pass" | "fail" | "not-attempted" | "pending";
+/**
+ * - pass: measured and at or above the required minimum (green)
+ * - fail: measured and below the minimum, INCLUDING a real measured 0 (red)
+ * - skipped: the learner knowingly skipped it, e.g. said nothing (red "Not attempted", counts as 0)
+ * - unavailable: could not be measured (timeout, too little data). Grey, never counted as a fail
+ * - pending: session still running, no data yet (grey)
+ */
+export type ScoreStatus = "pass" | "fail" | "skipped" | "unavailable" | "pending";
 
 /** 0-100 score to a 0-10 rating with one decimal ("7.4"). */
 export function toTen(score100: number): number {
@@ -18,22 +25,47 @@ export function toTen(score100: number): number {
 export const PASS_MIN_10 = toTen(PASS_MIN_100);
 
 /**
- * Status of one score.
- * - null while the session is still running = "pending" (no data yet, neutral)
- * - null or 0 once the session is over = "not-attempted" (red)
- * - otherwise pass/fail against the required minimum.
+ * Status of one score. `skipped` must come from a KNOWN skip, never be guessed from a missing value.
+ * - skipped flag = "skipped"
+ * - null/undefined/NaN = "pending" while the session runs, otherwise "unavailable" (NEVER coerced to 0)
+ * - a number (0 included) passes only if its DISPLAYED rating (one decimal) reaches the minimum,
+ *   so the ring colour always agrees with the number shown.
  */
-export function scoreStatus(score100: number | null | undefined, sessionOver: boolean): ScoreStatus {
+export function scoreStatus(
+  score100: number | null | undefined,
+  sessionOver: boolean,
+  skipped = false,
+): ScoreStatus {
+  if (skipped) return "skipped";
   if (score100 === null || score100 === undefined || !Number.isFinite(score100)) {
-    return sessionOver ? "not-attempted" : "pending";
+    return sessionOver ? "unavailable" : "pending";
   }
-  if (sessionOver && score100 <= 0) return "not-attempted";
-  return score100 >= PASS_MIN_100 ? "pass" : "fail";
+  return toTen(score100) >= PASS_MIN_10 ? "pass" : "fail";
 }
 
-/** Overall rating: mean of the attempted scores; a not-attempted skill counts as 0. */
-export function overallTen(scores: Array<number | null | undefined>): number | null {
-  if (scores.length === 0) return null;
-  const total = scores.reduce<number>((sum, s) => sum + (s && Number.isFinite(s) ? s : 0), 0);
-  return toTen(total / scores.length);
+/** One skill going into the overall. */
+export interface OverallInput {
+  score100: number | null | undefined;
+  skipped?: boolean;
+}
+
+/**
+ * Overall rating (0-10) plus how many skills it is based on.
+ * - measured skills (0 included) count with their score
+ * - known skips count as 0
+ * - unavailable skills are EXCLUDED (a technical failure is not the learner's fail)
+ * - nothing counted = value null ("Incomplete")
+ */
+export function overallSummary(inputs: OverallInput[]): { value: number | null; counted: number; total: number } {
+  let sum = 0;
+  let counted = 0;
+  for (const { score100, skipped } of inputs) {
+    if (skipped) {
+      counted += 1;
+    } else if (typeof score100 === "number" && Number.isFinite(score100)) {
+      sum += Math.max(0, Math.min(100, score100));
+      counted += 1;
+    }
+  }
+  return { value: counted === 0 ? null : toTen(sum / counted), counted, total: inputs.length };
 }

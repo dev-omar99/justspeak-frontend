@@ -3,7 +3,8 @@ import type { ScoreStatus } from "../../lib/score-scale";
 const STROKE: Record<ScoreStatus, string> = {
   pass: "#16A34A", // green: reached the required minimum
   fail: "#DC2626", // red: below the minimum
-  "not-attempted": "#DC2626", // red: skipped
+  skipped: "#DC2626", // red: known skip, "Not attempted"
+  unavailable: "#94A3B8", // grey: could not be measured
   pending: "#94A3B8", // grey: no data yet
 };
 
