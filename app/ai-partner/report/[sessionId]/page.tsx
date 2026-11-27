@@ -40,6 +40,63 @@ const DIMENSION_LABELS: { key: keyof SessionReportV2["dimensions"]; label: strin
   { key: "interaction", label: "Interaction" },
 ];
 
+function fmtTime(at?: number): string | null {
+  if (at === undefined || at === null) return null;
+  const m = Math.floor(at / 60);
+  const s = Math.round(at % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+// Semicircular pacing gauge, Yoodli-style. Bands use the crest palette:
+// steel = slow, gold = conversational sweet spot, crimson = fast.
+const GAUGE_MIN = 40;
+const GAUGE_MAX = 220;
+
+function gaugeAngle(value: number): number {
+  const clamped = Math.min(GAUGE_MAX, Math.max(GAUGE_MIN, value));
+  return 180 - ((clamped - GAUGE_MIN) / (GAUGE_MAX - GAUGE_MIN)) * 180;
+}
+
+function polar(angleDeg: number, r: number): { x: number; y: number } {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: 100 + r * Math.cos(rad), y: 100 - r * Math.sin(rad) };
+}
+
+function arcPath(a0: number, a1: number, r: number): string {
+  const p0 = polar(a0, r);
+  const p1 = polar(a1, r);
+  return `M ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${p1.x} ${p1.y}`;
+}
+
+function pacingBand(wpm: number): { label: string; tone: string } {
+  if (wpm < 120) return { label: "Slow", tone: "text-crest-steel-deep" };
+  if (wpm <= 160) return { label: "Conversational", tone: "text-crest-gold-deep" };
+  return { label: "Fast", tone: "text-crest-crimson" };
+}
+
+function PacingGauge({ wpm }: { wpm: number }) {
+  const band = pacingBand(wpm);
+  const needle = polar(gaugeAngle(wpm), 60);
+  return (
+    <div className="flex flex-col items-center">
+      <svg viewBox="0 0 200 112" className="w-full max-w-[240px]">
+        <path d={arcPath(gaugeAngle(GAUGE_MIN), gaugeAngle(120), 80)} fill="none" stroke="var(--color-crest-steel-light)" strokeWidth="14" />
+        <path d={arcPath(gaugeAngle(120), gaugeAngle(160), 80)} fill="none" stroke="var(--color-crest-gold-light)" strokeWidth="14" />
+        <path d={arcPath(gaugeAngle(160), gaugeAngle(GAUGE_MAX), 80)} fill="none" stroke="var(--color-crest-crimson-light)" strokeWidth="14" />
+        <line x1="100" y1="100" x2={needle.x} y2={needle.y} stroke="var(--color-crest-navy)" strokeWidth="3.5" strokeLinecap="round" />
+        <circle cx="100" cy="100" r="5" fill="var(--color-crest-navy)" />
+      </svg>
+      <div className="text-3xl font-black tabular-nums -mt-3">{wpm}</div>
+      <div className={`text-[11px] font-black uppercase tracking-wide ${band.tone}`}>
+        {band.label} · words per minute
+      </div>
+      <p className="text-[11px] text-ink-soft mt-1.5 text-center">
+        Aim for the gold zone, 120 to 160 words per minute.
+      </p>
+    </div>
+  );
+}
+
 export default function AiPartnerReportPage() {
   const params = useParams<{ sessionId: string }>();
   const router = useRouter();
@@ -52,7 +109,7 @@ export default function AiPartnerReportPage() {
   const [mode, setMode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"coaching" | "transcript">("coaching");
+  const [tab, setTab] = useState<"coaching" | "analytics" | "transcript">("coaching");
   const [practicing, setPracticing] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,7 +153,7 @@ export default function AiPartnerReportPage() {
 
   return (
     <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
-      <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
         <div className="bg-white border border-border rounded-[26px] px-5 py-6 sm:px-8">
           <div className="h-1.5 w-14 bg-crimson rounded-full mb-3" />
           <h1 className="text-xl font-black">Session report</h1>
@@ -126,322 +183,373 @@ export default function AiPartnerReportPage() {
 
         {report && !insufficient && (
           <>
-            <div className="flex gap-2 bg-white border border-border rounded-2xl p-1.5">
-              {(["coaching", "transcript"] as const).map((t) => (
+            {/* Mobile tab bar (desktop shows the split view) */}
+            <div className="flex gap-2 bg-white border border-border rounded-2xl p-1.5 lg:hidden">
+              {(["coaching", "analytics", "transcript"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`flex-1 text-sm font-black rounded-xl px-4 py-2.5 cursor-pointer ${
+                  className={`flex-1 text-sm font-black rounded-xl px-3 py-2.5 cursor-pointer capitalize ${
                     tab === t ? "btn-primary-crest text-white" : "text-ink-soft hover:text-ink"
                   }`}
                 >
-                  {t === "coaching" ? "Coaching" : "Transcript"}
+                  {t}
                 </button>
               ))}
             </div>
 
-            {tab === "transcript" && (
-              <div className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3">
+            <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start">
+              {/* LEFT: timestamped transcript with per-turn rephrase cards */}
+              <section
+                className={`${
+                  tab === "transcript" ? "flex" : "hidden lg:flex"
+                } w-full flex-col gap-3 bg-white border border-border rounded-2xl px-5 py-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto`}
+              >
+                <h2 className="font-black text-sm">Transcript</h2>
                 {transcript.length === 0 && (
                   <p className="text-sm text-ink-soft">No transcript saved for this session.</p>
                 )}
-                {transcript.map((turn, i) => (
-                  <div key={i} className="text-sm">
-                    <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
-                      {turn.role === "user" ? "You" : "Coach"}
-                    </span>
-                    <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
-                      {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
-                    </p>
-                    {turn.role === "user" && turn.rephrase && (
-                      <p className="mt-1 text-xs bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
-                        <span className="font-black text-[#C81E2F] uppercase tracking-wide text-[10px]">
-                          Say it better:{" "}
-                        </span>
-                        {turn.rephrase}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tab === "coaching" && (
-              <>
-                {/* Score + CEFR */}
-                <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
-                  <div className={`text-4xl font-black tabular-nums ${scoreColor(report.overall_score)}`}>
-                    {report.overall_score}
-                  </div>
-                  <div className="flex-1">
-                    {report.cefr_estimate && (
-                      <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
-                        {report.cefr_estimate}
-                      </span>
-                    )}
-                    <p className="text-sm text-ink-soft">{report.summary}</p>
-                  </div>
-                </div>
-
-                {/* Dimensions */}
-                <div className="bg-white border border-border rounded-2xl px-5 py-5">
-                  <h2 className="font-black text-sm mb-3">Your five scores</h2>
-                  <div className="flex flex-col gap-2.5">
-                    {DIMENSION_LABELS.map(({ key, label }) => {
-                      const value = report.dimensions[key];
-                      return (
-                        <div key={key} className="flex items-center gap-3">
-                          <span className="text-xs font-bold w-28 shrink-0">{label}</span>
-                          <div className="flex-1 h-2.5 bg-surface rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${barColor(value)}`}
-                              style={{ width: `${Math.max(4, value)}%` }}
-                            />
-                          </div>
-                          <span className={`text-xs font-black tabular-nums w-8 text-right ${scoreColor(value)}`}>
-                            {value}
+                {transcript.map((turn, i) => {
+                  const stamp = fmtTime(turn.at);
+                  return (
+                    <div key={i} className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
+                      <div className="flex items-center gap-2">
+                        {stamp && (
+                          <span className="text-[10px] font-black text-crest-steel-deep tabular-nums">
+                            {stamp}
                           </span>
+                        )}
+                        <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
+                          {turn.role === "user" ? "You" : "Coach"}
+                        </span>
+                      </div>
+                      <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
+                        {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
+                      </p>
+                      {turn.role === "user" && turn.rephrase && (
+                        <div className="mt-1.5 text-xs bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
+                          <span className="font-black text-[#C81E2F] uppercase tracking-wide text-[10px]">
+                            Say it better:{" "}
+                          </span>
+                          {turn.rephrase}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Real phoneme-level pronunciation (Azure add-on) */}
-                {pronunciation && (
-                  <div className="bg-white border border-border rounded-2xl px-5 py-5">
-                    <h2 className="font-black text-sm mb-1">Pronunciation, sound by sound</h2>
-                    <p className="text-[11px] text-ink-soft mb-3">
-                      Measured phoneme by phoneme on {pronunciation.wordsAssessed} words you said (Azure Pronunciation Assessment).
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                      {([
-                        ["Accuracy", pronunciation.accuracy],
-                        ["Fluency", pronunciation.fluency],
-                        ["Prosody", pronunciation.prosody],
-                        ["Overall", pronunciation.pronScore],
-                      ] as [string, number | null][]).map(([label, value]) =>
-                        value === null ? null : (
-                          <div key={label} className="bg-surface rounded-xl px-3 py-2 text-center">
-                            <div className={`text-lg font-black tabular-nums ${scoreColor(value)}`}>{value}</div>
-                            <div className="text-[10px] font-bold text-ink-soft uppercase tracking-wide">{label}</div>
-                          </div>
-                        )
                       )}
                     </div>
-                    {pronunciation.worstWords.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold mb-2">Words to practise</p>
-                        <div className="flex flex-wrap gap-2">
-                          {pronunciation.worstWords.map((w) => (
-                            <span
-                              key={w.word}
-                              className="text-xs bg-red-50 border border-red-200 text-red-800 rounded-lg px-2.5 py-1"
-                              title={w.weakPhonemes.length ? `Weak sounds: ${w.weakPhonemes.join(", ")}` : undefined}
-                            >
-                              {w.word} · {w.accuracy}
-                              {w.weakPhonemes.length > 0 && (
-                                <span className="text-red-500"> ({w.weakPhonemes.join(" ")})</span>
+                  );
+                })}
+              </section>
+
+              {/* RIGHT: insights with Coaching / Analytics tabs */}
+              <section
+                className={`${
+                  tab === "transcript" ? "hidden lg:flex" : "flex"
+                } w-full flex-col gap-4`}
+              >
+                <div className="hidden lg:flex gap-2 bg-white border border-border rounded-2xl p-1.5">
+                  {(["coaching", "analytics"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTab(t)}
+                      className={`flex-1 text-sm font-black rounded-xl px-3 py-2.5 cursor-pointer capitalize ${
+                        tab !== "transcript" && tab === t
+                          ? "btn-primary-crest text-white"
+                          : tab === "transcript" && t === "coaching"
+                            ? "btn-primary-crest text-white"
+                            : "text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                {tab !== "analytics" && (
+                  <>
+                    {/* Score + CEFR */}
+                    <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
+                      <div className={`text-4xl font-black tabular-nums ${scoreColor(report.overall_score)}`}>
+                        {report.overall_score}
+                      </div>
+                      <div className="flex-1">
+                        {report.cefr_estimate && (
+                          <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
+                            {report.cefr_estimate}
+                          </span>
+                        )}
+                        <p className="text-sm text-ink-soft">{report.summary}</p>
+                      </div>
+                    </div>
+
+                    {/* Dimensions */}
+                    <div className="bg-white border border-border rounded-2xl px-5 py-5">
+                      <h2 className="font-black text-sm mb-3">Your five scores</h2>
+                      <div className="flex flex-col gap-2.5">
+                        {DIMENSION_LABELS.map(({ key, label }) => {
+                          const value = report.dimensions[key];
+                          return (
+                            <div key={key} className="flex items-center gap-3">
+                              <span className="text-xs font-bold w-28 shrink-0">{label}</span>
+                              <div className="flex-1 h-2.5 bg-surface rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${barColor(value)}`}
+                                  style={{ width: `${Math.max(4, value)}%` }}
+                                />
+                              </div>
+                              <span className={`text-xs font-black tabular-nums w-8 text-right ${scoreColor(value)}`}>
+                                {value}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Coaching cards */}
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {report.coaching.strength_card.title && (
+                        <div className="bg-white border border-emerald-200 rounded-2xl px-5 py-4">
+                          <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">
+                            Strength
+                          </p>
+                          <h3 className="font-black text-sm mt-0.5">{report.coaching.strength_card.title}</h3>
+                          {report.coaching.strength_card.quote && (
+                            <blockquote className="text-xs italic text-ink-soft border-l-2 border-emerald-300 pl-2.5 my-2">
+                              “{report.coaching.strength_card.quote}”
+                            </blockquote>
+                          )}
+                          <p className="text-xs text-ink-soft">{report.coaching.strength_card.detail}</p>
+                        </div>
+                      )}
+                      {report.coaching.growth_area.title && (
+                        <div className="bg-white border border-amber-200 rounded-2xl px-5 py-4">
+                          <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
+                            Growth area
+                          </p>
+                          <h3 className="font-black text-sm mt-0.5">{report.coaching.growth_area.title}</h3>
+                          {report.coaching.growth_area.quote && (
+                            <blockquote className="text-xs italic text-ink-soft border-l-2 border-amber-300 pl-2.5 my-2">
+                              “{report.coaching.growth_area.quote}”
+                            </blockquote>
+                          )}
+                          <p className="text-xs text-ink-soft">{report.coaching.growth_area.detail}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {(report.coaching.tone.length > 0 || report.coaching.conciseness_note) && (
+                      <div className="bg-white border border-border rounded-2xl px-5 py-4">
+                        {report.coaching.tone.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="text-xs font-black text-ink-soft">TONE</span>
+                            {report.coaching.tone.map((t) => (
+                              <span key={t} className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {report.coaching.conciseness_note && (
+                          <p className="text-xs text-ink-soft">{report.coaching.conciseness_note}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Corrections with Arabic explanations */}
+                    {report.corrections.length > 0 && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-1">Your corrections</h2>
+                        <p className="text-xs text-ink-soft mb-3">
+                          Your exact sentence, the fix, and the rule explained in Arabic.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                          {report.corrections.map((m, i) => (
+                            <div key={i} className="border border-border rounded-xl px-4 py-3">
+                              <p className="text-sm">
+                                <span className="line-through text-red-600 font-semibold">{m.said}</span>
+                                {" → "}
+                                <span className="text-emerald-700 font-semibold">{m.better}</span>
+                              </p>
+                              <p className="text-xs text-ink-soft mt-1">{m.rule}</p>
+                              {m.explanation_ar && (
+                                <p dir="rtl" className="text-sm text-ink mt-2 bg-surface rounded-lg px-3 py-2">
+                                  {m.explanation_ar}
+                                </p>
                               )}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Recasts */}
+                    {report.recasts.length > 0 && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-3">Say it like a native</h2>
+                        <div className="flex flex-col gap-2.5">
+                          {report.recasts.map((r, i) => (
+                            <div key={i} className="text-sm border border-border rounded-xl px-4 py-3">
+                              <p className="text-ink-soft">{r.said}</p>
+                              <p className="font-semibold text-[#C81E2F] mt-1">{r.natural}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Follow-up questions with Practice */}
+                    {report.follow_up_questions.length > 0 && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-3">Keep this conversation going</h2>
+                        <div className="flex flex-col gap-2">
+                          {report.follow_up_questions.map((q, i) => (
+                            <div key={i} className="flex items-center gap-3 border border-border rounded-xl px-4 py-3">
+                              <p className="text-sm flex-1">{q}</p>
+                              <button
+                                onClick={() => void practiceQuestion(q)}
+                                disabled={practicing !== null}
+                                className="btn-primary-crest text-white text-xs font-black rounded-xl px-3.5 py-2 shrink-0 disabled:opacity-50 cursor-pointer"
+                              >
+                                {practicing === q ? "Setting up…" : "Practice"}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Drills */}
+                    {report.drills.length > 0 && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-3">Drills for your weak spots</h2>
+                        <div className="flex flex-col gap-2.5">
+                          {report.drills.map((d, i) => (
+                            <div key={i} className="border border-border rounded-xl px-4 py-3 flex items-start gap-3">
+                              <div className="flex-1">
+                                <p className="text-sm font-black">{d.title}</p>
+                                <p className="text-xs text-ink-soft mt-0.5">{d.instruction}</p>
+                                {d.example && (
+                                  <p className="text-xs italic text-[#C81E2F] mt-1.5">Example: {d.example}</p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() =>
+                                  void practiceQuestion(
+                                    `Practice drill "${d.title}": ${d.instruction}`,
+                                  )
+                                }
+                                disabled={practicing !== null}
+                                className="btn-primary-crest text-white text-xs font-black rounded-xl px-3.5 py-2 shrink-0 disabled:opacity-50 cursor-pointer"
+                              >
+                                {practicing !== null ? "Setting up…" : "Practice"}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Lesson result */}
+                    {report.lesson_result?.note && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-4">
+                        <p className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
+                          Lesson goal {report.lesson_result.goal_met ? `· ${report.lesson_result.goal_met}` : ""}
+                        </p>
+                        <p className="text-sm mt-1">{report.lesson_result.note}</p>
+                      </section>
+                    )}
+
+                    {report.next_focus && (
+                      <section className="bg-crimson text-white rounded-2xl px-5 py-4">
+                        <p className="text-[10px] font-black text-white/70 uppercase tracking-wide">
+                          Next session focus
+                        </p>
+                        <p className="text-sm font-bold mt-1">{report.next_focus}</p>
+                      </section>
+                    )}
+                  </>
+                )}
+
+                {tab === "analytics" && (
+                  <>
+                    {/* Pacing gauge */}
+                    <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                      <h2 className="font-black text-sm mb-3">Pacing</h2>
+                      <PacingGauge wpm={Math.round(report.metrics_echo.words_per_minute)} />
+                    </section>
+
+                    {/* Delivery stats */}
+                    <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                      <h2 className="font-black text-sm mb-3">Delivery analytics</h2>
+                      <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                        {[
+                          { label: "Fillers/min", value: report.metrics_echo.fillers_per_minute },
+                          { label: "You spoke", value: `${Math.round(report.metrics_echo.student_speech_sec / 60)} min` },
+                          { label: "Talk ratio", value: `${Math.round(report.metrics_echo.student_talk_ratio * 100)}%` },
+                        ].map((item) => (
+                          <div key={item.label} className="bg-surface border border-border rounded-xl px-2 py-2.5">
+                            <div className="text-sm font-black tabular-nums">{item.value}</div>
+                            <div className="text-[10px] text-ink-soft">{item.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {fillers.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {fillers.map((f) => (
+                            <span key={f.word} className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
+                              “{f.word}” × {f.count}
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Coaching cards */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {report.coaching.strength_card.title && (
-                    <div className="bg-white border border-emerald-200 rounded-2xl px-5 py-4">
-                      <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">
-                        Strength
-                      </p>
-                      <h3 className="font-black text-sm mt-0.5">{report.coaching.strength_card.title}</h3>
-                      {report.coaching.strength_card.quote && (
-                        <blockquote className="text-xs italic text-ink-soft border-l-2 border-emerald-300 pl-2.5 my-2">
-                          “{report.coaching.strength_card.quote}”
-                        </blockquote>
                       )}
-                      <p className="text-xs text-ink-soft">{report.coaching.strength_card.detail}</p>
-                    </div>
-                  )}
-                  {report.coaching.growth_area.title && (
-                    <div className="bg-white border border-amber-200 rounded-2xl px-5 py-4">
-                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide">
-                        Growth area
-                      </p>
-                      <h3 className="font-black text-sm mt-0.5">{report.coaching.growth_area.title}</h3>
-                      {report.coaching.growth_area.quote && (
-                        <blockquote className="text-xs italic text-ink-soft border-l-2 border-amber-300 pl-2.5 my-2">
-                          “{report.coaching.growth_area.quote}”
-                        </blockquote>
-                      )}
-                      <p className="text-xs text-ink-soft">{report.coaching.growth_area.detail}</p>
-                    </div>
-                  )}
-                </div>
+                    </section>
 
-                {(report.coaching.tone.length > 0 || report.coaching.conciseness_note) && (
-                  <div className="bg-white border border-border rounded-2xl px-5 py-4">
-                    {report.coaching.tone.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="text-xs font-black text-ink-soft">TONE</span>
-                        {report.coaching.tone.map((t) => (
-                          <span key={t} className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {report.coaching.conciseness_note && (
-                      <p className="text-xs text-ink-soft">{report.coaching.conciseness_note}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Corrections with Arabic explanations */}
-                {report.corrections.length > 0 && (
-                  <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                    <h2 className="font-black text-sm mb-1">Your corrections</h2>
-                    <p className="text-xs text-ink-soft mb-3">
-                      Your exact sentence, the fix, and the rule explained in Arabic.
-                    </p>
-                    <div className="flex flex-col gap-3">
-                      {report.corrections.map((m, i) => (
-                        <div key={i} className="border border-border rounded-xl px-4 py-3">
-                          <p className="text-sm">
-                            <span className="line-through text-red-600 font-semibold">{m.said}</span>
-                            {" → "}
-                            <span className="text-emerald-700 font-semibold">{m.better}</span>
-                          </p>
-                          <p className="text-xs text-ink-soft mt-1">{m.rule}</p>
-                          {m.explanation_ar && (
-                            <p dir="rtl" className="text-sm text-ink mt-2 bg-surface rounded-lg px-3 py-2">
-                              {m.explanation_ar}
-                            </p>
+                    {/* Real phoneme-level pronunciation (Azure add-on) */}
+                    {pronunciation && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-1">Pronunciation, sound by sound</h2>
+                        <p className="text-[11px] text-ink-soft mb-3">
+                          Measured phoneme by phoneme on {pronunciation.wordsAssessed} words you said (Azure Pronunciation Assessment).
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                          {([
+                            ["Accuracy", pronunciation.accuracy],
+                            ["Fluency", pronunciation.fluency],
+                            ["Prosody", pronunciation.prosody],
+                            ["Overall", pronunciation.pronScore],
+                          ] as [string, number | null][]).map(([label, value]) =>
+                            value === null ? null : (
+                              <div key={label} className="bg-surface rounded-xl px-3 py-2 text-center">
+                                <div className={`text-lg font-black tabular-nums ${scoreColor(value)}`}>{value}</div>
+                                <div className="text-[10px] font-bold text-ink-soft uppercase tracking-wide">{label}</div>
+                              </div>
+                            )
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Recasts */}
-                {report.recasts.length > 0 && (
-                  <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                    <h2 className="font-black text-sm mb-3">Say it like a native</h2>
-                    <div className="flex flex-col gap-2.5">
-                      {report.recasts.map((r, i) => (
-                        <div key={i} className="text-sm border border-border rounded-xl px-4 py-3">
-                          <p className="text-ink-soft">{r.said}</p>
-                          <p className="font-semibold text-[#C81E2F] mt-1">{r.natural}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Analytics */}
-                <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                  <h2 className="font-black text-sm mb-3">Delivery analytics</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center mb-3">
-                    {[
-                      { label: "WPM", value: report.metrics_echo.words_per_minute },
-                      { label: "Fillers/min", value: report.metrics_echo.fillers_per_minute },
-                      { label: "You spoke", value: `${Math.round(report.metrics_echo.student_speech_sec / 60)} min` },
-                      { label: "Talk ratio", value: `${Math.round(report.metrics_echo.student_talk_ratio * 100)}%` },
-                    ].map((item) => (
-                      <div key={item.label} className="bg-surface border border-border rounded-xl px-2 py-2.5">
-                        <div className="text-sm font-black tabular-nums">{item.value}</div>
-                        <div className="text-[10px] text-ink-soft">{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {fillers.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {fillers.map((f) => (
-                        <span key={f.word} className="text-xs font-bold bg-surface border border-border rounded-lg px-2.5 py-1">
-                          “{f.word}” × {f.count}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Follow-up questions with Practice */}
-                {report.follow_up_questions.length > 0 && (
-                  <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                    <h2 className="font-black text-sm mb-3">Keep this conversation going</h2>
-                    <div className="flex flex-col gap-2">
-                      {report.follow_up_questions.map((q, i) => (
-                        <div key={i} className="flex items-center gap-3 border border-border rounded-xl px-4 py-3">
-                          <p className="text-sm flex-1">{q}</p>
-                          <button
-                            onClick={() => void practiceQuestion(q)}
-                            disabled={practicing !== null}
-                            className="btn-primary-crest text-white text-xs font-black rounded-xl px-3.5 py-2 shrink-0 disabled:opacity-50 cursor-pointer"
-                          >
-                            {practicing === q ? "Setting up…" : "Practice"}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Drills */}
-                {report.drills.length > 0 && (
-                  <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                    <h2 className="font-black text-sm mb-3">Drills for your weak spots</h2>
-                    <div className="flex flex-col gap-2.5">
-                      {report.drills.map((d, i) => (
-                        <div key={i} className="border border-border rounded-xl px-4 py-3 flex items-start gap-3">
-                          <div className="flex-1">
-                            <p className="text-sm font-black">{d.title}</p>
-                            <p className="text-xs text-ink-soft mt-0.5">{d.instruction}</p>
-                            {d.example && (
-                              <p className="text-xs italic text-[#C81E2F] mt-1.5">Example: {d.example}</p>
-                            )}
+                        {pronunciation.worstWords.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold mb-2">Words to practise</p>
+                            <div className="flex flex-wrap gap-2">
+                              {pronunciation.worstWords.map((w) => (
+                                <span
+                                  key={w.word}
+                                  className="text-xs bg-red-50 border border-red-200 text-red-800 rounded-lg px-2.5 py-1"
+                                  title={w.weakPhonemes.length ? `Weak sounds: ${w.weakPhonemes.join(", ")}` : undefined}
+                                >
+                                  {w.word} · {w.accuracy}
+                                  {w.weakPhonemes.length > 0 && (
+                                    <span className="text-red-500"> ({w.weakPhonemes.join(" ")})</span>
+                                  )}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                          <button
-                            onClick={() =>
-                              void practiceQuestion(
-                                `Practice drill "${d.title}": ${d.instruction}`,
-                              )
-                            }
-                            disabled={practicing !== null}
-                            className="btn-primary-crest text-white text-xs font-black rounded-xl px-3.5 py-2 shrink-0 disabled:opacity-50 cursor-pointer"
-                          >
-                            {practicing !== null ? "Setting up…" : "Practice"}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+                        )}
+                      </section>
+                    )}
+                  </>
                 )}
-
-                {/* Lesson result */}
-                {report.lesson_result?.note && (
-                  <section className="bg-white border border-border rounded-2xl px-5 py-4">
-                    <p className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
-                      Lesson goal {report.lesson_result.goal_met ? `· ${report.lesson_result.goal_met}` : ""}
-                    </p>
-                    <p className="text-sm mt-1">{report.lesson_result.note}</p>
-                  </section>
-                )}
-
-                {report.next_focus && (
-                  <section className="bg-crimson text-white rounded-2xl px-5 py-4">
-                    <p className="text-[10px] font-black text-white/70 uppercase tracking-wide">
-                      Next session focus
-                    </p>
-                    <p className="text-sm font-bold mt-1">{report.next_focus}</p>
-                  </section>
-                )}
-              </>
-            )}
+              </section>
+            </div>
           </>
         )}
 
