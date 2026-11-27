@@ -295,3 +295,13 @@ body {
 .btn-primary-crest:active {
   transform: scale(0.98);
 }
+
+/* Session waveform bars */
+@keyframes crest-wave {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+.crest-wave-bar {
+  animation: crest-wave 1.1s ease-in-out infinite;
+  transform-origin: center;
+}
