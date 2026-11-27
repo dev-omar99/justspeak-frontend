@@ -41,6 +41,9 @@ export default function CoachAvatar({
 }) {
   // The four named coaches use semi-realistic portraits (public/coaches);
   // everything else (e.g. the lesson tutor) keeps the drawn neutral avatar.
+  // Unknown or not-yet-loaded persona: show the first coach's portrait rather
+  // than a cartoon, so the tile never flashes a different style.
+  if (!personaId || !LOOKS[personaId]) personaId = "sara";
   if (personaId && PHOTO_IDS.has(personaId)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element

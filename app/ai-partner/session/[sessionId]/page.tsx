@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Socket } from "socket.io-client";
 import { getToken, getUser } from "../../../../lib/auth";
+import { PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { computeLiveScores, SCORE_HELP } from "../../../../lib/live-scores";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
 import CoachAvatar from "../../../../components/ai-partner/CoachAvatar";
@@ -561,10 +562,25 @@ export default function AiPartnerSessionPage() {
                 ] as const
               ).map(([key, label]) => {
                 const v = liveScores[key];
+                const status = scoreStatus(v, callState === "ended");
                 return (
                   <div key={key} className="flex flex-col items-center gap-1" title={SCORE_HELP[key]}>
-                    <RingGauge pct={v ?? 0} value={v === null ? "–" : `${v}`} unit={v === null ? "" : "/100"} size={64} />
+                    <RingGauge
+                      pct={v ?? 0}
+                      value={v === null ? "–" : `${toTen(v)}`}
+                      unit={v === null ? "" : "/10"}
+                      size={64}
+                      status={status}
+                      minPct={PASS_MIN_100}
+                    />
                     <p className="text-[10px] font-black tracking-wide text-ink-soft uppercase text-center">{label}</p>
+                    <p
+                      className={`text-[9px] font-bold ${
+                        status === "pass" ? "text-emerald-600" : status === "fail" ? "text-red-600" : "text-ink-soft"
+                      }`}
+                    >
+                      {status === "pending" ? "no data yet" : `min ${PASS_MIN_10}`}
+                    </p>
                   </div>
                 );
               })}

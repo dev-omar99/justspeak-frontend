@@ -167,13 +167,13 @@ export default function AiPartnerRecordingsPage() {
             /* Yoodli-style library table: one row per session, expandable
                for inline playback. min-w keeps columns honest on phones. */
             <div className="bg-white border border-border rounded-2xl overflow-x-auto">
-              <table className="w-full min-w-[680px] text-sm">
+              <table className="w-full sm:min-w-[680px] text-sm">
                 <thead>
                   <tr className="text-left text-[10px] font-black tracking-wider text-ink-soft border-b border-border">
                     <th className="px-4 py-3">SESSION</th>
-                    <th className="px-3 py-3">DATE</th>
-                    <th className="px-3 py-3">DURATION</th>
-                    <th className="px-3 py-3">LEVEL</th>
+                    <th className="hidden sm:table-cell px-3 py-3">DATE</th>
+                    <th className="hidden sm:table-cell px-3 py-3">DURATION</th>
+                    <th className="hidden sm:table-cell px-3 py-3">LEVEL</th>
                     <th className="px-3 py-3 text-right">SCORE</th>
                     <th className="px-4 py-3 text-right">PLAY</th>
                   </tr>
@@ -244,12 +244,16 @@ function FragmentRow({
                 {session.status === "active" && corrections > 0 ? " · " : ""}
                 {corrections > 0 ? `${corrections} corrections` : ""}
               </span>
+              {/* On phones the date, duration and level columns are hidden, so show them here */}
+              <span className="block sm:hidden text-[11px] text-ink-soft">
+                {formatDate(session.createdAt)} · {formatDuration(session.durationSec)} · {session.level}
+              </span>
             </span>
           </Link>
         </td>
-        <td className="px-3 py-3 text-xs text-ink-soft whitespace-nowrap">{formatDate(session.createdAt)}</td>
-        <td className="px-3 py-3 text-xs tabular-nums">{formatDuration(session.durationSec)}</td>
-        <td className="px-3 py-3 text-xs font-bold">{session.level}</td>
+        <td className="hidden sm:table-cell px-3 py-3 text-xs text-ink-soft whitespace-nowrap">{formatDate(session.createdAt)}</td>
+        <td className="hidden sm:table-cell px-3 py-3 text-xs tabular-nums">{formatDuration(session.durationSec)}</td>
+        <td className="hidden sm:table-cell px-3 py-3 text-xs font-bold">{session.level}</td>
         <td className="px-3 py-3 text-right">
           {scored && score !== null ? (
             <span

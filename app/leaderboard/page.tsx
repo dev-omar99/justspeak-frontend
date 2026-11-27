@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
           <div className="flex items-center justify-center gap-2 bg-white p-1.5 rounded-2xl border border-border/60 shadow-sm max-w-2xl mx-auto w-full overflow-x-auto">
             <button
               onClick={() => setActiveTab("speakers")}
-              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${
+              className={`flex-1 min-w-0 sm:min-w-[120px] py-2.5 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all ${
                 activeTab === "speakers"
                   ? "bg-primary text-white shadow-md shadow-primary/30"
                   : "text-ink-soft hover:text-ink hover:bg-surface"
@@ -104,7 +104,7 @@ export default function LeaderboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("streaks")}
-              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${
+              className={`flex-1 min-w-0 sm:min-w-[120px] py-2.5 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all ${
                 activeTab === "streaks"
                   ? "bg-primary text-white shadow-md shadow-primary/30"
                   : "text-ink-soft hover:text-ink hover:bg-surface"
@@ -114,7 +114,7 @@ export default function LeaderboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("loved")}
-              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${
+              className={`flex-1 min-w-0 sm:min-w-[120px] py-2.5 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all ${
                 activeTab === "loved"
                   ? "bg-primary text-white shadow-md shadow-primary/30"
                   : "text-ink-soft hover:text-ink hover:bg-surface"
@@ -124,7 +124,7 @@ export default function LeaderboardPage() {
             </button>
             <button
               onClick={() => setActiveTab("tribes")}
-              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${
+              className={`flex-1 min-w-0 sm:min-w-[120px] py-2.5 px-1.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all ${
                 activeTab === "tribes"
                   ? "bg-primary text-white shadow-md shadow-primary/30"
                   : "text-ink-soft hover:text-ink hover:bg-surface"

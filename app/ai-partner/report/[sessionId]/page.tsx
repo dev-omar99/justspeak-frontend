@@ -1,5 +1,7 @@
 "use client";
 
+import RingGauge from "../../../../components/ai-partner/RingGauge";
+import { overallTen, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -138,10 +140,10 @@ function barColor(value: number): string {
 }
 
 const DIMENSION_LABELS: { key: keyof SessionReportV2["dimensions"]; label: string }[] = [
-  { key: "grammar", label: "Grammar" },
-  { key: "vocabulary", label: "Vocabulary" },
-  { key: "fluency", label: "Fluency" },
   { key: "pronunciation", label: "Pronunciation" },
+  { key: "fluency", label: "Fluency" },
+  { key: "vocabulary", label: "Vocabulary" },
+  { key: "grammar", label: "Grammar" },
   { key: "interaction", label: "Interaction" },
 ];
 
@@ -374,38 +376,59 @@ export default function AiPartnerReportPage() {
 
                 {tab !== "analytics" && (
                   <>
-                    {/* Score + CEFR */}
-                    <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
-                      <div className={`text-4xl font-black tabular-nums ${scoreColor(report.overall_score)}`}>
-                        {report.overall_score}
-                      </div>
-                      <div className="flex-1">
-                        {report.cefr_estimate && (
-                          <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
-                            {report.cefr_estimate}
-                          </span>
-                        )}
-                        <p className="text-sm text-ink-soft">{report.summary}</p>
-                      </div>
-                    </div>
+                    {/* Overall rating out of 10 + CEFR */}
+                    {(() => {
+                      const dims = DIMENSION_LABELS.map(({ key }) => report.dimensions[key]);
+                      const overall = overallTen(dims) ?? toTen(report.overall_score);
+                      const overallStatus = scoreStatus(overall * 10, true);
+                      return (
+                        <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
+                          <RingGauge
+                            pct={overall * 10}
+                            value={`${overall}`}
+                            unit="/10"
+                            size={84}
+                            status={overallStatus}
+                            minPct={PASS_MIN_100}
+                          />
+                          <div className="flex-1">
+                            <p className={`text-xs font-black mb-1 ${overallStatus === "pass" ? "text-emerald-600" : "text-red-600"}`}>
+                              {overallStatus === "pass" ? "Passed" : "Below the minimum"} · required {PASS_MIN_10}/10
+                            </p>
+                            {report.cefr_estimate && (
+                              <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
+                                {report.cefr_estimate}
+                              </span>
+                            )}
+                            <p className="text-sm text-ink-soft">{report.summary}</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
-                    {/* Dimensions */}
+                    {/* Dimensions: the four main skills first, then interaction */}
                     <div className="bg-white border border-border rounded-2xl px-5 py-5">
-                      <h2 className="font-black text-sm mb-3">Your five scores</h2>
-                      <div className="flex flex-col gap-2.5">
+                      <h2 className="font-black text-sm mb-1">Your scores</h2>
+                      <p className="text-[11px] text-ink-soft mb-4">
+                        Out of 10. Green means you reached the required {PASS_MIN_10}/10, red means below it or not attempted.
+                      </p>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
                         {DIMENSION_LABELS.map(({ key, label }) => {
                           const value = report.dimensions[key];
+                          const status = scoreStatus(value, true);
                           return (
-                            <div key={key} className="flex items-center gap-3">
-                              <span className="text-xs font-bold w-28 shrink-0">{label}</span>
-                              <div className="flex-1 h-2.5 bg-surface rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${barColor(value)}`}
-                                  style={{ width: `${Math.max(4, value)}%` }}
-                                />
-                              </div>
-                              <span className={`text-xs font-black tabular-nums w-8 text-right ${scoreColor(value)}`}>
-                                {value}
+                            <div key={key} className="flex flex-col items-center gap-1.5">
+                              <RingGauge
+                                pct={status === "not-attempted" ? 0 : value}
+                                value={status === "not-attempted" ? "–" : `${toTen(value)}`}
+                                unit={status === "not-attempted" ? "" : "/10"}
+                                size={72}
+                                status={status}
+                                minPct={PASS_MIN_100}
+                              />
+                              <span className="text-[11px] font-black uppercase tracking-wide text-center">{label}</span>
+                              <span className={`text-[10px] font-bold ${status === "pass" ? "text-emerald-600" : "text-red-600"}`}>
+                                {status === "not-attempted" ? "Not attempted" : `min ${PASS_MIN_10}`}
                               </span>
                             </div>
                           );
