@@ -1,5 +1,7 @@
 "use client";
 
+import ScoreBanner from "../../../../components/ai-partner/report/ScoreBanner";
+import TurnNotes from "../../../../components/ai-partner/report/TurnNotes";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
 import { overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { useEffect, useState } from "react";
@@ -294,6 +296,15 @@ export default function AiPartnerReportPage() {
 
         {report && !insufficient && (
           <>
+            <ScoreBanner
+              report={report}
+              sessionId={sessionId}
+              feedbackText={[
+                report.coaching?.strength_card ? `Strength: ${report.coaching.strength_card.title}. ${report.coaching.strength_card.detail}` : "",
+                report.coaching?.growth_area ? `Growth area: ${report.coaching.growth_area.title}. ${report.coaching.growth_area.detail}` : "",
+              ].filter(Boolean).join("\n")}
+            />
+
             {/* Mobile tab bar (desktop shows the split view) */}
             <div className="flex gap-2 bg-white border border-border rounded-2xl p-1.5 lg:hidden">
               {(["coaching", "analytics", "transcript"] as const).map((t) => (
@@ -322,30 +333,36 @@ export default function AiPartnerReportPage() {
                 )}
                 {transcript.map((turn, i) => {
                   const stamp = fmtTime(turn.at, firstTurnAt);
+                  const note =
+                    turn.role === "user"
+                      ? report.corrections.find((m) => m.said && turn.text.includes(m.said)) ?? null
+                      : null;
                   return (
-                    <div key={i} className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
-                      <div className="flex items-center gap-2">
-                        {stamp && (
-                          <span className="text-[10px] font-black text-crest-steel-deep tabular-nums">
-                            {stamp}
-                          </span>
-                        )}
-                        <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
-                          {turn.role === "user" ? "You" : "Coach"}
-                        </span>
-                      </div>
-                      <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
-                        {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
-                      </p>
-                      {turn.role === "user" && turn.rephrase && (
-                        <div className="mt-1.5 text-xs bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
-                          <span className="font-black text-[#C81E2F] uppercase tracking-wide text-[10px]">
-                            Say it better:{" "}
-                          </span>
-                          {turn.rephrase}
+                    <TurnNotes
+                      key={i}
+                      rewrite={turn.role === "user" ? turn.rephrase : undefined}
+                      note={note ? { better: note.better, rule: note.rule } : null}
+                    >
+                      {(icons, panels) => (
+                        <div className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
+                          <div className="flex items-center gap-2">
+                            {stamp && (
+                              <span className="text-[10px] font-black text-crest-steel-deep tabular-nums">
+                                {stamp}
+                              </span>
+                            )}
+                            <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
+                              {turn.role === "user" ? "You" : "Coach"}
+                            </span>
+                            <span className="ml-auto">{icons}</span>
+                          </div>
+                          <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
+                            {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
+                          </p>
+                          {panels}
                         </div>
                       )}
-                    </div>
+                    </TurnNotes>
                   );
                 })}
               </section>

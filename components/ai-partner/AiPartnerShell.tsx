@@ -98,7 +98,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/ai-partner/learning",
     label: "My Learning",
     icon: ICON.book,
-    active: (p) => p.startsWith("/ai-partner/learning"),
+    active: (p) =>
+      p.startsWith("/ai-partner/learning") ||
+      p.startsWith("/ai-partner/field") ||
+      p.startsWith("/ai-partner/path") ||
+      p.startsWith("/ai-partner/lesson") ||
+      p.startsWith("/ai-partner/programme"),
   },
   {
     href: "/ai-partner/dashboard",

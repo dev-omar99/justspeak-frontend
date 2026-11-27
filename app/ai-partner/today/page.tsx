@@ -1,71 +1,78 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import PageTransition from "../../../components/PageTransition";
-import TaskCard from "../../../components/ai-partner/programmes/TaskCard";
 import LoadError from "../../../components/ai-partner/programmes/LoadError";
-import { getToken, getUser } from "../../../lib/auth";
-import { nextTask } from "../../../lib/programmes";
-import { fetchAiPartnerProgrammes, Programme } from "../../../services/ai-partner";
+import ScoreChip from "../../../components/ai-partner/catalog/ScoreChip";
+import Trend from "../../../components/ai-partner/catalog/Trend";
+import { useCatalog } from "../../../components/ai-partner/catalog/useCatalog";
+import { chipFor, lessonHref, trendOf } from "../../../lib/catalog";
+import { getUser } from "../../../lib/auth";
+import type { CatalogField, CatalogLesson, CatalogProgramme } from "../../../services/ai-partner";
 
-/** "Tasks for today": one card per programme showing its next unfinished task. New page; nothing existing changed. */
+interface TodayItem {
+  field: CatalogField;
+  programme: CatalogProgramme;
+  lesson: CatalogLesson;
+  started: boolean;
+}
+
+/**
+ * Tasks for today: for each field, the next lesson to practise ("continue where you left off").
+ * Fields you already started come first. Nothing here is new data: it reads the catalog.
+ */
+function itemsOf(fields: CatalogField[]): TodayItem[] {
+  const items: TodayItem[] = [];
+  for (const field of fields) {
+    for (const programme of field.programmes) {
+      const lesson = programme.levels.flatMap((l) => l.lessons).find((l) => l.id === programme.nextLessonId);
+      if (!lesson) continue;
+      const started = programme.levels.some((l) => l.lessons.some((x) => x.attempts.length > 0));
+      items.push({ field, programme, lesson, started });
+    }
+  }
+  return items.sort((a, b) => Number(b.started) - Number(a.started));
+}
+
 export default function TodayPage() {
-  const router = useRouter();
-  const [programmes, setProgrammes] = useState<Programme[] | null>(null);
-  const [error, setError] = useState("");
-  // Bumped by the Retry button to run the request again.
-  const [attempt, setAttempt] = useState(0);
-  const [index, setIndex] = useState(0);
+  const { fields, error, retry } = useCatalog();
   // Read after mount: localStorage is not available on the server (avoids a hydration mismatch).
   const [firstName, setFirstName] = useState("");
   useEffect(() => setFirstName((getUser()?.name || "").split(" ")[0]), []);
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-    setError("");
-    fetchAiPartnerProgrammes(token)
-      .then((d) => setProgrammes(d.programmes))
-      .catch((e) => setError(e.message || "Could not load your tasks."));
-  }, [router, attempt]);
-
-  // Programmes with something left to do come first in the carousel.
-  const open = (programmes ?? []).filter((p) => nextTask(p));
-  const current = open[Math.min(index, Math.max(0, open.length - 1))];
-  const task = current ? nextTask(current) : null;
+  const items = fields ? itemsOf(fields) : [];
 
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
-        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
+        <div className="max-w-xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-4">
           <h1 className="text-2xl font-black leading-tight">
             Hi{firstName ? ` ${firstName}` : ""}, take a look at your tasks for today:
           </h1>
-          {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
-          {!programmes && !error && <p className="text-sm text-ink-soft">Loading…</p>}
-          {programmes && open.length === 0 && (
+          {error && <LoadError message={error} onRetry={retry} />}
+          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {fields && items.length === 0 && (
             <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">
               Nothing left to do right now. See <Link href="/ai-partner/learning" className="font-bold text-crimson">My Learning</Link>.
             </p>
           )}
-          {current && task && (
-            <div className="bg-slate-50 border border-border rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-black text-base">{current.title}</h2>
-                <div className="flex items-center gap-2 bg-white rounded-full border border-border px-3 py-1 text-sm font-black shrink-0">
-                  <button type="button" aria-label="Previous programme" disabled={open.length < 2} onClick={() => setIndex((i) => (i - 1 + open.length) % open.length)}>‹</button>
-                  <span>{open.indexOf(current) + 1} / {open.length}</span>
-                  <button type="button" aria-label="Next programme" disabled={open.length < 2} onClick={() => setIndex((i) => (i + 1) % open.length)}>›</button>
-                </div>
+          {items.map(({ field, programme, lesson, started }) => (
+            <div key={programme.id} className="bg-white border-[1.5px] border-border rounded-2xl p-4 flex flex-col gap-2">
+              <p className="text-[11px] font-black tracking-wider text-crimson">
+                {field.title.toUpperCase()} · {lesson.level} · LESSON {lesson.order}
+              </p>
+              <p className="font-black text-base leading-snug">{lesson.title}</p>
+              <p className="text-xs text-ink-soft">{programme.title} · {started ? "Continue where you left off" : "Start here"}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {lesson.attempts.map(chipFor).map((c) => <ScoreChip key={c.sessionId} chip={c} />)}
+                <span className="ml-auto"><Trend delta={trendOf(lesson.attempts)} /></span>
               </div>
-              <TaskCard programme={current} task={task} />
+              <div className="flex items-center gap-4 pt-1">
+                <Link href={lessonHref(lesson.id)} className="bg-crimson text-white font-black text-sm rounded-full px-6 py-2">Practise</Link>
+                <Link href={`/ai-partner/path/${encodeURIComponent(programme.id)}`} className="text-sm font-bold text-crimson">View programme</Link>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </main>
     </PageTransition>

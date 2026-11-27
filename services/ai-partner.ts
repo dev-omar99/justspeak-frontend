@@ -549,3 +549,78 @@ export function takePracticeQuestion(): string | null {
 export function aiPartnerEnabled(): boolean {
   return process.env.NEXT_PUBLIC_AI_PARTNER_ENABLED?.trim().toLowerCase() === "true";
 }
+
+/* ------------------------------------------------------------------ */
+/* Catalog: Field > Programme > Level > Lesson > Attempts              */
+/* ------------------------------------------------------------------ */
+
+export type CatalogLevelId = "A1" | "A2" | "B1" | "B2" | "C1";
+
+export interface CatalogAttempt {
+  sessionId: string;
+  /** ISO date-time of the attempt. */
+  at: string;
+  /** Overall score 0-100, or null when the report has no measured score. */
+  score: number | null;
+}
+
+export interface CatalogLesson {
+  source: ContentSource;
+  id: string;
+  order: number;
+  title: string;
+  description: string;
+  goal: string;
+  scenarioRoleplayId: string;
+  coachLine: string | null;
+  rubric: { label: string; hint: string }[];
+  level: CatalogLevelId;
+  passPct: number;
+  partner: { personaId: string; name: string; title: string };
+  status: ProgrammeTaskStatus;
+  bestScore: number | null;
+  /** Oldest first. */
+  attempts: CatalogAttempt[];
+}
+
+export interface CatalogLevel {
+  level: CatalogLevelId;
+  lessons: CatalogLesson[];
+  totalLessons: number;
+  passedLessons: number;
+}
+
+export interface CatalogProgramme {
+  id: string;
+  fieldId: string;
+  title: string;
+  description: string;
+  levels: CatalogLevel[];
+  totalLessons: number;
+  passedLessons: number;
+  recommendedLevel: CatalogLevelId;
+  nextLessonId: string | null;
+}
+
+export interface CatalogField {
+  id: string;
+  title: string;
+  programmes: CatalogProgramme[];
+  totalLessons: number;
+  passedLessons: number;
+}
+
+/** Same 20 s give-up rule as the programmes request, so the page shows an error with Retry. */
+export async function fetchAiPartnerCatalog(token: string) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROGRAMMES_TIMEOUT_MS);
+  try {
+    return await request<{ fields: CatalogField[] }>("/ai-partner/catalog", token, { signal: controller.signal });
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") throw new Error("This is taking too long. Check your connection and try again.");
+    if (e instanceof TypeError) throw new Error("Could not reach the server. Check your connection and try again.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
