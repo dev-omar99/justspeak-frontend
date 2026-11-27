@@ -507,6 +507,25 @@ export default function AiPartnerReportPage() {
                       )}
                     </section>
 
+                    {/* Per-sentence corrections, mirrored here so Analytics stands alone */}
+                    {report.corrections.length > 0 && (
+                      <section className="bg-white border border-border rounded-2xl px-5 py-5">
+                        <h2 className="font-black text-sm mb-3">Sentence corrections</h2>
+                        <div className="flex flex-col gap-3">
+                          {report.corrections.map((m, i) => (
+                            <div key={i} className="border border-border rounded-xl px-4 py-3">
+                              <p className="text-sm">
+                                <span className="line-through text-red-600 font-semibold">{m.said}</span>
+                                {" → "}
+                                <span className="text-emerald-700 font-semibold">{m.better}</span>
+                              </p>
+                              <p className="text-xs text-ink-soft mt-1">{m.rule}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
                     {/* Real phoneme-level pronunciation (Azure add-on) */}
                     {pronunciation && (
                       <section className="bg-white border border-border rounded-2xl px-5 py-5">
