@@ -147,7 +147,7 @@ export default function AcademyHubPage() {
                   🎓 CEFR {meta.level} — {meta.title} ({meta.titleAr})
                 </span>
                 <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#FFF0F2]/15 text-[#FFB3C1] border border-[#E11D48]/40">
-                  IELTS Est: Band {ieltsEstimate}
+                  Practice score (not official IELTS): {ieltsEstimate}
                 </span>
               </div>
 
@@ -357,7 +357,7 @@ export default function AcademyHubPage() {
                 📊 {isArabic ? "تقييمك وفق المعايير العالمية (CEFR & IELTS)" : "Global Fluency & CEFR Assessment"}
               </h2>
               <span className="text-xs font-black text-[#002868] bg-[#EAF1FC] px-3 py-1 rounded-full">
-                🏆 Est. IELTS Band {ieltsEstimate}
+                🏆 Practice score {ieltsEstimate} (approximate, not official IELTS)
               </span>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

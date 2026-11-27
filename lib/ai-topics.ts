@@ -104,7 +104,7 @@ export const AI_PRACTICE_TOPICS: readonly AiPracticeTopic[] = [
     requiredTier: "ELITE",
     tokenCostPerSession: 35,
     icon: "🎓",
-    summary: "Full timed IELTS cue-card & follow-up discussion with estimated band score and lexical upgrade tips.",
+    summary: "Full timed IELTS cue-card & follow-up discussion with an approximate practice score (not an official IELTS band) and lexical upgrade tips.",
     samplePrompt: "Part 2 Cue Card: Describe a skill you learned that required patience. You have 1 minute to prepare.",
     skillsFocused: ["Lexical Resource", "Coherence", "Band 7-8+ Structures"],
   },
