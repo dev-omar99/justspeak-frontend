@@ -44,7 +44,7 @@ export default function TodayPage() {
           {!programmes && !error && <p className="text-sm text-ink-soft">Loading…</p>}
           {programmes && open.length === 0 && (
             <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">
-              Nothing left to do right now. See <Link href="/ai-partner/learning" className="font-bold text-indigo-600">My Learning</Link>.
+              Nothing left to do right now. See <Link href="/ai-partner/learning" className="font-bold text-crimson">My Learning</Link>.
             </p>
           )}
           {current && task && (
