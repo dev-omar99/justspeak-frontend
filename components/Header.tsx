@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
 import BrandLogo from "./BrandLogo";
+import Sidebar from "./Sidebar";
 import { getUser, getToken } from "../lib/auth";
 import { getDashboardData } from "../services/api";
 import { getPlanById } from "../lib/plans";
@@ -16,32 +17,6 @@ type HeaderProps = {
   blueTickets?: number;
   resetsInSeconds?: number;
 };
-
-interface NavItem {
-  href: string;
-  label: string;
-  labelAr: string;
-  icon: string;
-  accent?: "gold" | "glacier";
-}
-
-const AUTHENTICATED_LINKS: readonly NavItem[] = [
-  { href: "/", label: "Home", labelAr: "الرئيسية", icon: "🏠" },
-  { href: "/learn", label: "Academy", labelAr: "الأكاديمية", icon: "🎓", accent: "glacier" },
-  { href: "/ai-studio", label: "AI Coach", labelAr: "المدرب الذكي", icon: "✨", accent: "glacier" },
-  { href: "/leaderboard", label: "Ranks", labelAr: "المتصدرون", icon: "🏆" },
-  ...(process.env.NEXT_PUBLIC_AI_PARTNER_ENABLED?.trim().toLowerCase() === "true"
-    ? [{ href: "/ai-partner", label: "AI Partner", labelAr: "شريك المحادثة", icon: "🎙️", accent: "glacier" } as NavItem]
-    : []),
-  { href: "/pricing", label: "Plans", labelAr: "الخطط", icon: "👑", accent: "gold" },
-];
-
-const PUBLIC_LINKS: readonly NavItem[] = [
-  { href: "/", label: "Home", labelAr: "الرئيسية", icon: "🏠" },
-  { href: "/learn", label: "Academy", labelAr: "الأكاديمية", icon: "🎓", accent: "glacier" },
-  { href: "/ai-studio", label: "AI Coach", labelAr: "المدرب الذكي", icon: "✨", accent: "glacier" },
-  { href: "/pricing", label: "Plans & Pricing", labelAr: "الخطط والأسعار", icon: "👑", accent: "gold" },
-];
 
 function formatHms(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
@@ -123,10 +98,10 @@ export default function Header({
     return () => clearInterval(timer);
   }, [showTicketModal]);
 
-  const currentNav = isLoggedIn ? AUTHENTICATED_LINKS : PUBLIC_LINKS;
-
   return (
     <>
+      {/* Desktop left sidebar (Yoodli-style); mobile keeps BottomNav */}
+      <Sidebar />
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-border/90 shadow-xs transition-all">
         {/* Official American Flag Tri-Color Top Ribbon (Navy • White • Crimson Red) */}
         <div className="h-1 w-full bg-gradient-to-r from-[#002868] via-[#E11D48] to-[#002868]" />
@@ -158,41 +133,11 @@ export default function Header({
 
             <Link
               href="/"
-              className="flex items-center gap-2 group focus:outline-none"
+              className="flex lg:hidden items-center gap-2 group focus:outline-none"
             >
               <BrandLogo size="header" withGlow={true} withText={true} />
             </Link>
           </div>
-
-          {/* Center: Clean Eagle Crest Navigation Pills */}
-          {!showBackButton && (
-            <nav className="hidden lg:flex items-center gap-1 bg-surface-subtle/90 border border-border p-1.5 rounded-2xl">
-              {currentNav.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href === "/achievements" && pathname === "/memos");
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 ${
-                      isActive
-                        ? "btn-primary-crest text-white shadow-md shadow-[#E11D48]/30"
-                        : item.accent === "gold"
-                        ? "text-[#D91023] hover:bg-[#FFF0F2]"
-                        : item.accent === "glacier"
-                        ? "text-[#002868] hover:bg-[#EAF1FC]"
-                        : "text-ink-soft hover:text-[#002868] hover:bg-white"
-                    }`}
-                  >
-                    <span className="text-sm leading-none">{item.icon}</span>
-                    <span>{isArabic ? item.labelAr : item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
 
           {/* Right: Language Switcher, AI Tokens Pill, Call Tickets, & Profile / Auth */}
           <div className="flex items-center gap-2 sm:gap-2.5">
