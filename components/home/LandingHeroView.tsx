@@ -175,7 +175,7 @@ export default function LandingHeroView() {
               </div>
               <Link
                 href="/pricing"
-                className="text-xs sm:text-sm font-extrabold text-glacier hover:text-primary underline"
+                className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-extrabold text-glacier hover:text-primary underline"
               >
                 Compare all plan features →
               </Link>
@@ -194,11 +194,11 @@ export default function LandingHeroView() {
                   }`}
                 >
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <h3 className="text-lg font-black text-ink">
                         {plan.name}
                       </h3>
-                      <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#002868] text-white">
+                      <span className="shrink-0 whitespace-nowrap text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#002868] text-white">
                         {plan.badge}
                       </span>
                     </div>
@@ -279,6 +279,22 @@ export default function LandingHeroView() {
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* Closing call to action for logged-out visitors */}
+          <section className="rounded-[32px] bg-[#0A1A3F] px-6 py-10 sm:px-10 text-center flex flex-col items-center gap-4">
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              Ready for your first 7-minute conversation?
+            </h2>
+            <p className="text-sm text-white/70 max-w-xl">
+              Create a free account in under a minute and start speaking today. No card needed.
+            </p>
+            <Link
+              href="/signup"
+              className="btn-primary-crest text-white font-black text-sm px-8 py-3 rounded-2xl shadow-md"
+            >
+              Create Free Account →
+            </Link>
           </section>
 
           {/* Clean Footer with Legal & Navigation Links */}
