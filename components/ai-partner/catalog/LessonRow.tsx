@@ -41,12 +41,12 @@ export default function LessonRow({
             ? "bg-emerald-600 border-emerald-600 text-white"
             : failed
               ? "bg-crimson border-crimson text-white"
-              : "bg-white border-slate-300 text-slate-400"
+              : "bg-slate-200 border-slate-200 text-slate-500"
         }`}
       >
         {passed ? "✓" : lesson.order}
       </span>
-      <div className={`flex-1 min-w-0 mb-3 bg-white rounded-2xl border-[1.5px] px-3 py-2.5 ${passed ? "border-emerald-400" : failed ? "border-red-300" : "border-border"}`}>
+      <div className={`flex-1 min-w-0 mb-3 rounded-2xl border-[1.5px] px-3 py-2.5 ${passed ? "bg-white border-emerald-400" : failed ? "bg-white border-red-300" : "bg-slate-100 border-slate-200"}`}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -71,7 +71,7 @@ export default function LessonRow({
         </div>
         <div className="flex items-center gap-1.5 mt-2 pl-8 flex-wrap">
           {chips.length === 0 ? (
-            <span className="text-[11px] text-slate-400">{isNext ? "Not tried · next" : "Not tried"}</span>
+            <span className="text-[11px] text-slate-500">{isNext ? "Not tried · next" : "Not tried"}</span>
           ) : (
             <>
               {chips.map((c) => (
