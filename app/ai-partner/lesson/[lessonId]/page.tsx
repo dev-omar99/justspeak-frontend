@@ -40,7 +40,7 @@ export default function LessonPage() {
                   <p className="text-xs text-white/70">{lesson.partner.title}</p>
                 </div>
                 {lesson.coachLine && <p className="text-xs text-white/80 italic text-center">“{lesson.coachLine}”</p>}
-                <Link href={startLessonHref(lesson)} className="btn-primary-crest text-white font-black text-base rounded-full px-10 py-3 mt-1 w-full text-center">
+                <Link href={`${startLessonHref(lesson)}&go=1`} className="btn-primary-crest text-white font-black text-base rounded-full px-10 py-3 mt-1 w-full text-center">
                   Start lesson
                 </Link>
                 <p className="text-[11px] text-white/60 text-center">You check your mic on the next screen. Pass mark {lesson.passPct / 10}/10, your best score counts.</p>

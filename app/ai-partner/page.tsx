@@ -254,6 +254,25 @@ export default function AiPartnerPage() {
   const roleplayCats = roleplays.map((r) => r.category).filter((c, i, all) => all.indexOf(c) === i);
   const visibleRoleplays = roleplays.filter((r) => !roleplayCat || r.category === roleplayCat);
   const selectedRoleplay = roleplays.find((r) => r.id === roleplayId);
+
+  // One-tap lesson start: the lesson page links here with &go=1. Only when everything the Start button
+  // needs is already true (roleplay chosen from the link, mic permission already granted, quota left)
+  // the session starts by itself, exactly as if Start had been pressed. Anything missing leaves the
+  // normal setup screen in place (mic prompt, quota message), so there is no new failure path.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStartedRef.current || starting || !status || !quota) return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("go") !== "1" || q.get("start") !== "roleplay") return;
+    if (mode !== "roleplay" || !selectedRoleplay || selectedRoleplay.id !== q.get("rp")) return;
+    if (!micReady || !quotaLeft) return;
+    autoStartedRef.current = true;
+    // Drop go=1 so Back from the session shows the setup screen instead of starting again.
+    q.delete("go");
+    window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
+    void handleStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, quota, mode, roleplayId, micState, starting]);
   /** Display facts for the coach tile: the scenario's persona in a
    *  roleplay, the picked persona otherwise. */
   const coachPersonaId = mode === "roleplay" && selectedRoleplay ? selectedRoleplay.persona : personaId;
