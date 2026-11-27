@@ -147,8 +147,14 @@ export class PcmRecorder {
   }
 
   async start(onChunk: (chunk: ArrayBuffer) => void): Promise<void> {
+    // Mic chosen in the setup screen's Audio settings, when there is one.
+    const preferredMic =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("ai_partner_mic_id") || ""
+        : "";
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
+        ...(preferredMic ? { deviceId: { ideal: preferredMic } } : {}),
         channelCount: 1,
         echoCancellation: true,
         noiseSuppression: true,
@@ -228,6 +234,14 @@ export class SentencePlayer {
   private playing = false;
   private currentSource: AudioBufferSourceNode | null = null;
   private currentReplyId = -1;
+  private rate = 1;
+
+  /* Playback speed for the coach voice (AI Response settings). Applies to
+     every sentence started after the call. */
+  setRate(rate: number): void {
+    this.rate = rate;
+    if (this.currentSource) this.currentSource.playbackRate.value = rate;
+  }
 
   private ensureContext(): AudioContext {
     if (!this.context) this.context = new AudioContext();
@@ -308,6 +322,7 @@ export class SentencePlayer {
     if (context.state === "suspended") await context.resume();
     const source = context.createBufferSource();
     source.buffer = buffer;
+    source.playbackRate.value = this.rate;
     source.connect(context.destination);
     this.currentSource = source;
     source.onended = () => {

@@ -37,12 +37,28 @@ const MODES: { id: AiSessionMode; icon: string; title: string; blurb: string }[]
 ];
 
 const RUBRIC = [
-  { label: "Grammar", note: "every mistake quoted and corrected" },
-  { label: "Vocabulary", note: "range and precision for your level" },
-  { label: "Fluency", note: "pace and fillers vs your level band" },
-  { label: "Pronunciation", note: "clarity from recognition confidence" },
-  { label: "Interaction", note: "full answers, asking back, turn-taking" },
+  { label: "Grammar", note: "Every mistake quoted and corrected." },
+  { label: "Vocabulary", note: "Range and precision for your level." },
+  { label: "Fluency", note: "Pace and fillers vs your level band." },
+  { label: "Pronunciation", note: "Clarity from recognition confidence." },
+  { label: "Interaction", note: "Full answers, asking back, turn-taking." },
 ];
+
+const VOICE_SPEEDS = [
+  { id: "0.85", label: "Slow" },
+  { id: "1", label: "Normal" },
+  { id: "1.2", label: "Fast" },
+];
+
+type MicState = "unknown" | "requesting" | "granted" | "denied";
+
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
 
 export default function AiPartnerPage() {
   const router = useRouter();
@@ -59,6 +75,14 @@ export default function AiPartnerPage() {
   const [loading, setLoading] = useState(true);
   const [practiceQ, setPracticeQ] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Stage 2: Yoodli-style mic gate + session settings
+  const [micState, setMicState] = useState<MicState>("unknown");
+  const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
+  const [micId, setMicId] = useState<string>("");
+  const [voiceSpeed, setVoiceSpeed] = useState<string>("1");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsPane, setSettingsPane] = useState<"menu" | "audio" | "ai">("menu");
 
   useEffect(() => {
     const token = getToken();
@@ -95,7 +119,59 @@ export default function AiPartnerPage() {
     }
   }, [status]);
 
+  // Mic gate: prefill from a prior grant, keep the chosen device + voice speed.
+  useEffect(() => {
+    setMicId(localStorage.getItem("ai_partner_mic_id") || "");
+    setVoiceSpeed(localStorage.getItem("ai_partner_voice_speed") || "1");
+    if (navigator.permissions?.query) {
+      navigator.permissions
+        .query({ name: "microphone" as PermissionName })
+        .then((result) => {
+          if (result.state === "granted") {
+            setMicState("granted");
+            void refreshMics();
+          } else if (result.state === "denied") {
+            setMicState("denied");
+          }
+        })
+        .catch(() => undefined);
+    }
+  }, []);
+
+  async function refreshMics() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setMics(devices.filter((d) => d.kind === "audioinput"));
+    } catch {
+      setMics([]);
+    }
+  }
+
+  async function requestMic() {
+    setMicState("requesting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMicState("granted");
+      await refreshMics();
+    } catch {
+      setMicState("denied");
+    }
+  }
+
+  function chooseMic(id: string) {
+    setMicId(id);
+    if (id) localStorage.setItem("ai_partner_mic_id", id);
+    else localStorage.removeItem("ai_partner_mic_id");
+  }
+
+  function chooseVoiceSpeed(id: string) {
+    setVoiceSpeed(id);
+    localStorage.setItem("ai_partner_voice_speed", id);
+  }
+
   const quotaLeft = quota ? quota.remaining > 0 : true;
+  const micReady = micState === "granted";
 
   async function handleStart() {
     const token = getToken();
@@ -134,10 +210,12 @@ export default function AiPartnerPage() {
     }
   }
 
+  const selectedMode = MODES.find((m) => m.id === mode)!;
+
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-6">
           {/* Coach hero, Yoodli-home style, Eagle Crest colours */}
           <div className="bg-white border border-crest-line rounded-[26px] px-5 py-8 sm:px-10 sm:py-10 text-center">
             <p className="text-[11px] font-black tracking-[0.2em] text-crest-steel-deep">
@@ -188,7 +266,7 @@ export default function AiPartnerPage() {
           {status && (
             <>
               {practiceQ && (
-                <div className="bg-white border border-[#002868]/30 rounded-2xl px-4 py-3 flex items-start gap-3">
+                <div className="bg-white border border-crest-gold/50 rounded-2xl px-4 py-3 flex items-start gap-3">
                   <span className="text-lg">🎯</span>
                   <div className="flex-1">
                     <p className="text-xs font-black text-ink-soft">PRACTICING YOUR FOLLOW-UP QUESTION</p>
@@ -203,148 +281,401 @@ export default function AiPartnerPage() {
                 </div>
               )}
 
-              <section id="setup-section" className="scroll-mt-4">
-                <h2 className="text-sm font-black mb-2">1 · Choose a mode</h2>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  {MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setMode(m.id)}
-                      className={`text-left bg-white border rounded-2xl px-4 py-4 transition-all cursor-pointer ${
-                        mode === m.id
-                          ? "border-[#002868] ring-2 ring-[#002868]/20 shadow-sm"
-                          : "border-border hover:border-[#002868]/40"
-                      }`}
-                    >
-                      <div className="text-2xl">{m.icon}</div>
-                      <div className="font-black text-sm mt-1">{m.title}</div>
-                      <div className="text-xs text-ink-soft mt-1">{m.blurb}</div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              {mode === "interview" && (
-                <section>
-                  <h2 className="text-sm font-black mb-2">2 · Pick a field</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {status.interviewFields.map((field) => (
-                      <button
-                        key={field.id}
-                        onClick={() => setFieldId(field.id)}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border cursor-pointer ${
-                          fieldId === field.id
-                            ? "btn-primary-crest text-white border-transparent"
-                            : "bg-white border-border text-ink hover:border-[#002868]/40"
-                        }`}
-                      >
-                        {field.title}
-                      </button>
-                    ))}
+              {/* Yoodli-style practice setup: config left, mic gate + controls right */}
+              <div id="setup-section" className="grid lg:grid-cols-5 gap-5 items-start scroll-mt-4">
+                {/* LEFT: configuration card */}
+                <section className="lg:col-span-3 bg-white border border-crest-line rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
+                  <div>
+                    <h2 className="text-base font-black text-crest-navy">Practice setup</h2>
+                    <p className="text-xs text-ink-soft mt-0.5">
+                      {selectedMode.icon} {selectedMode.title}
+                    </p>
                   </div>
-                </section>
-              )}
 
-              {mode === "lesson" && (
-                <section>
-                  <h2 className="text-sm font-black mb-2">2 · Pick a lesson</h2>
-                  <div className="flex flex-col gap-2">
-                    {status.availableLessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        onClick={() => setLessonId(lesson.id)}
-                        className={`text-left bg-white border rounded-2xl px-4 py-3 cursor-pointer ${
-                          lessonId === lesson.id
-                            ? "border-[#002868] ring-2 ring-[#002868]/20"
-                            : "border-border hover:border-[#002868]/40"
-                        }`}
-                      >
-                        <span className="text-xs font-black text-ink-soft">{lesson.halfLevel}</span>
-                        <span className="block text-sm font-black">{lesson.title}</span>
-                        <span className="block text-xs text-ink-soft">{lesson.goal}</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              <section>
-                <h2 className="text-sm font-black mb-2">
-                  {mode === "free-talk" ? "2" : "3"} · Choose your coach
-                </h2>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {status.personas.map((persona) => (
-                    <button
-                      key={persona.id}
-                      onClick={() => setPersonaId(persona.id)}
-                      className={`text-left bg-white border rounded-2xl px-4 py-4 cursor-pointer ${
-                        personaId === persona.id
-                          ? "border-[#002868] ring-2 ring-[#002868]/20 shadow-sm"
-                          : "border-border hover:border-[#002868]/40"
-                      }`}
-                    >
-                      <div className="font-black text-sm">{persona.displayName}</div>
-                      <div className="text-xs text-ink-soft mt-1">{persona.tagline}</div>
-                      <div className="text-[11px] text-ink-soft mt-2 italic">{persona.bestFor}</div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              {/* Rubric preview, the setup screen's scoring contract */}
-              <section className="bg-white border border-border rounded-2xl px-5 py-5">
-                <h2 className="text-sm font-black mb-1">How you will be scored</h2>
-                <p className="text-xs text-ink-soft mb-3">
-                  Five dimensions, scored against your level — never against native
-                  speech. Every claim in your report quotes your own words.
-                </p>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
-                  {RUBRIC.map((item) => (
-                    <div key={item.label} className="border border-border rounded-xl px-3 py-2.5">
-                      <div className="text-xs font-black">{item.label}</div>
-                      <div className="text-[11px] text-ink-soft mt-0.5">{item.note}</div>
+                  <div>
+                    <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">PRACTICE TYPE</p>
+                    <div className="flex flex-col gap-2">
+                      {MODES.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => setMode(m.id)}
+                          className={`flex items-start gap-3 text-left border rounded-xl px-4 py-3 transition-all cursor-pointer ${
+                            mode === m.id
+                              ? "border-crest-crimson ring-2 ring-crest-crimson/15 bg-crest-crimson-light/40"
+                              : "border-crest-line hover:border-crest-steel"
+                          }`}
+                        >
+                          <span className="text-xl leading-6">{m.icon}</span>
+                          <span className="flex-1">
+                            <span className="block text-sm font-black text-crest-navy">{m.title}</span>
+                            <span className="block text-xs text-ink-soft mt-0.5">{m.blurb}</span>
+                          </span>
+                          {mode === m.id && (
+                            <span className="text-crest-crimson mt-1"><CheckIcon /></span>
+                          )}
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {mode === "interview" && (
+                    <div>
+                      <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">FIELD</p>
+                      <div className="flex flex-wrap gap-2">
+                        {status.interviewFields.map((field) => (
+                          <button
+                            key={field.id}
+                            onClick={() => setFieldId(field.id)}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold border cursor-pointer transition-colors ${
+                              fieldId === field.id
+                                ? "bg-crest-navy text-white border-transparent"
+                                : "bg-white border-crest-line text-ink hover:border-crest-steel"
+                            }`}
+                          >
+                            {field.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {mode === "lesson" && (
+                    <div>
+                      <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">LESSON</p>
+                      <div className="flex flex-col gap-2">
+                        {status.availableLessons.map((lesson) => (
+                          <button
+                            key={lesson.id}
+                            onClick={() => setLessonId(lesson.id)}
+                            className={`flex items-start gap-3 text-left border rounded-xl px-4 py-3 cursor-pointer transition-all ${
+                              lessonId === lesson.id
+                                ? "border-crest-crimson ring-2 ring-crest-crimson/15 bg-crest-crimson-light/40"
+                                : "border-crest-line hover:border-crest-steel"
+                            }`}
+                          >
+                            <span className="flex-1">
+                              <span className="text-[11px] font-black text-crest-steel-deep">{lesson.halfLevel}</span>
+                              <span className="block text-sm font-black text-crest-navy">{lesson.title}</span>
+                              <span className="block text-xs text-ink-soft">{lesson.goal}</span>
+                            </span>
+                            {lessonId === lesson.id && (
+                              <span className="text-crest-crimson mt-1"><CheckIcon /></span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-[11px] font-black tracking-wider text-ink-soft mb-2">COACH</p>
+                    <div className="flex flex-col gap-2">
+                      {status.personas.map((persona) => (
+                        <button
+                          key={persona.id}
+                          onClick={() => setPersonaId(persona.id)}
+                          className={`flex items-center gap-3 text-left border rounded-xl px-4 py-3 cursor-pointer transition-all ${
+                            personaId === persona.id
+                              ? "border-crest-crimson ring-2 ring-crest-crimson/15 bg-crest-crimson-light/40"
+                              : "border-crest-line hover:border-crest-steel"
+                          }`}
+                        >
+                          <span className="w-9 h-9 rounded-full bg-crest-navy text-white text-sm font-black flex items-center justify-center flex-shrink-0">
+                            {persona.displayName.trim().charAt(0)}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-black text-crest-navy">
+                              {persona.displayName}
+                              <span className="ml-2 align-middle text-[10px] font-black tracking-wide text-crest-steel-deep bg-crest-steel-light rounded-md px-1.5 py-0.5">
+                                {persona.tagline}
+                              </span>
+                            </span>
+                            <span className="block text-xs text-ink-soft mt-0.5 italic truncate">{persona.bestFor}</span>
+                          </span>
+                          {personaId === persona.id && (
+                            <span className="text-crest-crimson"><CheckIcon /></span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-black tracking-wider text-ink-soft mb-1">HOW YOU WILL BE SCORED</p>
+                    <p className="text-xs text-ink-soft mb-3">
+                      Five dimensions, scored against your level, never against native
+                      speech. Every claim in your report quotes your own words.
+                    </p>
+                    <div className="flex flex-col gap-2.5">
+                      {RUBRIC.map((item) => (
+                        <div key={item.label} className="flex items-start gap-2.5">
+                          <span className="text-crest-crimson mt-0.5 flex-shrink-0"><CheckIcon /></span>
+                          <p className="text-xs">
+                            <span className="font-black text-crest-navy">{item.label}</span>
+                            <span className="text-ink-soft"> · {item.note}</span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* RIGHT: mic gate + controls */}
+                <div className="lg:col-span-2 flex flex-col gap-4">
+                  <section className="bg-white border border-crest-line rounded-2xl p-5 text-center">
+                    <p className="text-sm font-black text-crest-navy">
+                      {micReady ? "Your microphone is ready" : "Grant JustSpeak microphone access"}
+                    </p>
+                    <div
+                      className={`mx-auto my-4 w-14 h-14 rounded-full flex items-center justify-center ${
+                        micReady ? "bg-emerald-50 text-emerald-600" : "bg-crest-mist text-crest-navy-soft"
+                      }`}
+                    >
+                      {micReady ? (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="2" width="6" height="12" rx="3" />
+                          <path d="M5 10a7 7 0 0 0 14 0" />
+                          <path d="M12 19v3" />
+                        </svg>
+                      ) : (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" opacity="0.4" />
+                          <path d="m2 2 20 20" />
+                          <path d="M5 10a7 7 0 0 0 11.9 5" />
+                          <path d="M12 19v3" />
+                        </svg>
+                      )}
+                    </div>
+                    {micReady ? (
+                      <p className="text-xs text-ink-soft">
+                        Microphone access granted. You can start whenever you are ready.
+                      </p>
+                    ) : (
+                      <>
+                        <button
+                          onClick={requestMic}
+                          disabled={micState === "requesting"}
+                          className="w-full bg-crest-crimson hover:bg-crest-crimson-deep text-white font-black rounded-xl px-4 py-3 text-sm disabled:opacity-50 cursor-pointer transition-colors"
+                        >
+                          {micState === "requesting" ? "Asking the browser…" : "Allow access"}
+                        </button>
+                        {micState === "denied" && (
+                          <p className="text-[11px] text-red-600 font-semibold mt-2">
+                            The browser said no. Check the mic icon in the address bar,
+                            allow the microphone for this site, then try again.
+                          </p>
+                        )}
+                        <p className="text-[11px] text-ink-soft mt-2">
+                          Audio goes only to your practice session. Nothing is published.
+                        </p>
+                      </>
+                    )}
+                  </section>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSettingsPane("menu");
+                        setSettingsOpen(true);
+                      }}
+                      aria-label="Session settings"
+                      title="Session settings"
+                      className="w-11 h-11 rounded-xl bg-white border border-crest-line text-crest-navy hover:bg-crest-mist flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      aria-label="Upload audio"
+                      title="Upload audio for analysis"
+                      className="w-11 h-11 rounded-xl bg-white border border-crest-line text-crest-navy hover:bg-crest-mist flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 16V4" />
+                        <path d="m6 10 6-6 6 6" />
+                        <path d="M4 20h16" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleStart}
+                      disabled={starting || !quotaLeft || !micReady}
+                      title={micReady ? undefined : "Allow microphone access first"}
+                      className="flex-1 bg-crest-crimson hover:bg-crest-crimson-deep text-white font-black rounded-xl px-6 py-3 text-base disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    >
+                      {starting ? "Starting…" : !quotaLeft ? "No sessions left" : micReady ? "Start" : "Allow the mic to start"}
+                    </button>
+                  </div>
+
+                  {/* Upload analysis */}
+                  <section id="upload-section" className="bg-white border border-dashed border-crest-line rounded-2xl px-5 py-4 text-center scroll-mt-4">
+                    <h2 className="text-sm font-black text-crest-navy">Have a recording already?</h2>
+                    <p className="text-xs text-ink-soft mt-1 mb-3">
+                      Upload any English audio of yourself and get the same honest
+                      report: corrections, coaching cards, drills.
+                    </p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.mp4"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || !quotaLeft}
+                      className="bg-white border border-crest-steel/60 text-crest-steel-deep font-black rounded-xl px-5 py-2.5 text-sm disabled:opacity-50 cursor-pointer hover:bg-crest-steel-light transition-colors"
+                    >
+                      {uploading ? "Analysing — this takes a moment…" : "Upload audio for analysis"}
+                    </button>
+                  </section>
                 </div>
-              </section>
-
-              <button
-                onClick={handleStart}
-                disabled={starting || !quotaLeft}
-                className="btn-primary-crest text-white font-black rounded-2xl px-6 py-4 text-base disabled:opacity-50 cursor-pointer"
-              >
-                {starting ? "Starting…" : quotaLeft ? "Start talking 🎙️" : "No sessions left"}
-              </button>
-
-              {/* Upload analysis */}
-              <section id="upload-section" className="bg-white border border-dashed border-border rounded-2xl px-5 py-5 text-center scroll-mt-4">
-                <h2 className="text-sm font-black">Have a recording already?</h2>
-                <p className="text-xs text-ink-soft mt-1 mb-3">
-                  Upload any English audio of yourself and get the same honest
-                  report: corrections, coaching cards, drills.
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.mp4"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleUpload(file);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || !quotaLeft}
-                  className="bg-white border border-[#002868]/40 text-[#002868] font-black rounded-2xl px-6 py-3 text-sm disabled:opacity-50 cursor-pointer"
-                >
-                  {uploading ? "Analysing — this takes a moment…" : "Upload audio for analysis ⬆️"}
-                </button>
-              </section>
+              </div>
             </>
           )}
         </div>
+
+        {/* Session settings popover (Yoodli drill-in style) */}
+        {settingsOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-crest-navy-deep/40 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setSettingsOpen(false)}
+          >
+            <div
+              className="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                {settingsPane === "menu" ? (
+                                  <p className="text-[11px] font-black tracking-wider text-ink-soft">SETTINGS</p>
+                ) : (
+                  <button
+                    onClick={() => setSettingsPane("menu")}
+                    className="flex items-center gap-1.5 text-[11px] font-black tracking-wider text-ink-soft hover:text-ink cursor-pointer"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                    {settingsPane === "audio" ? "AUDIO" : "AI RESPONSE"}
+                  </button>
+                )}
+                <button
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close settings"
+                  className="p-1.5 rounded-lg text-ink-soft hover:bg-crest-mist cursor-pointer"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {settingsPane === "menu" && (
+                <div className="flex flex-col gap-1">
+                  {(
+                    [
+                      { pane: "audio" as const, label: "Audio", note: micReady ? "Microphone ready" : "Microphone not allowed yet" },
+                      { pane: "ai" as const, label: "AI Response", note: `Coach voice speed: ${VOICE_SPEEDS.find((s) => s.id === voiceSpeed)?.label || "Normal"}` },
+                    ]
+                  ).map((item) => (
+                    <button
+                      key={item.pane}
+                      onClick={() => setSettingsPane(item.pane)}
+                      className="flex items-center justify-between rounded-xl px-3.5 py-3 hover:bg-crest-mist text-left cursor-pointer transition-colors"
+                    >
+                      <span>
+                        <span className="block text-sm font-black text-crest-navy">{item.label}</span>
+                        <span className="block text-xs text-ink-soft mt-0.5">{item.note}</span>
+                      </span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-soft">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {settingsPane === "audio" && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-crest-navy">Microphone</p>
+                    <span
+                      className={`text-[11px] font-black px-2 py-0.5 rounded-md ${
+                        micReady ? "bg-emerald-50 text-emerald-700" : "bg-crest-mist text-ink-soft"
+                      }`}
+                    >
+                      {micReady ? "Allowed" : "Not allowed"}
+                    </span>
+                  </div>
+                  {!micReady && (
+                    <button
+                      onClick={requestMic}
+                      disabled={micState === "requesting"}
+                      className="bg-crest-crimson hover:bg-crest-crimson-deep text-white font-black rounded-xl px-4 py-2.5 text-sm disabled:opacity-50 cursor-pointer transition-colors"
+                    >
+                      {micState === "requesting" ? "Asking the browser…" : "Allow access"}
+                    </button>
+                  )}
+                  {mics.length > 1 && (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[11px] font-black tracking-wider text-ink-soft">INPUT DEVICE</p>
+                      <button
+                        onClick={() => chooseMic("")}
+                        className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold cursor-pointer ${
+                          micId === "" ? "bg-crest-steel-light text-crest-navy" : "hover:bg-crest-mist text-ink"
+                        }`}
+                      >
+                        System default
+                        {micId === "" && <span className="text-crest-steel-deep"><CheckIcon /></span>}
+                      </button>
+                      {mics.map((mic, i) => (
+                        <button
+                          key={mic.deviceId || i}
+                          onClick={() => chooseMic(mic.deviceId)}
+                          className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold cursor-pointer ${
+                            micId === mic.deviceId ? "bg-crest-steel-light text-crest-navy" : "hover:bg-crest-mist text-ink"
+                          }`}
+                        >
+                          <span className="truncate">{mic.label || `Microphone ${i + 1}`}</span>
+                          {micId === mic.deviceId && <span className="text-crest-steel-deep"><CheckIcon /></span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {settingsPane === "ai" && (
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-black tracking-wider text-ink-soft mb-1">COACH VOICE SPEED</p>
+                  {VOICE_SPEEDS.map((speed) => (
+                    <button
+                      key={speed.id}
+                      onClick={() => chooseVoiceSpeed(speed.id)}
+                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold cursor-pointer ${
+                        voiceSpeed === speed.id ? "bg-crest-steel-light text-crest-navy" : "hover:bg-crest-mist text-ink"
+                      }`}
+                    >
+                      {speed.label}
+                      {voiceSpeed === speed.id && <span className="text-crest-steel-deep"><CheckIcon /></span>}
+                    </button>
+                  ))}
+                  <p className="text-[11px] text-ink-soft mt-2">
+                    Applies from your next session. Slower helps you catch every word;
+                    faster sounds more like real conversation.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </PageTransition>
   );

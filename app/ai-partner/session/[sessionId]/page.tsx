@@ -88,6 +88,9 @@ export default function AiPartnerSessionPage() {
     tokenRef.current = token;
 
     const player = new SentencePlayer();
+    // Coach voice speed chosen on the setup screen (AI Response settings).
+    const savedRate = parseFloat(localStorage.getItem("ai_partner_voice_speed") || "1");
+    if (savedRate > 0 && savedRate !== 1) player.setRate(savedRate);
     playerRef.current = player;
     const socket = connectAiPartnerSocket(token);
     socketRef.current = socket;
