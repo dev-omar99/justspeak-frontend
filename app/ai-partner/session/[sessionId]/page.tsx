@@ -479,6 +479,12 @@ export default function AiPartnerSessionPage() {
     const last = lines[lines.length - 1];
     return last && last.role === "user" ? last : null;
   })();
+  // Fade rules (Omar, Nov 28): a line leaves the screen right after its
+  // speaker finishes. The coach finished when the server says "listening";
+  // the learner finished when the server says "thinking". A correction tip
+  // is never faded: it stays until the learner taps it.
+  const coachLineFaded = callState === "listening" || callState === "paused";
+  const answerFaded = !!currentAnswer?.isFinal && callState === "thinking";
   const liveScores = computeLiveScores(metrics, lines);
   const stageActive = listening || thinking;
   const voiceRateLabel = voiceRate === 1 ? "Normal" : voiceRate > 1 ? "Fast" : "Slow";
@@ -819,7 +825,7 @@ export default function AiPartnerSessionPage() {
 
         {/* The coach's current line streams here in large type, like Yoodli's captions */}
         {lastAiLine && callState !== "ended" && (
-          <p key={lastAiLine.id} className="turn-in text-lg sm:text-xl font-semibold text-ink leading-relaxed min-h-[3rem]">
+          <p key={lastAiLine.id} className={`turn-in text-lg sm:text-xl font-semibold text-ink leading-relaxed min-h-[3rem] transition-opacity duration-700 ${coachLineFaded ? "opacity-0" : "opacity-100"}`}>
             {lastAiLine.text}
           </p>
         )}
@@ -838,8 +844,8 @@ export default function AiPartnerSessionPage() {
               <div key={currentAnswer.id} className="turn-in flex flex-col gap-1 items-end">
                 <span className="text-[10px] font-bold text-ink-soft px-1">You</span>
                 <div
-                  className={`rounded-2xl rounded-tr-md px-4 py-2.5 text-sm bg-crest-crimson text-white max-w-full ${
-                    currentAnswer.isFinal ? "" : "opacity-70 italic"
+                  className={`rounded-2xl rounded-tr-md px-4 py-2.5 text-sm bg-crest-crimson text-white max-w-full transition-opacity duration-700 ${
+                    answerFaded ? "opacity-0" : currentAnswer.isFinal ? "" : "opacity-70 italic"
                   }`}
                 >
                   {currentAnswer.isFinal ? highlightFillers(currentAnswer.text) : currentAnswer.text}
