@@ -1,5 +1,6 @@
 /**
- * Original anime-style avatars for the AI coaches, drawn as inline SVG
+ * Coach avatars. Named coaches: semi-realistic generated portraits (none of
+ * them is a real person). Fallback: original drawn avatar as inline SVG
  * (no image files, no network request, crisp at any size). Big glossy eyes,
  * blush, layered bangs and a distinct outfit per persona, in the JustSpeak
  * palette. These are original drawings, not based on any existing character.
@@ -27,6 +28,8 @@ const LOOKS: Record<string, Look> = {
   default: { bg: ["#E8EDF5", "#B4C2DB"], skin: "#FBD9BD", hair: "#3A2A5C", hairLight: "#6A5599", eye: "#0F295A", outfit: "#0F295A", style: "short" },
 };
 
+const PHOTO_IDS = new Set(["sara", "adams", "rachel", "sam"]);
+
 export default function CoachAvatar({
   personaId,
   size = 48,
@@ -36,6 +39,22 @@ export default function CoachAvatar({
   size?: number;
   className?: string;
 }) {
+  // The four named coaches use semi-realistic portraits (public/coaches);
+  // everything else (e.g. the lesson tutor) keeps the drawn neutral avatar.
+  if (personaId && PHOTO_IDS.has(personaId)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/coaches/${personaId}.jpg`}
+        alt=""
+        width={size}
+        height={size}
+        className={`object-cover ${className}`}
+        loading="eager"
+        decoding="async"
+      />
+    );
+  }
   const k = LOOKS[personaId ?? ""] ? (personaId as string) : "default";
   const look = LOOKS[k];
   const bg = `coach-bg-${k}`;
