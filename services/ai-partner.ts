@@ -438,6 +438,41 @@ export function fetchAiPartnerSessions(token: string) {
   return request<AiSessionListItem[]>("/ai-partner/sessions", token);
 }
 
+/** Programme task progress is derived server-side from the learner's own sessions. */
+export type ProgrammeTaskStatus = "not_started" | "in_progress" | "passed";
+
+export interface ProgrammeTask {
+  id: string;
+  title: string;
+  description: string;
+  goal: string;
+  roleplayId: string;
+  level: string;
+  /** Pass mark on the 0-100 scale. */
+  passPct: number;
+  status: ProgrammeTaskStatus;
+  /** Best measured score 0-100; null = none measured yet (never a zero). */
+  bestScore: number | null;
+  attempts: number;
+  partner: { personaId: string; name: string; title: string; trait: string };
+}
+
+export interface Programme {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  tasks: ProgrammeTask[];
+  totalTasks: number;
+  passedTasks: number;
+  stepsToGo: number;
+  nextTaskId: string | null;
+}
+
+export function fetchAiPartnerProgrammes(token: string) {
+  return request<{ programmes: Programme[] }>("/ai-partner/programmes", token);
+}
+
 export function fetchAiPartnerDashboard(token: string) {
   return request<AiDashboard>("/ai-partner/dashboard", token);
 }

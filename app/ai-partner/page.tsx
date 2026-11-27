@@ -133,6 +133,13 @@ export default function AiPartnerPage() {
     const start = new URLSearchParams(window.location.search).get("start");
     if (start === "free-talk" || start === "interview" || start === "lesson" || start === "roleplay") {
       setMode(start);
+      // Deep link from a programme task: /ai-partner?start=roleplay&rp=<roleplayId>
+      const rp = new URLSearchParams(window.location.search).get("rp");
+      const target = start === "roleplay" && rp ? status.roleplays?.find((r) => r.id === rp) : undefined;
+      if (target) {
+        setRoleplayId(target.id);
+        setRoleplayCat(target.category);
+      }
       document.getElementById("setup-section")?.scrollIntoView({ behavior: "smooth" });
     } else if (start === "upload") {
       document.getElementById("upload-section")?.scrollIntoView({ behavior: "smooth" });

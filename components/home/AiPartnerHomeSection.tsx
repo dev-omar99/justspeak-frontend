@@ -94,6 +94,12 @@ export default function AiPartnerHomeSection() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs font-semibold">
+          <Link href="/ai-partner/today" className="text-[#0A66C2] hover:underline">
+            {isArabic ? "مهام اليوم" : "Today's tasks"}
+          </Link>
+          <Link href="/ai-partner/learning" className="text-[#0A66C2] hover:underline">
+            {isArabic ? "رحلتي التعليمية" : "My Learning"}
+          </Link>
           <Link href="/ai-partner/recordings" className="text-[#0A66C2] hover:underline">
             {isArabic ? "تسجيلاتي وتقاريري" : "My recordings & reports"}
           </Link>

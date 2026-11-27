@@ -89,6 +89,18 @@ const NAV_ITEMS: NavItem[] = [
     active: (p) => p === "/ai-partner" || p === "/ai-partner/",
   },
   {
+    href: "/ai-partner/today",
+    label: "Today's tasks",
+    icon: ICON.target,
+    active: (p) => p.startsWith("/ai-partner/today"),
+  },
+  {
+    href: "/ai-partner/learning",
+    label: "My Learning",
+    icon: ICON.book,
+    active: (p) => p.startsWith("/ai-partner/learning"),
+  },
+  {
     href: "/ai-partner/dashboard",
     label: "My Progress",
     icon: ICON.chart,
