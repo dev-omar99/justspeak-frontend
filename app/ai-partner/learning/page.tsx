@@ -37,7 +37,7 @@ export default function LearningPage() {
             </Link>
           ))}
           <div className="flex justify-center gap-5 pt-3 text-sm font-bold text-ink-soft">
-            <Link href="/ai-partner" className="hover:text-ink">Free practice ›</Link>
+            <Link href="/ai-partner?setup=1" className="hover:text-ink">Free practice ›</Link>
             <Link href="/ai-partner/learning/programmes" className="hover:text-ink">Earlier programmes ›</Link>
           </div>
         </div>

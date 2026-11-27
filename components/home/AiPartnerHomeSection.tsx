@@ -70,7 +70,7 @@ export default function AiPartnerHomeSection() {
             </p>
           </div>
           <Link
-            href="/ai-partner"
+            href="/ai-partner/learning"
             className="group/btn self-start sm:self-center shrink-0 bg-gradient-to-r from-[#D91023] to-[#E11D48] hover:from-[#B91C1C] hover:to-[#D91023] hover:scale-105 hover:shadow-lg hover:shadow-[#D91023]/30 active:scale-[0.98] transition-all duration-200 text-white font-bold text-center py-3.5 px-7 rounded-xl text-base shadow-md flex items-center gap-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
           >
             <span>{isArabic ? "ابدأ جلسة" : "Start a session"}</span>

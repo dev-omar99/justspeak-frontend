@@ -51,7 +51,7 @@ export default function BottomNav() {
     ...(aiPartnerEnabled()
       ? [
           {
-            href: "/ai-partner",
+            href: "/ai-partner/learning",
             label: "AI Partner",
             icon: "🎙️",
             match: (p: string) => p.startsWith("/ai-partner"),

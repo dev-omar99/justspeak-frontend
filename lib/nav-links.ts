@@ -18,7 +18,7 @@ export const AUTHENTICATED_LINKS: readonly NavItem[] = [
   { href: "/ai-studio", label: "AI Coach", labelAr: "المدرب الذكي", icon: "✨", accent: "glacier" },
   { href: "/leaderboard", label: "Ranks", labelAr: "المتصدرون", icon: "🏆" },
   ...(process.env.NEXT_PUBLIC_AI_PARTNER_ENABLED?.trim().toLowerCase() === "true"
-    ? [{ href: "/ai-partner", label: "AI Partner", labelAr: "شريك المحادثة", icon: "🎙️", accent: "glacier" } as NavItem]
+    ? [{ href: "/ai-partner/learning", label: "AI Partner", labelAr: "شريك المحادثة", icon: "🎙️", accent: "glacier" } as NavItem]
     : []),
   { href: "/pricing", label: "Plans", labelAr: "الخطط", icon: "👑", accent: "gold" },
 ];

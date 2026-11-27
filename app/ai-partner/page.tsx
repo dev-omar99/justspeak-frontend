@@ -127,6 +127,13 @@ export default function AiPartnerPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
+  // Landing: a bare /ai-partner opens the programmes flow (Choose a field). The setup screen below stays
+  // reachable with ?start=... (Start menu, lessons) or ?setup=1 (the "Free practice" link).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (!q.get("start") && !q.get("setup")) router.replace("/ai-partner/learning");
+  }, [router]);
+
   // Deep links from the shell's Start menu: /ai-partner?start=free-talk|interview|lesson|upload
   useEffect(() => {
     if (!status) return;
