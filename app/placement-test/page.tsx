@@ -66,7 +66,7 @@ export default function PlacementTestPage() {
               {/* Hero Card (Matches JustSpeak Official Navy + Crimson Brand) */}
               <section className="rounded-[28px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#0B1F3A] text-white p-6 sm:p-10 border border-[#002868]/40 shadow-lg text-center flex flex-col items-center gap-4">
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-black">
-                  🎓 CEFR & Oxford Standard Placement
+                  🎓 CEFR Placement Test
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
                   {isArabic
@@ -76,7 +76,7 @@ export default function PlacementTestPage() {
                 <p className="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
                   {isArabic
                     ? "اختبار سريع من 12 سؤالاً (يستغرق 3 دقائق) يحدد مستواك بدقة من A1 إلى C2 ويفتح لك مسار الدروس وهدف التحدث اليومي مع الشركاء."
-                    : "Take a quick 3-minute CEFR test (12 questions) to pinpoint your level (A1–C2) and unlock your structured Oxford-style lesson path."}
+                    : "Take a quick 3-minute CEFR test (12 questions) to pinpoint your level (A1–C2) and unlock your structured lesson path."}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button

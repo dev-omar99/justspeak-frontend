@@ -53,7 +53,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 12,
     objective: "Introduce yourself naturally, describe your morning routine, and ask simple friendly questions.",
     objectiveAr: "عرّف بنفسك بطبيعية، وتحدث عن روتينك الصباحي، واطرح أسئلة تعارف بسيطة.",
-    sourceRef: "Oxford CEFR A1 • Unit 1",
+    sourceRef: "CEFR A1 • Unit 1",
     vocabulary: [
       { id: "l-a1-1-1", word: "morning", level: "A1", pos: "noun", ipa: "/ˈmɔːrnɪŋ/", meaningEn: "The early part of the day before noon.", meaningAr: "الصباح", example: "Good morning! How are you today?" },
       { id: "l-a1-1-2", word: "friendly", level: "A1", pos: "adj", ipa: "/ˈfrendli/", meaningEn: "Kind, warm, and pleasant to others.", meaningAr: "ودود / لطيف", example: "Everyone in my English group is very friendly." },
@@ -107,7 +107,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 12,
     objective: "Order food and drinks politely, talk about favorite dishes, and ask simple questions in a café.",
     objectiveAr: "اطلب الطعام والمشروبات بأدب وتحدث عن أطباقك المفضلة في المقهى والمطعم.",
-    sourceRef: "Oxford CEFR A1 • Unit 2",
+    sourceRef: "CEFR A1 • Unit 2",
     vocabulary: [
       { id: "l-a1-2-1", word: "menu", level: "A1", pos: "noun", ipa: "/ˈmenjuː/", meaningEn: "A list of food and drinks you can order.", meaningAr: "قائمة الطعام", example: "Could I see the menu, please?" },
       { id: "l-a1-2-2", word: "delicious", level: "A1", pos: "adj", ipa: "/dɪˈlɪʃəs/", meaningEn: "Having a very pleasant taste.", meaningAr: "لذيذ جداً", example: "Egyptian koshari is really delicious." },
@@ -164,7 +164,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 14,
     objective: "Talk about past trips and future travel plans, check in at airports, and ask for directions.",
     objectiveAr: "تحدث عن رحلاتك السابقة وخطط سفرك القادمة وتعامل بثقة في المطار.",
-    sourceRef: "Oxford CEFR A2 • Unit 1",
+    sourceRef: "CEFR A2 • Unit 1",
     vocabulary: [
       { id: "l-a2-1-1", word: "destination", level: "A2", pos: "noun", ipa: "/ˌdestɪˈneɪʃən/", meaningEn: "The place to which someone is going.", meaningAr: "وجهة السفر", example: "Istanbul is a popular destination for travelers." },
       { id: "l-a2-1-2", word: "luggage", level: "A2", pos: "noun", ipa: "/ˈlʌɡɪdʒ/", meaningEn: "Suitcases and bags you carry when traveling.", meaningAr: "أمتعة السفر", example: "Please keep your hand luggage close to you." },
@@ -217,7 +217,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 14,
     objective: "Describe hobbies, compare weekend activities, and explain how you improve a new skill.",
     objectiveAr: "تحدث عن هواياتك، وقارن بين أنشطة الإجازة، واشرح كيف تطور مهاراتك.",
-    sourceRef: "Oxford CEFR A2 • Unit 2",
+    sourceRef: "CEFR A2 • Unit 2",
     vocabulary: [
       { id: "l-a2-2-1", word: "improve", level: "A2", pos: "verb", ipa: "/ɪmˈpruːv/", meaningEn: "To get better at something over time.", meaningAr: "يحسّن / يطوّر", example: "Daily speaking calls improve your listening fast." },
       { id: "l-a2-2-2", word: "describe", level: "A2", pos: "verb", ipa: "/dɪˈskraɪb/", meaningEn: "To explain what something looks or feels like.", meaningAr: "يصف", example: "Can you describe your favorite weekend hobby?" },
@@ -272,7 +272,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 15,
     objective: "Express feelings clearly, explain personal challenges, and give encouraging advice using connectors.",
     objectiveAr: "عبّر عن التحديات الشخصية بوضوح وقدّم نصائح مشجعة باستخدام أدوات الربط.",
-    sourceRef: "Oxford CEFR B1 • Unit 1",
+    sourceRef: "CEFR B1 • Unit 1",
     vocabulary: [
       { id: "l-b1-1-1", word: "overcome", level: "B1", pos: "verb", ipa: "/ˌoʊvərˈkʌm/", meaningEn: "To succeed in dealing with a fear or difficulty.", meaningAr: "يتغلب على", example: "Daily calls helped me overcome my fear of speaking." },
       { id: "l-b1-1-2", word: "fluent", level: "B1", pos: "adj", ipa: "/ˈfluːənt/", meaningEn: "Able to speak smoothly and naturally without long pauses.", meaningAr: "طلق اللسان / فصيح", example: "You don't need to be perfect to sound fluent." },
@@ -325,7 +325,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 15,
     objective: "Discuss career goals, explain work-life balance, and talk about future plans using conditionals.",
     objectiveAr: "ناقش أهدافك المهنية وتوازن الحياة والعمل وتحدث عن خططك المستقبلية.",
-    sourceRef: "Oxford CEFR B1 • Unit 2",
+    sourceRef: "CEFR B1 • Unit 2",
     vocabulary: [
       { id: "l-b1-2-1", word: "ambition", level: "B1", pos: "noun", ipa: "/æmˈbɪʃən/", meaningEn: "A strong desire to achieve something meaningful.", meaningAr: "طموح", example: "Her main ambition is to lead an international design team." },
       { id: "l-b1-2-2", word: "flexible", level: "B1", pos: "adj", ipa: "/ˈfleksəbəl/", meaningEn: "Able to change or adapt easily to different situations.", meaningAr: "مرِن", example: "Remote work offers a much more flexible schedule." },
@@ -380,7 +380,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 16,
     objective: "Articulate nuanced opinions spontaneously, defend an argument persuasively, and handle unexpected questions.",
     objectiveAr: "عبّر عن آراء دقيقة بعفوية ودافع عن فكرتك بأسلوب مقنع أمام الأسئلة المفاجئة.",
-    sourceRef: "Oxford CEFR B2 • Unit 1",
+    sourceRef: "CEFR B2 • Unit 1",
     vocabulary: [
       { id: "l-b2-1-1", word: "spontaneous", level: "B2", pos: "adj", ipa: "/spɒnˈteɪniəs/", meaningEn: "Happening naturally without rehearsing in advance.", meaningAr: "عفوي / تلقائي", example: "Live calls train your mind for spontaneous dialogue." },
       { id: "l-b2-1-2", word: "articulate", level: "B2", pos: "verb", ipa: "/ɑːrˈtɪkjuleɪt/", meaningEn: "To express complex ideas clearly and effectively.", meaningAr: "يعبّر بوضوح وفصاحة", example: "She can articulate her strategy in two crisp sentences." },
@@ -431,7 +431,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 16,
     objective: "Analyze cause and effect, discuss modern technology trends, and compare advantages vs drawbacks.",
     objectiveAr: "حلّل السبب والنتيجة وناقش أثر التكنولوجيا الحديثة وموازنة الإيجابيات والسلبيات.",
-    sourceRef: "Oxford CEFR B2 • Unit 2",
+    sourceRef: "CEFR B2 • Unit 2",
     vocabulary: [
       { id: "l-b2-2-1", word: "distraction", level: "B2", pos: "noun", ipa: "/dɪˈstrækʃən/", meaningEn: "Something that pulls your attention away from focus.", meaningAr: "مُشتّت للانتباه", example: "Constant notifications are the biggest distraction at work." },
       { id: "l-b2-2-2", word: "productive", level: "B2", pos: "adj", ipa: "/prəˈdʌktɪv/", meaningEn: "Achieving meaningful results efficiently.", meaningAr: "مُنتج / فعّال", example: "Short focused sprints are far more productive than multitasking." },
@@ -486,7 +486,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 18,
     objective: "Deliver lucid, pragmatic arguments using advanced discourse markers and precise lexical choices.",
     objectiveAr: "قدّم حججاً واضحة وعملية باستخدام مفردات متقدمة وروابط خطابية احترافية.",
-    sourceRef: "Oxford CEFR C1 • Unit 1",
+    sourceRef: "CEFR C1 • Unit 1",
     vocabulary: [
       { id: "l-c1-1-1", word: "lucid", level: "C1", pos: "adj", ipa: "/ˈluːsɪd/", meaningEn: "Expressed so clearly that complex ideas feel effortless.", meaningAr: "واضح وسلس للغاية", example: "Her lucid summary aligned the entire engineering team." },
       { id: "l-c1-1-2", word: "eloquent", level: "C1", pos: "adj", ipa: "/ˈeləkwənt/", meaningEn: "Fluent, graceful, and deeply persuasive in speech.", meaningAr: "بليغ / فصيح", example: "He delivered an eloquent keynote without glancing at notes." },
@@ -536,7 +536,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 18,
     objective: "Evaluate competing viewpoints diplomatically and navigate cross-cultural conversations with tact.",
     objectiveAr: "قيّم وجهات النظر المختلفة بدبلوماسية وأدر الحوارات متعددة الثقافات بلباقة.",
-    sourceRef: "Oxford CEFR C1 • Unit 2",
+    sourceRef: "CEFR C1 • Unit 2",
     vocabulary: [
       { id: "l-c1-2-1", word: "diplomatic", level: "C1", pos: "adj", ipa: "/ˌdɪpləˈmætɪk/", meaningEn: "Skilled at dealing with sensitive matters without offending.", meaningAr: "دبلوماسي / لبق", example: "She gave a diplomatic answer to a tough question." },
       { id: "l-c1-2-2", word: "assumptions", level: "C1", pos: "noun", ipa: "/əˈsʌmpʃənz/", meaningEn: "Things accepted as true without direct proof.", meaningAr: "افتراضات", example: "Cross-cultural dialogue challenges our hidden assumptions." },
@@ -590,7 +590,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 18,
     objective: "Convey refined shades of meaning with conciseness, candor, and effortless idiomatic flow.",
     objectiveAr: "عبّر عن أدق الفروق المعنوية بإيجاز وصراحة وتدفق لغوي يضاهي المتحدثين الأصليين.",
-    sourceRef: "Oxford CEFR C2 • Unit 1",
+    sourceRef: "CEFR C2 • Unit 1",
     vocabulary: [
       { id: "l-c2-1-1", word: "brevity", level: "C2", pos: "noun", ipa: "/ˈbrevəti/", meaningEn: "Concise, exact, and powerful economy of words.", meaningAr: "الإيجاز والبلاغة", example: "Brevity is the soul of unforgettable leadership." },
       { id: "l-c2-1-2", word: "candid", level: "C2", pos: "adj", ipa: "/ˈkændɪd/", meaningEn: "Frank, truthful, and refreshingly direct.", meaningAr: "صريح ومباشر", example: "I deeply appreciate your candid critique of my talk." },
@@ -640,7 +640,7 @@ export const STRUCTURED_LESSONS: StructuredLesson[] = [
     durationMins: 18,
     objective: "Weave vivid stories, use refined idioms effortlessly, and mirror native cadence in live debates.",
     objectiveAr: "انسج قصصاً حية واستخدم التعبيرات الاصطلاحية بسلاسة وإيقاع المتحدث الأصلي.",
-    sourceRef: "Oxford CEFR C2 • Unit 2",
+    sourceRef: "CEFR C2 • Unit 2",
     vocabulary: [
       { id: "l-c2-2-1", word: "evocative", level: "C2", pos: "adj", ipa: "/ɪˈvɒkətɪv/", meaningEn: "Bringing strong images, memories, or feelings to mind.", meaningAr: "مُثير للخيال والمشاعر", example: "Her evocative story transported everyone to Alexandria." },
       { id: "l-c2-2-2", word: "serendipity", level: "C2", pos: "noun", ipa: "/ˌserənˈdɪpəti/", meaningEn: "Finding something wonderful completely by happy chance.", meaningAr: "صدفة سعيدة رائعة", example: "Meeting a lifelong mentor on a random call was pure serendipity." },

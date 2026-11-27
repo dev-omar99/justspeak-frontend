@@ -124,7 +124,7 @@ export default function AcademyHubPage() {
                   </h2>
                   <p className="text-xs text-ink-soft mt-0.5">
                     {isArabic
-                      ? "لنفتح لك مسار الدروس المناسب لمستواك الحقيقي (A1 إلى C2) وفق منهجية Oxford."
+                      ? "لنفتح لك مسار الدروس المناسب لمستواك الحقيقي (A1 إلى C2) وفق مقياس CEFR الأوروبي."
                       : "Unlock the structured lesson path calibrated to your level (A1–C2)."}
                   </p>
                 </div>

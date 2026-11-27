@@ -83,7 +83,7 @@ export default function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-0.5 py-1 px-1.5 sm:px-2.5 min-w-0 rounded-xl transition-all ${
               isActive
                 ? "text-white btn-primary-crest font-extrabold shadow-xs"
                 : "text-ink-soft hover:text-[#002868] font-semibold"

@@ -39,7 +39,7 @@ function hydrateLesson(s: CompactLessonSeed): StructuredLesson {
     durationMins: s.durationMins,
     objective: s.objective,
     objectiveAr: s.objectiveAr,
-    sourceRef: `Oxford CEFR ${s.level} • Unit ${s.unitNumber}`,
+    sourceRef: `CEFR ${s.level} • Unit ${s.unitNumber}`,
     vocabulary: s.words.map((w, idx) => ({
       id: `${s.id}-w${idx + 1}`,
       word: w[0],

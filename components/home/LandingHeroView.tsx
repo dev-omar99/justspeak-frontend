@@ -147,7 +147,7 @@ export default function LandingHeroView() {
                 {
                   step: "03",
                   title: "Save Words & Level Up",
-                  desc: "Check off new Oxford-aligned vocabulary into your Saved Words vault and build your daily speaking streak.",
+                  desc: "Check off new CEFR-level vocabulary into your Saved Words vault and build your daily speaking streak.",
                 },
               ].map((item) => (
                 <div

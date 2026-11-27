@@ -91,7 +91,7 @@ export default function GradedReadingPage() {
             <p className="text-xs sm:text-sm text-ink-soft mt-1">
               {isArabic
                 ? "12 قطعة قراءة متدرجة تظلّل كلمات مستواك بالأحمر — اضغط أي كلمة لمعناها ونطقها فوراً."
-                : "12 CEFR-calibrated passages highlighting your target Oxford vocabulary — tap any highlighted word."}
+                : "12 CEFR-calibrated passages highlighting your target vocabulary — tap any highlighted word."}
             </p>
           </div>
 
