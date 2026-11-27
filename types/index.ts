@@ -195,6 +195,7 @@ export interface BlockedUserItem {
 export interface AdminUser {
   id: string;
   email: string | null;
+  phone?: string | null;
   name: string | null;
   country: string | null;
   isAdmin: boolean;
@@ -209,6 +210,134 @@ export interface AdminStats {
   totalSessions: number;
   totalFeedbacks: number;
   totalBlocks: number;
+  totalAiSessions: number;
+  activeAiSessions: number;
+  totalRecordings: number;
+  newUsersLast7d: number;
+}
+
+export interface AdminUserDetail {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  name: string | null;
+  country: string | null;
+  englishLevel: string | null;
+  isAdmin: boolean;
+  ticketsLeft: number;
+  createdAt: string;
+  planTier: PlanTierId;
+  aiTokensBalance: number;
+  aiSessionsUsed: number;
+  aiQuotaOffset: number;
+  buddiesCount: number;
+  blockedCount: number;
+  feedbackGiven: number;
+  feedbackReceived: number;
+}
+
+export interface AdminSessionItem {
+  id: string;
+  roomName: string;
+  topic: string | null;
+  createdAt: string;
+  feedbackCount: number;
+  participants: { id: string; name: string | null; email: string | null; country: string | null }[];
+}
+
+export interface AdminLiveOverview {
+  liveRooms: {
+    roomName: string;
+    participants: { userId: string; userName: string; userCountry: string }[];
+  }[];
+  activeAiSessions: {
+    id: string;
+    userId: string;
+    mode: string;
+    personaId: string;
+    level: string;
+    startedAt: string;
+    user: { name: string | null; email: string | null };
+  }[];
+}
+
+export interface AdminAiSessionItem {
+  id: string;
+  userId: string;
+  mode: string;
+  personaId: string;
+  level: string;
+  status: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSec: number;
+  reportModel: string | null;
+  user: { name: string | null; email: string | null };
+  _count: { recordings: number };
+}
+
+export interface AdminAiSessionDetail {
+  id: string;
+  userId: string;
+  mode: string;
+  personaId: string;
+  fieldId: string | null;
+  lessonId: string | null;
+  roleplayId: string | null;
+  level: string;
+  status: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSec: number;
+  transcript: unknown;
+  facts: unknown;
+  metrics: unknown;
+  report: unknown;
+  reportModel: string | null;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string | null };
+  recordings: AdminRecordingItem[];
+}
+
+export interface AdminRecordingItem {
+  id: string;
+  sessionId: string;
+  userId: string;
+  kind: string;
+  status: string;
+  storageKey: string | null;
+  mimeType: string;
+  bytes: number;
+  durationMs: number;
+  position: number;
+  createdAt: string;
+  session?: {
+    id: string;
+    mode: string;
+    personaId: string;
+    user: { name: string | null; email: string | null };
+  };
+}
+
+export interface AdminFeedbackItem {
+  id: string;
+  sessionId: string;
+  levelFeedback: string;
+  partnerRating: string;
+  compliments: string[];
+  createdAt: string;
+  giver: { id: string; name: string | null; email: string | null };
+  receiver: { id: string; name: string | null; email: string | null };
+}
+
+export interface AdminAuditEntry {
+  id: string;
+  adminEmail: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  details: unknown;
+  createdAt: string;
 }
 
 export interface LeaderboardUser {

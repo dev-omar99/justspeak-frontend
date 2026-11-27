@@ -6,6 +6,14 @@ import {
   QueueStatusResponse,
   AdminUser,
   AdminStats,
+  AdminUserDetail,
+  AdminSessionItem,
+  AdminLiveOverview,
+  AdminAiSessionItem,
+  AdminAiSessionDetail,
+  AdminRecordingItem,
+  AdminFeedbackItem,
+  AdminAuditEntry,
   UserDashboardData,
   BuddyUserItem,
   BlockedUserItem,
@@ -388,6 +396,78 @@ class ApiClient {
         body: JSON.stringify(payload),
       }
     );
+  }
+
+  // Admin: full platform control endpoints
+  private adminGet<T>(token: string, path: string): Promise<T> {
+    return this.request<T>(path, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  getAdminUserDetail(token: string, userId: string) {
+    return this.adminGet<AdminUserDetail>(token, `/admin/users/${userId}`);
+  }
+
+  setAdminAiQuotaOffset(token: string, userId: string, offset: number) {
+    return this.request<{ success: boolean; userId: string; offset: number }>(
+      `/admin/users/${userId}/ai-quota-offset`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ offset }),
+      }
+    );
+  }
+
+  getAdminSessions(token: string, take = 20, skip = 0) {
+    return this.adminGet<AdminSessionItem[]>(token, `/admin/sessions?take=${take}&skip=${skip}`);
+  }
+
+  getAdminLive(token: string) {
+    return this.adminGet<AdminLiveOverview>(token, `/admin/live`);
+  }
+
+  getAdminAiSessions(token: string, opts: { status?: string; userId?: string; take?: number; skip?: number } = {}) {
+    const params = new URLSearchParams();
+    if (opts.status) params.set("status", opts.status);
+    if (opts.userId) params.set("userId", opts.userId);
+    if (opts.take) params.set("take", String(opts.take));
+    if (opts.skip) params.set("skip", String(opts.skip));
+    const qs = params.toString();
+    return this.adminGet<AdminAiSessionItem[]>(token, `/admin/ai-sessions${qs ? `?${qs}` : ""}`);
+  }
+
+  getAdminAiSessionDetail(token: string, sessionId: string) {
+    return this.adminGet<AdminAiSessionDetail>(token, `/admin/ai-sessions/${sessionId}`);
+  }
+
+  forceEndAdminAiSession(token: string, sessionId: string) {
+    return this.request<{ success: boolean; id: string; status: string; changed: boolean }>(
+      `/admin/ai-sessions/${sessionId}/force-end`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+  }
+
+  getAdminRecordings(token: string, opts: { userId?: string; take?: number; skip?: number } = {}) {
+    const params = new URLSearchParams();
+    if (opts.userId) params.set("userId", opts.userId);
+    if (opts.take) params.set("take", String(opts.take));
+    if (opts.skip) params.set("skip", String(opts.skip));
+    const qs = params.toString();
+    return this.adminGet<AdminRecordingItem[]>(token, `/admin/recordings${qs ? `?${qs}` : ""}`);
+  }
+
+  getAdminFeedback(token: string, take = 20, skip = 0) {
+    return this.adminGet<AdminFeedbackItem[]>(token, `/admin/feedback?take=${take}&skip=${skip}`);
+  }
+
+  getAdminAuditLog(token: string, take = 50, skip = 0) {
+    return this.adminGet<AdminAuditEntry[]>(token, `/admin/audit-log?take=${take}&skip=${skip}`);
   }
 }
 
