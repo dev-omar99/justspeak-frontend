@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SourceNote from "../../../components/ai-partner/programmes/SourceNote";
 import PageTransition from "../../../components/PageTransition";
+import LoadError from "../../../components/ai-partner/programmes/LoadError";
 import { getToken } from "../../../lib/auth";
 import { nextTask, programmeStatus, progressPct, startHref, STATUS_LABEL } from "../../../lib/programmes";
 import { fetchAiPartnerProgrammes, Programme } from "../../../services/ai-partner";
@@ -20,6 +21,8 @@ export default function LearningPage() {
   const router = useRouter();
   const [programmes, setProgrammes] = useState<Programme[] | null>(null);
   const [error, setError] = useState("");
+  // Bumped by the Retry button to run the request again.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const token = getToken();
@@ -27,10 +30,11 @@ export default function LearningPage() {
       router.replace("/login");
       return;
     }
+    setError("");
     fetchAiPartnerProgrammes(token)
       .then((d) => setProgrammes(d.programmes))
       .catch((e) => setError(e.message || "Could not load your programmes."));
-  }, [router]);
+  }, [router, attempt]);
 
   return (
     <PageTransition>
@@ -40,7 +44,7 @@ export default function LearningPage() {
             <h1 className="text-xl font-black">My Learning</h1>
             <p className="text-sm text-ink-soft mt-1">Programmes</p>
           </div>
-          {error && <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>}
+          {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
           {!programmes && !error && <p className="text-sm text-ink-soft">Loading…</p>}
           {programmes?.map((p) => {
             const status = programmeStatus(p);

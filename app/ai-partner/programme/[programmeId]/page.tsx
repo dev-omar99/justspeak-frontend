@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import PageTransition from "../../../../components/PageTransition";
 import CoachAvatar from "../../../../components/ai-partner/CoachAvatar";
 import SourceNote from "../../../../components/ai-partner/programmes/SourceNote";
+import LoadError from "../../../../components/ai-partner/programmes/LoadError";
 import { getToken } from "../../../../lib/auth";
 import { nextTask, passMarkText, programmeStatus, progressPct, startHref, stepsToGoText, STATUS_LABEL } from "../../../../lib/programmes";
 import { toTen } from "../../../../lib/score-scale";
@@ -27,6 +28,8 @@ export default function ProgrammePage() {
   const params = useParams<{ programmeId: string }>();
   const [programme, setProgramme] = useState<Programme | null | undefined>(undefined);
   const [error, setError] = useState("");
+  // Bumped by the Retry button to run the request again.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const token = getToken();
@@ -34,10 +37,11 @@ export default function ProgrammePage() {
       router.replace("/login");
       return;
     }
+    setError("");
     fetchAiPartnerProgrammes(token)
       .then((d) => setProgramme(d.programmes.find((p) => p.id === params.programmeId) ?? null))
       .catch((e) => setError(e.message || "Could not load this programme."));
-  }, [router, params.programmeId]);
+  }, [router, params.programmeId, attempt]);
 
   const next = programme ? nextTask(programme) : null;
   const status = programme ? programmeStatus(programme) : "not_started";
@@ -47,7 +51,7 @@ export default function ProgrammePage() {
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-4">
           <Link href="/ai-partner/learning" className="text-sm font-bold text-crimson hover:underline">‹ My Learning</Link>
-          {error && <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>}
+          {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
           {programme === undefined && !error && <p className="text-sm text-ink-soft">Loading…</p>}
           {programme === null && <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">Programme not found.</p>}
           {programme && (

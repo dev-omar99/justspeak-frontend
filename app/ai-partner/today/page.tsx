@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageTransition from "../../../components/PageTransition";
 import TaskCard from "../../../components/ai-partner/programmes/TaskCard";
+import LoadError from "../../../components/ai-partner/programmes/LoadError";
 import { getToken, getUser } from "../../../lib/auth";
 import { nextTask } from "../../../lib/programmes";
 import { fetchAiPartnerProgrammes, Programme } from "../../../services/ai-partner";
@@ -14,6 +15,8 @@ export default function TodayPage() {
   const router = useRouter();
   const [programmes, setProgrammes] = useState<Programme[] | null>(null);
   const [error, setError] = useState("");
+  // Bumped by the Retry button to run the request again.
+  const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(0);
   // Read after mount: localStorage is not available on the server (avoids a hydration mismatch).
   const [firstName, setFirstName] = useState("");
@@ -25,10 +28,11 @@ export default function TodayPage() {
       router.replace("/login");
       return;
     }
+    setError("");
     fetchAiPartnerProgrammes(token)
       .then((d) => setProgrammes(d.programmes))
       .catch((e) => setError(e.message || "Could not load your tasks."));
-  }, [router]);
+  }, [router, attempt]);
 
   // Programmes with something left to do come first in the carousel.
   const open = (programmes ?? []).filter((p) => nextTask(p));
@@ -42,7 +46,7 @@ export default function TodayPage() {
           <h1 className="text-2xl font-black leading-tight">
             Hi{firstName ? ` ${firstName}` : ""}, take a look at your tasks for today:
           </h1>
-          {error && <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</p>}
+          {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
           {!programmes && !error && <p className="text-sm text-ink-soft">Loading…</p>}
           {programmes && open.length === 0 && (
             <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">

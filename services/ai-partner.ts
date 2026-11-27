@@ -482,8 +482,21 @@ export interface Programme {
   nextTaskId: string | null;
 }
 
-export function fetchAiPartnerProgrammes(token: string) {
-  return request<{ programmes: Programme[] }>("/ai-partner/programmes", token);
+/** Give up after this long so a stalled phone connection shows an error instead of loading forever. */
+export const PROGRAMMES_TIMEOUT_MS = 20000;
+
+export async function fetchAiPartnerProgrammes(token: string) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROGRAMMES_TIMEOUT_MS);
+  try {
+    return await request<{ programmes: Programme[] }>("/ai-partner/programmes", token, { signal: controller.signal });
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") throw new Error("This is taking too long. Check your connection and try again.");
+    if (e instanceof TypeError) throw new Error("Could not reach the server. Check your connection and try again.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function fetchAiPartnerDashboard(token: string) {
