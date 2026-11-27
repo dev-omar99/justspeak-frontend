@@ -4,6 +4,7 @@ import Link from "next/link";
 import Header from "../Header";
 import PageTransition from "../PageTransition";
 import BrandLogo from "../BrandLogo";
+import Reveal from "../Reveal";
 import { SUBSCRIPTION_PLANS } from "../../lib/plans";
 
 const VALUE_PILLARS = [
@@ -101,11 +102,12 @@ export default function LandingHeroView() {
           </section>
 
           {/* 3 Clean Value Pillars */}
+          <Reveal>
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {VALUE_PILLARS.map((pillar) => (
               <div
                 key={pillar.title}
-                className="rounded-2xl p-6 border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(6,21,51,0.04)] flex flex-col gap-3"
+                className="rounded-2xl p-6 border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(6,21,51,0.04)] flex flex-col gap-3 card-lift"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#002868]/[0.07] text-[#002868] flex items-center justify-center">
                   <PillarIcon kind={pillar.icon} />
@@ -117,8 +119,10 @@ export default function LandingHeroView() {
               </div>
             ))}
           </section>
+          </Reveal>
 
           {/* How It Works in 3 Simple Steps */}
+          <Reveal>
           <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-xs flex flex-col gap-6">
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-[#002868]">
@@ -148,7 +152,7 @@ export default function LandingHeroView() {
               ].map((item) => (
                 <div
                   key={item.step}
-                  className="rounded-2xl bg-surface border border-border/80 p-5 flex flex-col gap-2"
+                  className="rounded-2xl bg-surface border border-border/80 p-5 flex flex-col gap-2 card-lift"
                 >
                   <span className="text-xs font-black text-[#D91023] tracking-widest">
                     STEP {item.step}
@@ -161,8 +165,10 @@ export default function LandingHeroView() {
               ))}
             </div>
           </section>
+          </Reveal>
 
           {/* Compact 3-Tier Membership Preview */}
+          <Reveal>
           <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-md flex flex-col gap-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
@@ -185,7 +191,7 @@ export default function LandingHeroView() {
               {SUBSCRIPTION_PLANS.map((plan) => (
                 <div
                   key={plan.id}
-                  className={`rounded-3xl p-6 border-2 flex flex-col justify-between gap-5 transition-all ${
+                  className={`rounded-3xl p-6 border-2 flex flex-col justify-between gap-5 card-lift ${
                     plan.id === "ELITE"
                       ? "border-[#E11D48] bg-gradient-to-b from-[#FFF0F2]/80 to-white shadow-lg shadow-[#E11D48]/10"
                       : plan.popular
@@ -238,8 +244,10 @@ export default function LandingHeroView() {
               ))}
             </div>
           </section>
+          </Reveal>
 
           {/* Frequently Asked Questions */}
+          <Reveal>
           <section className="bg-white rounded-[32px] p-6 sm:p-10 border border-border shadow-xs flex flex-col gap-6">
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-[#002868]">
@@ -280,8 +288,10 @@ export default function LandingHeroView() {
               ))}
             </div>
           </section>
+          </Reveal>
 
           {/* Closing call to action for logged-out visitors */}
+          <Reveal>
           <section className="rounded-[32px] bg-[#0A1A3F] px-6 py-10 sm:px-10 text-center flex flex-col items-center gap-4">
             <h2 className="text-2xl sm:text-3xl font-black text-white">
               Ready for your first 7-minute conversation?
@@ -296,6 +306,7 @@ export default function LandingHeroView() {
               Create Free Account →
             </Link>
           </section>
+          </Reveal>
 
           {/* Clean Footer with Legal & Navigation Links */}
           <footer className="border-t border-border pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-soft">

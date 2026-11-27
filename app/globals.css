@@ -315,3 +315,85 @@ body {
     padding-left: 15rem;
   }
 }
+
+/* ========================================================================= */
+/* BRAND MOTION: loader, scroll reveal, focus + press feedback               */
+/* Pure CSS, GPU-friendly (transform/opacity only), no libraries.            */
+/* ========================================================================= */
+
+/* Branded loader: crest + sonar rings + equalizer bars */
+@keyframes brand-loader-ring {
+  0%   { transform: scale(0.7); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes brand-loader-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@keyframes brand-loader-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+.brand-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid rgba(225, 29, 72, 0.45);
+  box-shadow: 0 0 24px rgba(0, 40, 104, 0.18);
+  animation: brand-loader-ring 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.brand-loader-ring-delay { animation-delay: 0.9s; border-color: rgba(0, 40, 104, 0.4); }
+.brand-loader-logo { animation: brand-loader-breathe 1.8s ease-in-out infinite; }
+.brand-loader-bar {
+  width: 4px;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #E11D48, #002868);
+  transform-origin: bottom;
+  animation: brand-loader-bar 1s ease-in-out infinite;
+}
+
+/* Scroll reveal (see components/Reveal.tsx) */
+.reveal-hidden {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+}
+.reveal-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms);
+}
+
+/* Visible keyboard focus in the brand red */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #E11D48;
+  outline-offset: 2px;
+}
+
+/* Tactile press feedback on the main interactive surfaces */
+.card-lift:active { transform: translate3d(0, 0, 0) scale(0.995); }
+
+/* Respect users who ask for less motion: every transition/animation above
+   and the page-enter fade collapse to instant. */
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader-ring,
+  .brand-loader-logo,
+  .brand-loader-bar,
+  .page-transition,
+  .crest-wave-bar {
+    animation: none !important;
+  }
+  .reveal-hidden { opacity: 1 !important; transform: none !important; }
+  .reveal-in { transition: none !important; }
+  .card-lift,
+  .card-lift:hover,
+  .btn-primary-crest,
+  .btn-primary-crest:hover,
+  .crest-glow-hover:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+}
