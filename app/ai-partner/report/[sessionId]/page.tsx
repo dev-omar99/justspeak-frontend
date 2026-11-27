@@ -40,10 +40,13 @@ const DIMENSION_LABELS: { key: keyof SessionReportV2["dimensions"]; label: strin
   { key: "interaction", label: "Interaction" },
 ];
 
-function fmtTime(at?: number): string | null {
+// turn.at is epoch milliseconds on newer sessions, seconds on older ones.
+function fmtTime(at: number | undefined, firstAt: number | undefined): string | null {
   if (at === undefined || at === null) return null;
-  const m = Math.floor(at / 60);
-  const s = Math.round(at % 60);
+  let sec = at;
+  if (at > 1e11) sec = firstAt !== undefined ? Math.max(0, (at - firstAt) / 1000) : 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
@@ -149,6 +152,7 @@ export default function AiPartnerReportPage() {
 
   const insufficient = report?.status === "INSUFFICIENT_DATA";
   const studentText = transcript.filter((t) => t.role === "user").map((t) => t.text).join(" ");
+  const firstTurnAt = transcript.find((t) => t.at !== undefined && t.at !== null)?.at;
   const fillers = countFillersByWord(studentText);
 
   return (
@@ -210,7 +214,7 @@ export default function AiPartnerReportPage() {
                   <p className="text-sm text-ink-soft">No transcript saved for this session.</p>
                 )}
                 {transcript.map((turn, i) => {
-                  const stamp = fmtTime(turn.at);
+                  const stamp = fmtTime(turn.at, firstTurnAt);
                   return (
                     <div key={i} className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
                       <div className="flex items-center gap-2">
