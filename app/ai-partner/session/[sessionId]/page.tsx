@@ -7,10 +7,19 @@ import { getToken } from "../../../../lib/auth";
 import { highlightFillers } from "../../../../lib/filler-highlight";
 import {
   connectAiPartnerSocket,
+  fetchAiPartnerStatus,
   PcmRecorder,
   SentencePlayer,
   takePracticeQuestion,
 } from "../../../../services/ai-partner";
+import {
+  grantRecordingConsent,
+  hasRecordingConsent,
+  recordingModeFromStatus,
+  SessionRecorder,
+  uploadSessionRecordings,
+  type RecordingMode,
+} from "../../../../services/ai-partner-recording";
 
 interface Line {
   id: number;
@@ -50,6 +59,14 @@ export default function AiPartnerSessionPage() {
   const [showTranscript, setShowTranscript] = useState(true);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>("off");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingConsentOpen, setRecordingConsentOpen] = useState(false);
+  const sessionRecorderRef = useRef<SessionRecorder | null>(null);
+  const tokenRef = useRef<string | null>(null);
+  // Socket handlers and the unmount cleanup close over the first render, so
+  // the recording mode must live in a ref for the upload path to see it.
+  const recordingModeRef = useRef<RecordingMode>("off");
 
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -68,6 +85,7 @@ export default function AiPartnerSessionPage() {
       router.replace("/login");
       return;
     }
+    tokenRef.current = token;
 
     const player = new SentencePlayer();
     playerRef.current = player;
@@ -106,6 +124,30 @@ export default function AiPartnerSessionPage() {
       } catch {
         setError("Microphone access was denied. Allow the microphone and reload.");
         setCallState("failed");
+        return;
+      }
+      // Recording rides on the same mic capture. Storage on the server
+      // decides whether uploads persist ("on") or this run only previews the
+      // consent and indicator UX ("demo").
+      try {
+        const status = await fetchAiPartnerStatus(token);
+        const mode = recordingModeFromStatus(status.recordingStorage);
+        setRecordingMode(mode);
+        recordingModeRef.current = mode;
+        if (mode !== "off") {
+          const micStream = recorder.getMediaStream();
+          if (micStream) {
+            const sessionRecorder = new SessionRecorder(micStream);
+            sessionRecorder.setCamera(cameraStreamRef.current);
+            if (sessionRecorder.start()) {
+              sessionRecorderRef.current = sessionRecorder;
+              setIsRecording(true);
+              if (!hasRecordingConsent()) setRecordingConsentOpen(true);
+            }
+          }
+        }
+      } catch {
+        // Status hiccup: run the session without recording.
       }
     });
 
@@ -184,6 +226,18 @@ export default function AiPartnerSessionPage() {
       socket.disconnect();
       recorderRef.current?.stop();
       stopCamera();
+      const sessionRecorder = sessionRecorderRef.current;
+      sessionRecorderRef.current = null;
+      setIsRecording(false);
+      if (sessionRecorder && recordingModeRef.current === "on" && tokenRef.current) {
+        const savedToken = tokenRef.current;
+        void sessionRecorder
+          .stop()
+          .then((segments) => uploadSessionRecordings(savedToken, sessionId, segments))
+          .catch(() => undefined);
+      } else if (sessionRecorder) {
+        void sessionRecorder.stop().catch(() => undefined);
+      }
       void player.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,6 +260,20 @@ export default function AiPartnerSessionPage() {
     recorderRef.current?.stop();
     stopCamera();
     setCallState("ended");
+    // Upload the recording in the background; client-side navigation does
+    // not cancel the in-flight requests.
+    const sessionRecorder = sessionRecorderRef.current;
+    sessionRecorderRef.current = null;
+    setIsRecording(false);
+    if (sessionRecorder && recordingModeRef.current === "on" && tokenRef.current) {
+      const token = tokenRef.current;
+      void sessionRecorder
+        .stop()
+        .then((segments) => uploadSessionRecordings(token, sessionId, segments))
+        .catch(() => undefined);
+    } else if (sessionRecorder) {
+      void sessionRecorder.stop().catch(() => undefined);
+    }
     setTimeout(() => {
       socket?.disconnect();
       router.push(`/ai-partner/report/${sessionId}${auto ? "?auto=1" : ""}`);
@@ -221,6 +289,7 @@ export default function AiPartnerSessionPage() {
   function stopCamera() {
     cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
     cameraStreamRef.current = null;
+    sessionRecorderRef.current?.setCamera(null);
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraOn(false);
   }
@@ -237,6 +306,7 @@ export default function AiPartnerSessionPage() {
         video: { width: { ideal: 640 }, facingMode: "user" },
       });
       cameraStreamRef.current = stream;
+      sessionRecorderRef.current?.setCamera(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
@@ -270,6 +340,40 @@ export default function AiPartnerSessionPage() {
             {mm}:{ss}
           </span>
         </div>
+
+        {isRecording && (
+          <div className="flex items-center gap-2 self-start bg-white border border-crimson/30 rounded-xl px-3 py-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-crimson animate-pulse" />
+            <span className="text-xs font-black tracking-wide text-[#C81E2F]">REC</span>
+            <span className="text-xs text-ink-soft">
+              {recordingMode === "demo"
+                ? "Recording preview - storage not connected yet, this one will not be saved."
+                : "This session is being recorded. Only you can play it back."}
+            </span>
+          </div>
+        )}
+
+        {recordingConsentOpen && (
+          <div className="bg-white border border-border rounded-2xl px-4 py-4 flex flex-col gap-2">
+            <p className="text-sm font-black">Session recording is on</p>
+            <p className="text-xs text-ink-soft leading-relaxed">
+              Every session is recorded as audio, plus video whenever you turn the camera on,
+              so you can replay it from your history anytime. Recordings are private to you and
+              are never analysed beyond your coaching feedback. The camera is only ever recorded,
+              nothing watches or scores it.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                grantRecordingConsent();
+                setRecordingConsentOpen(false);
+              }}
+              className="self-start text-xs font-bold text-white bg-crimson rounded-xl px-4 py-2"
+            >
+              Got it
+            </button>
+          </div>
+        )}
 
         <div
           className={`h-2 rounded-full transition-all ${

@@ -10,6 +10,8 @@ import { getApiBaseUrl } from "./api";
 
 export interface AiPartnerStatus {
   enabled: boolean;
+  /** True when recording storage is configured server-side; uploads persist. */
+  recordingStorage?: boolean;
   personas: { id: string; displayName: string; tagline: string; bestFor: string }[];
   interviewFields: { id: string; title: string }[];
   halfLevels: string[];
@@ -136,6 +138,12 @@ export class PcmRecorder {
   setMuted(muted: boolean): void {
     this.muted = muted;
     this.stream?.getAudioTracks().forEach((track) => (track.enabled = !muted));
+  }
+
+  /** The live mic stream, so session recording can tap the same capture
+   *  instead of opening the microphone twice. */
+  getMediaStream(): MediaStream | null {
+    return this.stream;
   }
 
   async start(onChunk: (chunk: ArrayBuffer) => void): Promise<void> {
@@ -358,6 +366,8 @@ export interface AiSessionListItem {
   durationSec: number;
   createdAt: string;
   report: SessionReportV2 | null;
+  /** True when the session has at least one playable recording. */
+  hasRecordings?: boolean;
 }
 
 export interface AiDashboard {
