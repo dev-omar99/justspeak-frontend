@@ -45,15 +45,15 @@ export default function AiPartnerHomeSection() {
   return (
     <section
       aria-label={isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Speaking Partner"}
-      className="rounded-2xl bg-white border border-[#D8E2F0] shadow-sm overflow-hidden"
+      className="group/hero rounded-2xl bg-white border-2 border-[#D91023]/30 shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#D91023]/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {/* Crimson rule ties the section to the brand, like the hero card. */}
-      <div className="h-1 w-full bg-[#D91023]" />
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#D91023] via-[#E11D48] to-[#0F295A]" />
       <div className="p-6 sm:p-8 flex flex-col gap-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="max-w-xl">
             <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#D91023]">
-              <span className="bg-[#FFF0F2] border border-[#E11D48]/25 rounded-md px-2 py-0.5">
+              <span className="bg-[#D91023] text-white rounded-md px-2 py-0.5 animate-pulse motion-reduce:animate-none">
                 {isArabic ? "جديد" : "New"}
               </span>
               <span>{isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Speaking Partner"}</span>
@@ -71,10 +71,10 @@ export default function AiPartnerHomeSection() {
           </div>
           <Link
             href="/ai-partner"
-            className="self-start sm:self-center shrink-0 bg-[#D91023] hover:bg-[#B91C1C] active:scale-[0.99] transition-all text-white font-bold text-center py-3 px-6 rounded-xl text-sm shadow-sm flex items-center gap-2"
+            className="group/btn self-start sm:self-center shrink-0 bg-gradient-to-r from-[#D91023] to-[#E11D48] hover:from-[#B91C1C] hover:to-[#D91023] hover:scale-105 hover:shadow-lg hover:shadow-[#D91023]/30 active:scale-[0.98] transition-all duration-200 text-white font-bold text-center py-3.5 px-7 rounded-xl text-base shadow-md flex items-center gap-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
           >
             <span>{isArabic ? "ابدأ جلسة" : "Start a session"}</span>
-            <span>{isArabic ? "←" : "→"}</span>
+            <span className="transition-transform duration-200 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 motion-reduce:transform-none">{isArabic ? "←" : "→"}</span>
           </Link>
         </div>
 
