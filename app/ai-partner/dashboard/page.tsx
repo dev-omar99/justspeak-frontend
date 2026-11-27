@@ -32,9 +32,10 @@ export default function AiPartnerDashboardPage() {
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
         <Header />
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
-          <div className="bg-[#061533] text-white rounded-[26px] px-5 py-6 sm:px-8">
+          <div className="bg-white border border-border rounded-[26px] px-5 py-6 sm:px-8">
+            <div className="h-1.5 w-14 bg-crimson rounded-full mb-3" />
             <h1 className="text-xl font-black">My progress</h1>
-            <p className="text-sm text-slate-300 mt-1">
+            <p className="text-sm text-ink-soft mt-1">
               The last 8 weeks of speaking practice, week by week.
             </p>
           </div>
@@ -79,7 +80,7 @@ export default function AiPartnerDashboardPage() {
                         {w.minutes > 0 ? Math.round(w.minutes) : ""}
                       </span>
                       <div
-                        className={`w-full rounded-t-lg ${w.minutes > 0 ? "bg-[#002868]" : "bg-surface border border-border"}`}
+                        className={`w-full rounded-t-lg ${w.minutes > 0 ? "bg-crimson" : "bg-surface border border-border"}`}
                         style={{ height: `${Math.max(4, (w.minutes / maxMinutes) * 96)}px` }}
                       />
                       <span className="text-[9px] text-ink-soft truncate w-full text-center">

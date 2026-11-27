@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../../../components/Header";
+import { highlightFillers } from "../../../../lib/filler-highlight";
 import { getToken } from "../../../../lib/auth";
 import {
   countFillersByWord,
@@ -98,9 +99,10 @@ export default function AiPartnerReportPage() {
     <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
       <Header />
       <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
-        <div className="bg-[#061533] text-white rounded-[26px] px-5 py-6 sm:px-8">
+        <div className="bg-white border border-border rounded-[26px] px-5 py-6 sm:px-8">
+          <div className="h-1.5 w-14 bg-crimson rounded-full mb-3" />
           <h1 className="text-xl font-black">Session report</h1>
-          <p className="text-sm text-slate-300 mt-1">
+          <p className="text-sm text-ink-soft mt-1">
             Honest feedback, scored against {level || "your"} level
             {mode ? ` · ${mode.replace("-", " ")}` : ""}. Every note quotes your own words.
           </p>
@@ -151,7 +153,7 @@ export default function AiPartnerReportPage() {
                       {turn.role === "user" ? "You" : "Coach"}
                     </span>
                     <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
-                      {turn.text}
+                      {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
                     </p>
                     {turn.role === "user" && turn.rephrase && (
                       <p className="mt-1 text-xs bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
@@ -175,7 +177,7 @@ export default function AiPartnerReportPage() {
                   </div>
                   <div className="flex-1">
                     {report.cefr_estimate && (
-                      <span className="inline-block text-xs font-black bg-[#061533] text-white rounded-lg px-2.5 py-1 mb-1.5">
+                      <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
                         {report.cefr_estimate}
                       </span>
                     )}
@@ -336,7 +338,7 @@ export default function AiPartnerReportPage() {
                       {report.recasts.map((r, i) => (
                         <div key={i} className="text-sm border border-border rounded-xl px-4 py-3">
                           <p className="text-ink-soft">{r.said}</p>
-                          <p className="font-semibold text-[#002868] mt-1">{r.natural}</p>
+                          <p className="font-semibold text-[#C81E2F] mt-1">{r.natural}</p>
                         </div>
                       ))}
                     </div>
@@ -397,12 +399,25 @@ export default function AiPartnerReportPage() {
                     <h2 className="font-black text-sm mb-3">Drills for your weak spots</h2>
                     <div className="flex flex-col gap-2.5">
                       {report.drills.map((d, i) => (
-                        <div key={i} className="border border-border rounded-xl px-4 py-3">
-                          <p className="text-sm font-black">{d.title}</p>
-                          <p className="text-xs text-ink-soft mt-0.5">{d.instruction}</p>
-                          {d.example && (
-                            <p className="text-xs italic text-[#002868] mt-1.5">Example: {d.example}</p>
-                          )}
+                        <div key={i} className="border border-border rounded-xl px-4 py-3 flex items-start gap-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-black">{d.title}</p>
+                            <p className="text-xs text-ink-soft mt-0.5">{d.instruction}</p>
+                            {d.example && (
+                              <p className="text-xs italic text-[#C81E2F] mt-1.5">Example: {d.example}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() =>
+                              void practiceQuestion(
+                                `Practice drill "${d.title}": ${d.instruction}`,
+                              )
+                            }
+                            disabled={practicing !== null}
+                            className="btn-primary-crest text-white text-xs font-black rounded-xl px-3.5 py-2 shrink-0 disabled:opacity-50 cursor-pointer"
+                          >
+                            {practicing !== null ? "Setting up…" : "Practice"}
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -420,8 +435,8 @@ export default function AiPartnerReportPage() {
                 )}
 
                 {report.next_focus && (
-                  <section className="bg-[#061533] text-white rounded-2xl px-5 py-4">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-wide">
+                  <section className="bg-crimson text-white rounded-2xl px-5 py-4">
+                    <p className="text-[10px] font-black text-white/70 uppercase tracking-wide">
                       Next session focus
                     </p>
                     <p className="text-sm font-bold mt-1">{report.next_focus}</p>

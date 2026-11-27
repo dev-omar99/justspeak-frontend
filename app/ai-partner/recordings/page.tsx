@@ -50,10 +50,11 @@ export default function AiPartnerRecordingsPage() {
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 bg-surface text-ink">
         <Header />
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-5">
-          <div className="bg-[#061533] text-white rounded-[26px] px-5 py-6 sm:px-8">
+          <div className="bg-white border border-border rounded-[26px] px-5 py-6 sm:px-8">
+            <div className="h-1.5 w-14 bg-crimson rounded-full mb-3" />
             <h1 className="text-xl font-black">My recordings</h1>
-            <p className="text-sm text-slate-300 mt-1">
-              Every session, with its transcript and coaching report.
+            <p className="text-sm text-ink-soft mt-1">
+              Every session, in order, with its transcript and coaching report.
             </p>
           </div>
 
@@ -76,7 +77,7 @@ export default function AiPartnerRecordingsPage() {
             </div>
           )}
 
-          {sessions?.map((session) => {
+          {sessions?.map((session, idx) => {
             const meta = MODE_LABELS[session.mode] ?? { icon: "🎙️", label: session.mode };
             const report = session.report;
             const scored = report && report.status === "OK";
@@ -84,18 +85,21 @@ export default function AiPartnerRecordingsPage() {
               <Link
                 key={session.id}
                 href={`/ai-partner/report/${session.id}`}
-                className="bg-white border border-border rounded-2xl px-5 py-4 flex items-center gap-4 hover:border-[#002868]/40 transition-all"
+                className="bg-white border border-border rounded-2xl px-5 py-4 flex items-center gap-4 hover:border-crimson/40 transition-all"
               >
                 <span className="text-2xl">{meta.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-black truncate">
-                    {meta.label}
+                    #{sessions.length - idx} · {meta.label}
                     {session.lessonId ? ` · ${session.lessonId}` : ""}
                   </p>
                   <p className="text-xs text-ink-soft">
                     {formatDate(session.createdAt)} · {formatDuration(session.durationSec)} ·{" "}
                     {session.level}
                     {session.status === "active" ? " · unfinished" : ""}
+                    {scored && report!.corrections.length > 0
+                      ? ` · ${report!.corrections.length} corrections`
+                      : ""}
                   </p>
                 </div>
                 {scored ? (

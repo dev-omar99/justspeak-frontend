@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Socket } from "socket.io-client";
 import { getToken } from "../../../../lib/auth";
+import { highlightFillers } from "../../../../lib/filler-highlight";
 import {
   connectAiPartnerSocket,
   PcmRecorder,
@@ -325,7 +326,7 @@ export default function AiPartnerSessionPage() {
                         : "bg-crimson border border-crimson text-white rounded-tr-md"
                     } ${line.isFinal ? "" : "opacity-60 italic"}`}
                   >
-                    {line.text}
+                    {line.role === "user" && line.isFinal ? highlightFillers(line.text) : line.text}
                   </div>
                   {line.role === "user" && line.verdict === "ok" && (
                     <span className="text-emerald-600 text-xs font-black px-1" title="Correct">
