@@ -135,7 +135,7 @@ export default function AiPartnerSessionPage() {
         return;
       }
       // Recording rides on the same mic capture. Storage on the server
-      // decides whether uploads persist ("on") or this run only previews the
+      // decides whether uploads persist ("on") or this run only exercises the
       // consent and indicator UX ("demo").
       try {
         const status = await fetchAiPartnerStatus(token);
@@ -373,7 +373,7 @@ export default function AiPartnerSessionPage() {
         {isRecording && (
           <p className="text-[11px] text-ink-soft -mt-2">
             {recordingMode === "demo"
-              ? "Recording preview - storage not connected yet, this one will not be saved."
+              ? "This session is being recorded for live coaching. Recording storage is not connected yet, so this session will not be saved to your history."
               : "This session is being recorded. Only you can play it back."}
           </p>
         )}

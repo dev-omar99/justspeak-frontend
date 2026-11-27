@@ -272,7 +272,7 @@ export default function SignupPage() {
               <form onSubmit={handleVerifyAndCreate} className="flex flex-col gap-4">
                 {devCodeHint && (
                   <div className="bg-amber-500/15 border border-amber-400/30 text-amber-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-center">
-                    Verification code (SMTP fallback): <span className="font-mono font-bold tracking-widest">{devCodeHint}</span>
+                    Verification code: <span className="font-mono font-bold tracking-widest">{devCodeHint}</span>
                   </div>
                 )}
 
