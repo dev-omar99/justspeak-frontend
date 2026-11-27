@@ -1,5 +1,6 @@
 "use client";
 
+import JumpToRow from "../../components/JumpToRow";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "../../components/Header";
@@ -138,6 +139,7 @@ export default function AcademyHubPage() {
           )}
 
           {/* BRAND-MATCHED NAVY EDITORIAL HERO (Matches Home & Pricing Identity) */}
+          <JumpToRow items={[{ id: "lessons", label: isArabic ? "الدروس" : "Lessons" }, { id: "tools", label: isArabic ? "أدوات حرة" : "Practice tools" }, { id: "level", label: isArabic ? "مستواك" : "Your level" }]} label={isArabic ? "اذهب إلى" : "Jump to"} />
           <section className="rounded-[28px] bg-gradient-to-br from-[#061533] via-[#002868] to-[#0B1F3A] text-white p-6 sm:p-8 shadow-lg border border-[#002868]/40 flex flex-col gap-5 relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#D91023]/25 blur-3xl pointer-events-none" />
 
@@ -232,7 +234,7 @@ export default function AcademyHubPage() {
           </section>
 
           {/* PRIMARY SECTION: STRUCTURED LESSONS PATH (Clean Editorial Cards) */}
-          <section className="flex flex-col gap-4">
+          <section id="lessons" className="flex flex-col gap-4 scroll-mt-28">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-ink">
@@ -323,7 +325,7 @@ export default function AcademyHubPage() {
           </section>
 
           {/* SECONDARY SECTION: FREE STANDALONE PRACTICE TOOLS */}
-          <section className="flex flex-col gap-3 pt-2">
+          <section id="tools" className="flex flex-col gap-3 pt-2 scroll-mt-28">
             <div>
               <h2 className="text-sm sm:text-base font-black text-ink">
                 🎯 {isArabic ? "أدوات التدريب الحر (خارج الدروس)" : "Free Standalone Practice Tools"}
@@ -351,7 +353,7 @@ export default function AcademyHubPage() {
           </section>
 
           {/* COMPACT GLOBAL CEFR / IELTS ASSESSMENT */}
-          <section className="bg-white border border-border rounded-[24px] p-5 sm:p-6 shadow-2xs flex flex-col gap-4">
+          <section id="level" className="bg-white border border-border rounded-[24px] p-5 sm:p-6 shadow-2xs flex flex-col gap-4 scroll-mt-28">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-sm font-black text-ink">
                 📊 {isArabic ? "تقييمك وفق المعايير العالمية (CEFR & IELTS)" : "Global Fluency & CEFR Assessment"}

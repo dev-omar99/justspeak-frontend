@@ -72,7 +72,7 @@ export default function LandingHeroView() {
 
               <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/15 text-slate-200 text-xs font-semibold px-4 py-1.5 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                Live 1-on-1 Practice · CEFR Academy · Voice AI Studio
+                Live 1-on-1 Practice · CEFR Academy · Voice AI Coach
               </span>
 
               <h1 className="text-3xl sm:text-5xl font-bold leading-[1.12] tracking-tight max-w-2xl text-white">

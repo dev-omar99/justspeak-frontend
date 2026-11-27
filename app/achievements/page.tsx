@@ -1,5 +1,6 @@
 "use client";
 
+import JumpToRow from "../../components/JumpToRow";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -207,13 +208,14 @@ export default function AchievementsPage() {
             </Link>
           </div>
 
+          <JumpToRow items={[{ id: "sessions", label: "Sessions" }, { id: "ratings", label: "Fluency" }, { id: "partners", label: "Partners" }, { id: "countries", label: "Countries" }, { id: "streak", label: "Streak" }]} />
           {/* =============================================================== */}
           {/* SCREENSHOT #19 — CARD 1: Total Sessions */}
           {/* =============================================================== */}
           <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
+                <h2 id="sessions" className="text-base sm:text-lg font-extrabold text-slate-900 scroll-mt-28">
                   Total Sessions
                 </h2>
                 <button
@@ -304,7 +306,7 @@ export default function AchievementsPage() {
           <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100 flex flex-col gap-5">
             <div>
               <div className="flex items-center gap-1.5">
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
+                <h2 id="ratings" className="text-base sm:text-lg font-extrabold text-slate-900 scroll-mt-28">
                   English fluency ratings
                 </h2>
                 <button
@@ -433,7 +435,7 @@ export default function AchievementsPage() {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+              <h2 id="partners" className="text-lg sm:text-xl font-extrabold text-slate-900 scroll-mt-28">
                 Partners Milestone Card
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -464,7 +466,7 @@ export default function AchievementsPage() {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+              <h2 id="countries" className="text-lg sm:text-xl font-extrabold text-slate-900 scroll-mt-28">
                 Total Countries
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -502,7 +504,7 @@ export default function AchievementsPage() {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+              <h2 id="streak" className="text-lg sm:text-xl font-extrabold text-slate-900 scroll-mt-28">
                 My Streak
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">

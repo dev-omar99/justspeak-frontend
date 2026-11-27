@@ -44,7 +44,7 @@ export default function AiPartnerHomeSection() {
 
   return (
     <section
-      aria-label={isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Speaking Partner"}
+      aria-label={isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Partner"}
       className="group/hero rounded-2xl bg-white border-2 border-[#D91023]/30 shadow-md overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#D91023]/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {/* Crimson rule ties the section to the brand, like the hero card. */}
@@ -56,7 +56,7 @@ export default function AiPartnerHomeSection() {
               <span className="bg-[#D91023] text-white rounded-md px-2 py-0.5 animate-pulse motion-reduce:animate-none">
                 {isArabic ? "جديد" : "New"}
               </span>
-              <span>{isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Speaking Partner"}</span>
+              <span>{isArabic ? "شريك المحادثة بالذكاء الاصطناعي" : "AI Partner"}</span>
             </p>
             <h2 className="text-xl sm:text-2xl font-bold text-[#061533] mt-2 leading-tight tracking-tight">
               {isArabic
