@@ -331,34 +331,47 @@ export default function AiPartnerSessionPage() {
     failed: "Connection problem",
   };
 
+  const listening = callState === "listening";
+  const thinking = callState === "thinking";
+
   return (
-    <main className="min-h-screen flex flex-col bg-surface text-ink">
-      <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-5 flex flex-col gap-4 flex-1 min-h-0">
+    <main className="min-h-screen flex flex-col bg-crest-mist text-ink">
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-5 flex flex-col gap-4 flex-1 min-h-0">
+        {/* Top bar: coach identity, timer, recording state */}
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-black">AI Partner</h1>
-            <p className="text-xs text-ink-soft">{stateLabel[callState]}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-9 h-9 rounded-full bg-crest-navy text-white text-sm font-black flex items-center justify-center flex-shrink-0">
+              C
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-sm font-black text-crest-navy truncate">Your coach</h1>
+              <p className="text-xs text-ink-soft">{stateLabel[callState]}</p>
+            </div>
           </div>
-          <span className="text-xs font-bold bg-white border border-border rounded-xl px-3 py-1.5 tabular-nums">
-            {mm}:{ss}
-          </span>
+          <div className="flex items-center gap-2">
+            {isRecording && (
+              <span className="flex items-center gap-1.5 bg-white border border-crest-crimson/30 rounded-xl px-2.5 py-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-crest-crimson animate-pulse" />
+                <span className="text-[11px] font-black tracking-wide text-crest-crimson">REC</span>
+              </span>
+            )}
+            <span className="text-xs font-bold bg-white border border-crest-line rounded-xl px-3 py-1.5 tabular-nums">
+              {mm}:{ss}
+            </span>
+          </div>
         </div>
 
         {isRecording && (
-          <div className="flex items-center gap-2 self-start bg-white border border-crimson/30 rounded-xl px-3 py-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-crimson animate-pulse" />
-            <span className="text-xs font-black tracking-wide text-[#C81E2F]">REC</span>
-            <span className="text-xs text-ink-soft">
-              {recordingMode === "demo"
-                ? "Recording preview - storage not connected yet, this one will not be saved."
-                : "This session is being recorded. Only you can play it back."}
-            </span>
-          </div>
+          <p className="text-[11px] text-ink-soft -mt-2">
+            {recordingMode === "demo"
+              ? "Recording preview - storage not connected yet, this one will not be saved."
+              : "This session is being recorded. Only you can play it back."}
+          </p>
         )}
 
         {recordingConsentOpen && (
-          <div className="bg-white border border-border rounded-2xl px-4 py-4 flex flex-col gap-2">
-            <p className="text-sm font-black">Session recording is on</p>
+          <div className="bg-white border border-crest-line rounded-2xl px-4 py-4 flex flex-col gap-2">
+            <p className="text-sm font-black text-crest-navy">Session recording is on</p>
             <p className="text-xs text-ink-soft leading-relaxed">
               Every session is recorded as audio, plus video whenever you turn the camera on,
               so you can replay it from your history anytime. Recordings are private to you and
@@ -371,41 +384,205 @@ export default function AiPartnerSessionPage() {
                 grantRecordingConsent();
                 setRecordingConsentOpen(false);
               }}
-              className="self-start text-xs font-bold text-white bg-crimson rounded-xl px-4 py-2"
+              className="self-start text-xs font-bold text-white bg-crest-crimson hover:bg-crest-crimson-deep rounded-xl px-4 py-2 cursor-pointer transition-colors"
             >
               Got it
             </button>
           </div>
         )}
 
-        <div
-          className={`h-2 rounded-full transition-all ${
-            callState === "listening" ? "bg-crimson animate-pulse" : "bg-border"
-          }`}
-        />
-
         {error && (
-          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             {error}
           </p>
         )}
-
         {micMuted && (
-          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             Microphone is off. The coach cannot hear you.
           </p>
         )}
-
         {cameraError && (
-          <p className="text-xs font-semibold text-[#C81E2F] bg-crimson-light border border-crimson/30 rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-crest-crimson-deep bg-crest-crimson-light border border-crest-crimson/30 rounded-xl px-3 py-2">
             {cameraError}
           </p>
         )}
 
+        {/* Call stage: video-call metaphor in crest navy */}
+        <div className="grid lg:grid-cols-[1fr_240px] gap-4 items-stretch">
+          <div className="relative bg-crest-navy-deep rounded-3xl min-h-[280px] sm:min-h-[340px] flex flex-col items-center justify-center overflow-hidden">
+            {/* Coach tile */}
+            <div className="relative flex flex-col items-center gap-3 px-6 text-center">
+              <div className="relative">
+                <span
+                  className={`absolute inset-0 rounded-full ${
+                    listening ? "animate-ping bg-crest-steel/30" : ""
+                  }`}
+                />
+                <span
+                  className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl font-black text-white ${
+                    thinking ? "bg-crest-gold-deep" : "bg-crest-steel-deep"
+                  }`}
+                >
+                  C
+                </span>
+              </div>
+              <div>
+                <p className="text-white font-black text-base">Your coach</p>
+                <p className="text-white/70 text-xs mt-0.5">{stateLabel[callState]}</p>
+              </div>
+              {/* Live level bars: animate while either side is active */}
+              <div className="flex items-end gap-1 h-6" aria-hidden>
+                {[0.9, 0.5, 1, 0.6, 0.8].map((d, i) => (
+                  <span
+                    key={i}
+                    className={`w-1.5 rounded-full ${
+                      listening || thinking ? "bg-crest-steel animate-pulse" : "bg-white/20"
+                    }`}
+                    style={{ height: `${d * 100}%`, animationDelay: `${i * 120}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Local self-view; the video never leaves the browser */}
+            <video
+              ref={videoRef}
+              muted
+              playsInline
+              className={`absolute bottom-4 right-4 w-32 sm:w-40 aspect-[4/3] object-cover rounded-2xl border-2 border-white/20 shadow-xl bg-black -scale-x-100 ${
+                cameraOn ? "" : "hidden"
+              }`}
+            />
+          </div>
+
+          {/* Live stats rail, Yoodli-style filling bars */}
+          {metrics && (
+            <aside className="bg-white border border-crest-line rounded-3xl px-4 py-4 flex lg:flex-col flex-row flex-wrap gap-3 justify-between">
+              {[
+                {
+                  label: "Pace",
+                  value: `${metrics.words_per_minute}`,
+                  unit: "wpm",
+                  pct: Math.min(100, Math.round((metrics.words_per_minute / 180) * 100)),
+                },
+                {
+                  label: "Fillers",
+                  value: `${metrics.fillers_per_minute}`,
+                  unit: "/min",
+                  pct: Math.min(100, Math.round((metrics.fillers_per_minute / 8) * 100)),
+                },
+                {
+                  label: "You talk",
+                  value: `${Math.round(metrics.student_talk_ratio * 100)}`,
+                  unit: "%",
+                  pct: Math.round(metrics.student_talk_ratio * 100),
+                },
+                {
+                  label: "Turns",
+                  value: `${metrics.turns}`,
+                  unit: "",
+                  pct: Math.min(100, metrics.turns * 10),
+                },
+              ].map((item) => (
+                <div key={item.label} className="flex-1 min-w-[70px]">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <p className="text-[10px] font-black tracking-wide text-ink-soft uppercase">{item.label}</p>
+                    <p className="text-xs font-black text-crest-navy tabular-nums">
+                      {item.value}
+                      <span className="text-ink-soft font-bold">{item.unit}</span>
+                    </p>
+                  </div>
+                  <div className="h-1.5 mt-1 rounded-full bg-crest-mist-subtle overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-crest-steel transition-all duration-700"
+                      style={{ width: `${item.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </aside>
+          )}
+        </div>
+
+        {/* Control bar: round call controls + red end */}
+        {callState !== "ended" && (
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={toggleMic}
+              title={micMuted ? "Unmute microphone" : "Mute microphone"}
+              aria-label={micMuted ? "Unmute microphone" : "Mute microphone"}
+              className={`w-12 h-12 rounded-full flex items-center justify-center border cursor-pointer transition-colors ${
+                micMuted
+                  ? "bg-crest-crimson border-crest-crimson text-white"
+                  : "bg-white border-crest-line text-crest-navy hover:bg-crest-mist"
+              }`}
+            >
+              {micMuted ? (
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m2 2 20 20" />
+                  <path d="M15 9.3V5a3 3 0 0 0-5.9-.8" />
+                  <path d="M9 9.6V11a3 3 0 0 0 5.4 1.7" />
+                  <path d="M5 10a7 7 0 0 0 11.9 5" />
+                  <path d="M12 19v3" />
+                </svg>
+              ) : (
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="2" width="6" height="12" rx="3" />
+                  <path d="M5 10a7 7 0 0 0 14 0" />
+                  <path d="M12 19v3" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={() => void toggleCamera()}
+              title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
+              aria-label={cameraOn ? "Turn camera off" : "Turn camera on"}
+              className={`w-12 h-12 rounded-full flex items-center justify-center border cursor-pointer transition-colors ${
+                cameraOn
+                  ? "bg-crest-navy border-crest-navy text-white"
+                  : "bg-white border-crest-line text-crest-navy hover:bg-crest-mist"
+              }`}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="6" width="13" height="12" rx="2" />
+                <path d="m15 10 7-3v10l-7-3" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowTranscript((v) => !v)}
+              title={showTranscript ? "Hide captions" : "Show captions"}
+              aria-label={showTranscript ? "Hide captions" : "Show captions"}
+              className={`w-12 h-12 rounded-full flex items-center justify-center border cursor-pointer transition-colors ${
+                showTranscript
+                  ? "bg-crest-navy border-crest-navy text-white"
+                  : "bg-white border-crest-line text-crest-navy hover:bg-crest-mist"
+              }`}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="M6 12h4" />
+                <path d="M14 12h4" />
+                <path d="M6 16h7" />
+              </svg>
+            </button>
+            <span className="w-px h-8 bg-crest-line hidden sm:block" />
+            <button
+              onClick={() => void endCall()}
+              className="h-12 rounded-full bg-crest-crimson hover:bg-crest-crimson-deep text-white text-sm font-black px-6 cursor-pointer transition-colors flex items-center gap-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-[135deg]">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              End call
+            </button>
+          </div>
+        )}
+
+        {/* Live transcript with learner corrections */}
         {showTranscript ? (
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1"
+            className="flex-1 min-h-[160px] overflow-y-auto flex flex-col gap-2 pr-1 bg-white border border-crest-line rounded-3xl p-4"
           >
             {lines.length === 0 && (
               <p className="text-xs text-ink-soft text-center mt-8">
@@ -429,8 +606,8 @@ export default function AiPartnerSessionPage() {
                   <div
                     className={`rounded-2xl px-4 py-2.5 text-sm ${
                       line.role === "ai"
-                        ? "bg-white border border-border text-ink rounded-tl-md"
-                        : "bg-crimson border border-crimson text-white rounded-tr-md"
+                        ? "bg-crest-mist text-ink rounded-tl-md"
+                        : "bg-crest-crimson text-white rounded-tr-md"
                     } ${line.isFinal ? "" : "opacity-60 italic"}`}
                   >
                     {line.role === "user" && line.isFinal ? highlightFillers(line.text) : line.text}
@@ -454,7 +631,7 @@ export default function AiPartnerSessionPage() {
                     </button>
                   )}
                   {line.role === "user" && line.verdict === "fix" && line.showTip && line.suggestion && (
-                    <div className="rounded-xl bg-crimson-light border border-crimson/30 px-3 py-1.5 text-xs text-ink">
+                    <div className="rounded-xl bg-crest-crimson-light border border-crest-crimson/30 px-3 py-1.5 text-xs text-ink">
                       <span className="text-emerald-600 font-black">✓</span>{" "}
                       <span className="font-semibold">{line.suggestion}</span>
                     </div>
@@ -464,79 +641,10 @@ export default function AiPartnerSessionPage() {
             })}
           </div>
         ) : (
-          <div className="flex-1 min-h-0 flex items-center justify-center">
-            <p className="text-xs text-ink-soft">Captions hidden. Tap "Captions" to show them again.</p>
+          <div className="flex-1 min-h-[120px] flex items-center justify-center bg-white border border-crest-line rounded-3xl">
+            <p className="text-xs text-ink-soft">Captions hidden. Tap the captions button to show them again.</p>
           </div>
         )}
-
-        {metrics && (
-          <div className="grid grid-cols-4 gap-2 text-center">
-            {[
-              { label: "WPM", value: metrics.words_per_minute },
-              { label: "Fillers/min", value: metrics.fillers_per_minute },
-              { label: "You talk", value: `${Math.round(metrics.student_talk_ratio * 100)}%` },
-              { label: "Turns", value: metrics.turns },
-            ].map((item) => (
-              <div key={item.label} className="bg-white border border-border rounded-xl px-2 py-2">
-                <div className="text-sm font-black tabular-nums">{item.value}</div>
-                <div className="text-[10px] text-ink-soft">{item.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-        {callState !== "ended" && (
-          <div className="flex items-center justify-center gap-2 sm:gap-3 pt-1">
-            <button
-              onClick={() => setShowTranscript((v) => !v)}
-              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
-                showTranscript
-                  ? "bg-white hover:bg-surface-subtle border-border text-ink"
-                  : "bg-crimson hover:bg-crimson-bright border-crimson text-white"
-              }`}
-              title={showTranscript ? "Hide captions" : "Show captions"}
-            >
-              {showTranscript ? "Captions on" : "Captions off"}
-            </button>
-            <button
-              onClick={() => void toggleCamera()}
-              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
-                cameraOn
-                  ? "bg-white hover:bg-surface-subtle border-border text-ink"
-                  : "bg-crimson hover:bg-crimson-bright border-crimson text-white"
-              }`}
-              title={cameraOn ? "Turn camera off" : "Turn camera on (local preview only)"}
-            >
-              {cameraOn ? "Cam on" : "Cam off"}
-            </button>
-            <button
-              onClick={toggleMic}
-              className={`text-xs font-black rounded-xl px-4 py-2.5 cursor-pointer border ${
-                micMuted
-                  ? "bg-crimson hover:bg-crimson-bright border-crimson text-white"
-                  : "bg-white hover:bg-surface-subtle border-border text-ink"
-              }`}
-              title={micMuted ? "Unmute microphone" : "Mute microphone"}
-            >
-              {micMuted ? "Mic off" : "Mic on"}
-            </button>
-            <button
-              onClick={() => void endCall()}
-              className="bg-crimson hover:bg-[#C81E2F] text-white text-xs font-black rounded-xl px-5 py-2.5 cursor-pointer"
-            >
-              End call
-            </button>
-          </div>
-        )}
-
-        {/* Local self-view; the video never leaves the browser */}
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          className={`fixed bottom-20 right-4 w-36 sm:w-44 aspect-[4/3] object-cover rounded-2xl border-2 border-border shadow-xl bg-black -scale-x-100 ${
-            cameraOn ? "" : "hidden"
-          }`}
-        />
       </div>
     </main>
   );
