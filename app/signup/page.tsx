@@ -123,7 +123,11 @@ export default function SignupPage() {
       setDevCodeHint(res.devCode || null);
       setPendingApproval(Boolean(res.pendingApproval));
       setResendCooldown(res.cooldownSeconds || 60);
-      setSuccessMsg("A new 6-digit code has been sent to your email.");
+      setSuccessMsg(
+        res.pendingApproval
+          ? "Your request was sent again for approval. We will send you the code."
+          : "A new 6-digit code has been sent to your email.",
+      );
     } catch (err: any) {
       setError(err.message || "Please wait before requesting another code.");
     } finally {
@@ -143,12 +147,14 @@ export default function SignupPage() {
             <BrandLogo size="lg" withGlow={false} priority={true} />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {step === "details" ? "Start Speaking English" : "Verify Your Email"}
+                {step === "details" ? "Start Speaking English" : pendingApproval ? "Waiting for Approval" : "Verify Your Email"}
               </h1>
               <p className="text-xs text-slate-300 mt-1.5 leading-relaxed max-w-xs mx-auto">
                 {step === "details"
                   ? "Practice real 1-on-1 daily English conversations with learners worldwide."
-                  : `Enter the 6-digit code sent to ${email.trim().toLowerCase()}`}
+                  : pendingApproval
+                    ? `Waiting for approval for ${email.trim().toLowerCase()}. Enter the 6-digit code when you receive it.`
+                    : `Enter the 6-digit code sent to ${email.trim().toLowerCase()}`}
               </p>
             </div>
           </div>
