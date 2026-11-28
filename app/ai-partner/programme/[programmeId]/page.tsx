@@ -52,7 +52,7 @@ export default function ProgrammePage() {
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-4">
           <Link href="/ai-partner/learning" className="text-sm font-bold text-crimson hover:underline">‹ My Learning</Link>
           {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
-          {programme === undefined && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {programme === undefined && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {programme === null && <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">Programme not found.</p>}
           {programme && (
             <>
