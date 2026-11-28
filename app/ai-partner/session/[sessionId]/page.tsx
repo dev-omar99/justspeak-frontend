@@ -51,6 +51,12 @@ interface Metrics {
 
 type CallState = "connecting" | "listening" | "thinking" | "paused" | "time-up" | "ended" | "failed";
 
+/**
+ * Live meters during the call are off by request: the four core scores come in the post-call report
+ * (after about a minute of speaking). Set to true to bring the rings back.
+ */
+const SHOW_LIVE_METERS = false;
+
 export default function AiPartnerSessionPage() {
   const params = useParams<{ sessionId: string }>();
   const router = useRouter();
@@ -696,6 +702,7 @@ export default function AiPartnerSessionPage() {
 
           {/* Live scores: the four main skills as big rings (computed from real
               measurements, see lib/live-scores.ts), then the supporting stats. */}
+          {SHOW_LIVE_METERS && (
           <aside className="bg-white border border-crest-line rounded-3xl px-4 py-4 flex flex-col gap-4">
             <div className="grid grid-cols-4 lg:grid-cols-2 gap-3">
               {(
@@ -746,6 +753,7 @@ export default function AiPartnerSessionPage() {
               </div>
             )}
           </aside>
+          )}
         </div>
 
         {/* Control row, Yoodli order: voice speed, captions, camera, mic, red stop */}
