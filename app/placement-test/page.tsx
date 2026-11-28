@@ -291,11 +291,11 @@ export default function PlacementTestPage() {
                       </span>
                       <div className="mt-2 flex items-center justify-center gap-3 flex-wrap">
                         <span className="text-3xl sm:text-4xl font-black px-5 py-1.5 rounded-2xl bg-[#002868] text-white shadow-sm">
-                          {meta.level} — {meta.title}
+                          {meta.level} — {isArabic ? meta.titleAr : meta.title}
                         </span>
                       </div>
                       <p className="text-xs sm:text-sm font-bold text-ink-soft mt-2">
-                        {isArabic ? `${meta.titleAr} • تقدير IELTS تقريبي: ` : `${meta.titleAr} • IELTS rough guide: `}
+                        {isArabic ? `${meta.titleAr} • تقدير IELTS تقريبي: ` : `${meta.title} • IELTS rough guide: `}
                         <span className="text-[#D91023] font-black">{meta.ieltsBand}</span> •{" "}
                         {isArabic
                           ? `${result.correctCount}/${result.totalCount} صحيحة (${result.percentage}%) • الثقة ${result.confidenceLabel === "higher" ? "أعلى" : "متوسطة"}`
@@ -304,11 +304,11 @@ export default function PlacementTestPage() {
                     </div>
 
                     {/* Skill Breakdown */}
-                    <div className="w-full grid grid-cols-3 gap-3 text-left">
+                    <div className="w-full grid grid-cols-3 gap-3 text-start">
                       {[
-                        { label: "Grammar", val: result.grammarScore, color: "bg-[#002868]" },
-                        { label: "Vocabulary", val: result.vocabularyScore, color: "bg-[#10B981]" },
-                        { label: "Comprehension", val: result.comprehensionScore, color: "bg-[#D91023]" },
+                        { label: isArabic ? "القواعد" : "Grammar", val: result.grammarScore, color: "bg-[#002868]" },
+                        { label: isArabic ? "المفردات" : "Vocabulary", val: result.vocabularyScore, color: "bg-[#10B981]" },
+                        { label: isArabic ? "الفهم" : "Comprehension", val: result.comprehensionScore, color: "bg-[#D91023]" },
                       ].map((s) => (
                         <div
                           key={s.label}
