@@ -124,8 +124,8 @@ class ApiClient {
     });
   }
 
-  async sendOtp(payload: { identifier: string; type?: 'email' | 'phone'; countryCode?: string }): Promise<{ success: boolean; message: string; identifier: string; devCode?: string; cooldownSeconds?: number }> {
-    return this.request<{ success: boolean; message: string; identifier: string; devCode?: string; cooldownSeconds?: number }>("/auth/send-otp", {
+  async sendOtp(payload: { identifier: string; type?: 'email' | 'phone'; countryCode?: string }): Promise<{ success: boolean; message: string; identifier: string; devCode?: string; pendingApproval?: boolean; cooldownSeconds?: number }> {
+    return this.request<{ success: boolean; message: string; identifier: string; devCode?: string; pendingApproval?: boolean; cooldownSeconds?: number }>("/auth/send-otp", {
       method: "POST",
       body: JSON.stringify(payload),
     });

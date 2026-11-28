@@ -24,6 +24,7 @@ export default function SignupPage() {
   const [step, setStep] = useState<"details" | "verify">("details");
   const [otpCode, setOtpCode] = useState("");
   const [devCodeHint, setDevCodeHint] = useState<string | null>(null);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Status
@@ -63,9 +64,14 @@ export default function SignupPage() {
     try {
       const res = await sendOtp({ identifier: cleanEmail, type: "email" });
       setDevCodeHint(res.devCode || null);
+      setPendingApproval(Boolean(res.pendingApproval));
       setResendCooldown(res.cooldownSeconds || 60);
       setStep("verify");
-      setSuccessMsg(`We sent a 6-digit verification code to ${cleanEmail}.`);
+      setSuccessMsg(
+        res.pendingApproval
+          ? "Your request was sent for approval. We will send you the code. Enter it here when you get it."
+          : `We sent a 6-digit verification code to ${cleanEmail}.`,
+      );
     } catch (err: any) {
       setError(err.message || "Failed to send verification code. Please try again.");
     } finally {
@@ -115,6 +121,7 @@ export default function SignupPage() {
     try {
       const res = await sendOtp({ identifier: email.trim().toLowerCase(), type: "email" });
       setDevCodeHint(res.devCode || null);
+      setPendingApproval(Boolean(res.pendingApproval));
       setResendCooldown(res.cooldownSeconds || 60);
       setSuccessMsg("A new 6-digit code has been sent to your email.");
     } catch (err: any) {
