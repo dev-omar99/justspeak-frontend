@@ -140,3 +140,32 @@ export function programmeState(programme: CatalogProgramme): "not_started" | "in
   if (programme.totalLessons > 0 && programme.passedLessons >= programme.totalLessons) return "completed";
   return lastPracticeOf(programme) ? "in_progress" : "not_started";
 }
+
+/** A track is one programme shown on its own card, grouped under its field heading. */
+export interface TrackGroup {
+  field: CatalogField;
+  tracks: CatalogProgramme[];
+}
+
+/**
+ * Tracks for the "Choose a track" screen. The original base programme of a field (id "<field>-english")
+ * is a thin list of a few lessons; when the field has dedicated tracks it is left out of this list so the
+ * learner never sees two overlapping choices (for example Everyday English next to Everyday Life English).
+ * Nothing is deleted: the base lessons stay in the catalog data and reachable by their own links.
+ * A field with no dedicated track keeps its base programme, and a field with nothing is dropped.
+ */
+export function trackGroups(fields: CatalogField[]): TrackGroup[] {
+  const groups: TrackGroup[] = [];
+  for (const field of fields) {
+    const dedicated = field.programmes.filter((p) => p.id !== `${field.id}-english`);
+    const tracks = dedicated.length > 0 ? dedicated : field.programmes;
+    const withLessons = tracks.filter((p) => p.totalLessons > 0);
+    if (withLessons.length > 0) groups.push({ field, tracks: withLessons });
+  }
+  return groups;
+}
+
+/** Levels worth showing: a level with no lessons is hidden instead of greyed out as "soon". */
+export function levelsWithLessons(p: CatalogProgramme): CatalogLevel[] {
+  return p.levels.filter((l) => l.totalLessons > 0);
+}

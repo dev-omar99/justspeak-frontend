@@ -8,7 +8,7 @@ import Back from "../../../../components/ai-partner/catalog/Back";
 import LessonRow from "../../../../components/ai-partner/catalog/LessonRow";
 import LoadError from "../../../../components/ai-partner/programmes/LoadError";
 import { useCatalog } from "../../../../components/ai-partner/catalog/useCatalog";
-import { findProgramme, nextLessonOf, toUnits } from "../../../../lib/catalog";
+import { findProgramme, levelsWithLessons, nextLessonOf, toUnits } from "../../../../lib/catalog";
 import type { CatalogLevelId } from "../../../../services/ai-partner";
 
 /**
@@ -36,7 +36,7 @@ export default function PathPage() {
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
-          <Back href={programme ? `/ai-partner/field/${encodeURIComponent(programme.fieldId)}` : "/ai-partner/learning"} label="Programmes" />
+          <Back href={programme ? "/ai-partner/learning" : "/ai-partner/learning"} label="Tracks" />
           <h1 className="text-2xl font-black">{programme?.title ?? "Programme"}</h1>
           {error && <LoadError message={error} onRetry={retry} />}
           {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
@@ -44,7 +44,7 @@ export default function PathPage() {
           {programme && level && (
             <>
               <div className="flex flex-wrap gap-2" role="tablist" aria-label="Level">
-                {programme.levels.map((l) => (
+                {levelsWithLessons(programme).map((l) => (
                   <button
                     key={l.level}
                     type="button"

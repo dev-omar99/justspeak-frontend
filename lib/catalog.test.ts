@@ -58,3 +58,17 @@ test("bestChip: highest measured score, ties keep the earliest, unmeasured never
   assert.equal(bestChip(chips)?.sessionId, "y");
   assert.equal(bestChip([chipFor(a(null, "p")), chipFor(a(null, "q"))])?.sessionId, "q");
 });
+
+test("trackGroups hides the base programme when dedicated tracks exist, keeps it otherwise", async () => {
+  const { trackGroups, levelsWithLessons } = await import("./catalog.ts");
+  const prog = (id: string, total: number, lv: number[]) =>
+    ({ id, title: id, totalLessons: total, passedLessons: 0, levels: lv.map((n, i) => ({ level: ["A1", "A2", "B1"][i], totalLessons: n, passedLessons: 0, lessons: [] })) }) as never;
+  const fields = [
+    { id: "daily-life", title: "Daily life", programmes: [prog("daily-life-english", 2, [0, 1, 1]), prog("everyday-life", 10, [4, 3, 3])] },
+    { id: "travel", title: "Travel", programmes: [prog("travel-english", 3, [0, 2, 1])] },
+    { id: "academic", title: "Academic", programmes: [prog("academic-english", 0, [0, 0, 0])] },
+  ] as never;
+  const g = trackGroups(fields);
+  assert.deepEqual(g.map((x) => x.tracks.map((t) => t.id)), [["everyday-life"], ["travel-english"]]);
+  assert.deepEqual(levelsWithLessons(g[1].tracks[0]).map((l) => l.level), ["A2", "B1"]);
+});
