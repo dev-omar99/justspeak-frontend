@@ -490,7 +490,7 @@ export default function ProfilePage() {
                 <span className="text-2xl select-none">🎁</span>
                 <span className="absolute -top-1 -right-1 text-xs">✨</span>
               </div>
-              <div className="text-left">
+              <div className="text-left" dir="ltr">
                 <p className="text-xs text-slate-200 font-medium">
                   Invite and get
                 </p>
@@ -1425,4 +1425,4 @@ export default function ProfilePage() {
       )}
     </main>
   );
-}
+                }
