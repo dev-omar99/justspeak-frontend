@@ -98,10 +98,21 @@ export default function Header({
     return () => clearInterval(timer);
   }, [showTicketModal]);
 
+  // Focus routes: while someone signs up or onboards, show only the logo and
+  // the language switch so there is one clear next action.
+  const minimal = ["/signup", "/login", "/onboarding"].some(
+    (r) => pathname === r || pathname?.startsWith(`${r}/`)
+  );
+
+  useEffect(() => {
+    document.body.classList.toggle("no-sidebar", minimal);
+    return () => document.body.classList.remove("no-sidebar");
+  }, [minimal]);
+
   return (
     <>
       {/* Desktop left sidebar (Yoodli-style); mobile keeps BottomNav */}
-      <Sidebar />
+      {!minimal && <Sidebar />}
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-border/90 shadow-xs transition-all">
         {/* Official American Flag Tri-Color Top Ribbon (Navy • White • Crimson Red) */}
         <div className="h-1 w-full bg-gradient-to-r from-[#002868] via-[#E11D48] to-[#002868]" />
@@ -149,7 +160,7 @@ export default function Header({
             >
               {isArabic ? "EN" : "عربي"}
             </button>
-            {isLoggedIn ? (
+            {minimal ? null : isLoggedIn ? (
               <>
                 {/* AI Tokens Balance Pill -> Links to /ai-studio or /pricing */}
                 <Link

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
-import Button from "../../components/Button";
 import Penguin3D from "../../components/Penguin3D";
 import { getUser, getToken, saveUser } from "../../lib/auth";
 import { updateProfile, joinTribe } from "../../services/api";
@@ -73,6 +72,38 @@ const TRIBES = [
   { id: 12, label: "Tribe 12", utcStartHour: 22 },
 ];
 
+/** Local clock hour (0-23) at which a tribe slot starts, in the learner's timezone. */
+function localStartHour(utcStartHour: number): number {
+  const d = new Date(Date.UTC(2026, 0, 1, utcStartHour, 0));
+  return d.getHours();
+}
+
+/** Three day-parts replace twelve slots; each maps to the slot nearest its anchor hour. */
+const DAY_PARTS = [
+  { key: "morning", label: "Morning", icon: "🌅", anchor: 9 },
+  { key: "afternoon", label: "Afternoon", icon: "☀️", anchor: 15 },
+  { key: "evening", label: "Evening", icon: "🌙", anchor: 21 },
+] as const;
+
+function circularGap(a: number, b: number): number {
+  const d = Math.abs(a - b) % 24;
+  return Math.min(d, 24 - d);
+}
+
+function tribeForAnchor(anchor: number): number {
+  let best = TRIBES[0];
+  for (const tr of TRIBES) {
+    if (circularGap(localStartHour(tr.utcStartHour), anchor) < circularGap(localStartHour(best.utcStartHour), anchor)) best = tr;
+  }
+  return best.id;
+}
+
+function dayPartOfTribe(tribeId: number): string {
+  const tr = TRIBES.find((t) => t.id === tribeId) ?? TRIBES[0];
+  const h = localStartHour(tr.utcStartHour);
+  return DAY_PARTS.reduce((a, b) => (circularGap(h, b.anchor) < circularGap(h, a.anchor) ? b : a)).key;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -92,6 +123,8 @@ export default function OnboardingPage() {
       return;
     }
     setUser(u);
+    const wanted = new URLSearchParams(window.location.search).get("goal");
+    if (wanted && GOAL_OPTIONS.some((g) => g.id === wanted)) setSelectedGoal(wanted);
     if (u.englishLevel) setSelectedLevel(u.englishLevel);
     if (u.tribeId) setSelectedTribe(u.tribeId);
   }, [router]);
@@ -242,16 +275,19 @@ export default function OnboardingPage() {
                 })}
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <Button variant="secondary" onClick={() => setStep(1)}>
-                  Back
-                </Button>
+              <div className="flex flex-col gap-3 pt-2">
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-1 bg-gradient-to-r from-primary via-blue-600 to-primary-dark hover:brightness-110 active:scale-[0.98] transition-all text-white font-extrabold text-center py-4 rounded-2xl text-base shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-primary via-blue-600 to-primary-dark hover:brightness-110 active:scale-[0.98] transition-all text-white font-extrabold text-center py-4 rounded-2xl text-base shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
                 >
                   <span>Continue</span>
                   <span>→</span>
+                </button>
+                <button type="button" onClick={() => { setSelectedLevel("Beginner"); setStep(3); }} className="text-sm font-semibold text-primary hover:underline underline-offset-4 py-2 self-center">
+                  Not sure? Start easy
+                </button>
+                <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-ink-soft hover:text-ink underline underline-offset-4 py-2 self-center">
+                  Back
                 </button>
               </div>
             </div>
@@ -280,30 +316,27 @@ export default function OnboardingPage() {
                 <label className="text-xs font-bold text-ink uppercase tracking-wider">
                   Choose your regular daily speaking slot (your local time):
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1" role="radiogroup" aria-label="Daily speaking slot">
-                  {TRIBES.map((tr) => {
-                    const isSelected = selectedTribe === tr.id;
+                <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Daily speaking slot">
+                  {DAY_PARTS.map((dp) => {
+                    const isSelected = dayPartOfTribe(selectedTribe) === dp.key;
+                    const tr = TRIBES.find((t) => t.id === tribeForAnchor(dp.anchor)) ?? TRIBES[0];
                     return (
                       <button
-                        key={tr.id}
+                        key={dp.key}
                         type="button"
                         role="radio"
                         aria-checked={isSelected}
                         onClick={() => setSelectedTribe(tr.id)}
-                        className={`p-3 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
+                        className={`p-3 rounded-xl border-2 text-center flex flex-col items-center gap-1 transition-all min-h-[88px] ${
                           isSelected
                             ? "border-primary bg-primary-light/40 shadow-xs font-bold"
                             : "border-border/60 hover:bg-surface text-ink-soft"
                         }`}
                       >
-                        <div>
-                          <span className="text-xs font-bold text-ink block">{tr.label}</span>
-                          <span className="text-[11px] text-primary font-semibold">
-                            {formatTribeLocalTime(tr.utcStartHour)}
-                          </span>
-                        </div>
-                        <span className={`text-sm ${isSelected ? "text-primary font-bold" : "text-border"}`}>
-                          {isSelected ? "✓" : "+"}
+                        <span className="text-xl">{dp.icon}</span>
+                        <span className="text-xs font-bold text-ink">{dp.label}</span>
+                        <span className="text-[11px] text-primary font-semibold">
+                          {formatTribeLocalTime(tr.utcStartHour)}
                         </span>
                       </button>
                     );
@@ -311,16 +344,16 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
-                <Button variant="secondary" onClick={() => setStep(2)}>
-                  Back
-                </Button>
+              <div className="flex flex-col gap-3 pt-2">
                 <button
                   onClick={handleComplete}
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-primary via-blue-600 to-primary-dark hover:brightness-110 active:scale-[0.98] transition-all text-white font-extrabold text-center py-4 rounded-2xl text-base shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-primary via-blue-600 to-primary-dark hover:brightness-110 active:scale-[0.98] transition-all text-white font-extrabold text-center py-4 rounded-2xl text-base shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
                 >
                   <span>{loading ? "Setting up..." : "🚀 Let's Start Speaking!"}</span>
+                </button>
+                <button type="button" onClick={() => setStep(2)} className="text-sm font-semibold text-ink-soft hover:text-ink underline underline-offset-4 py-2 self-center">
+                  Back
                 </button>
               </div>
             </div>
