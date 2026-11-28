@@ -5,7 +5,7 @@ import DimensionCards from "../../../../components/ai-partner/report/DimensionCa
 import ChatTranscript, { TurnCheckTools, useTurnChecks } from "../../../../components/ai-partner/report/ChatTranscript";
 import TurnNotes from "../../../../components/ai-partner/report/TurnNotes";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
-import { applyScoreCap, overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
+import { applyScoreCap, resultDial, reportOverall100, overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -370,13 +370,24 @@ export default function AiPartnerReportPage() {
               We could not measure your skills from this session, so there is no score. This try is saved on the lesson as
               &quot;did not reach the target score&quot; (required {PASS_MIN_10}/10). Your conversation is saved below.
             </p>
-            <button
-              type="button"
-              onClick={() => { setReport(null); setError(""); setLoading(true); setRetryKey((k) => k + 1); }}
-              className="self-start btn-primary-crest text-white text-sm font-black rounded-xl px-5 py-3 min-h-[44px] inline-flex items-center cursor-pointer"
-            >
-              Try again
-            </button>
+            <div className="flex items-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => { setReport(null); setError(""); setLoading(true); setRetryKey((k) => k + 1); }}
+                className="btn-primary-crest text-white text-sm font-black rounded-xl px-5 py-3 min-h-[44px] inline-flex items-center cursor-pointer"
+              >
+                Try again
+              </button>
+              {(() => {
+                const dial = resultDial(reportOverall100(report), report?.incomplete === true);
+                return (
+                  <div className="flex items-center gap-2.5" aria-label="Score incomplete, target not reached">
+                    <RingGauge pct={dial.value === "–" ? 100 : Number(dial.value) * 10} value={dial.value} unit="/10" size={64} status={dial.status} minPct={PASS_MIN_100} />
+                    <p className="text-xs font-black text-amber-600 leading-snug">Target not reached<br /><span className="text-ink-soft font-bold">required {PASS_MIN_10}/10</span></p>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
         {insufficient && !report?.incomplete && (

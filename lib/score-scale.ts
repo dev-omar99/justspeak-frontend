@@ -14,8 +14,9 @@ export const PASS_MIN_100 = 60;
  * - skipped: the learner knowingly skipped it, e.g. said nothing (red "Not attempted", counts as 0)
  * - unavailable: could not be measured (timeout, too little data). Grey, never counted as a fail
  * - pending: session still running, no data yet (grey)
+ * - incomplete: the model answered but nothing could be measured: no score, did not reach the target (orange, report dial only)
  */
-export type ScoreStatus = "pass" | "fail" | "skipped" | "unavailable" | "pending";
+export type ScoreStatus = "pass" | "fail" | "skipped" | "unavailable" | "pending" | "incomplete";
 
 /** 0-100 score to a 0-10 rating with one decimal ("7.4"). */
 export function toTen(score100: number): number {
@@ -100,4 +101,16 @@ export function reportOverall100(
   if (mean.value === null) return null;
   const rounded = Math.round(mean.value * 10);
   return report.score_cap && Number.isFinite(report.score_cap.to) ? Math.min(rounded, report.score_cap.to) : rounded;
+}
+
+/**
+ * The report's result dial: score out of 10 and whether the target (6/10) was reached.
+ * green = reached it, red = scored below it, orange = incomplete (no score, shown as "–/10", target not reached).
+ */
+export function resultDial(score100: number | null | undefined, incomplete: boolean): { status: ScoreStatus; value: string; reached: boolean } {
+  if (incomplete || score100 === null || score100 === undefined || !Number.isFinite(score100)) {
+    return { status: "incomplete", value: "–", reached: false };
+  }
+  const status = scoreStatus(score100, true);
+  return { status, value: String(toTen(score100)), reached: status === "pass" };
 }

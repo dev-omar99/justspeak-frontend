@@ -6,6 +6,7 @@ const STROKE: Record<ScoreStatus, string> = {
   skipped: "#DC2626", // red: known skip, "Not attempted"
   unavailable: "#94A3B8", // grey: could not be measured
   pending: "#94A3B8", // grey: no data yet
+  incomplete: "#F59E0B", // orange: report incomplete, no score, target not reached
 };
 
 /**

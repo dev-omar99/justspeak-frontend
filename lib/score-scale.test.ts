@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyScoreCap, overallSummary, PASS_MIN_10, reportOverall100, scoreStatus, toTen } from "./score-scale.ts";
+import { resultDial, applyScoreCap, overallSummary, PASS_MIN_10, reportOverall100, scoreStatus, toTen } from "./score-scale.ts";
 
 test("0-100 converts to a 0-10 rating with one decimal and clamps", () => {
   assert.equal(toTen(74), 7.4);
@@ -70,4 +70,14 @@ test("banner and ring agree: same cap applied to the same skill average", () => 
   assert.equal(avg, 8.2);
   assert.equal(applyScoreCap(avg, { to: 55 }), 5.5);
   assert.equal(applyScoreCap(avg, null), 8.2);
+});
+
+test("result dial: green at 6/10 and above, red below, orange when incomplete (never a number or a zero)", () => {
+  assert.deepEqual(resultDial(60, false), { status: "pass", value: "6", reached: true });
+  assert.deepEqual(resultDial(74, false), { status: "pass", value: "7.4", reached: true });
+  assert.deepEqual(resultDial(55, false), { status: "fail", value: "5.5", reached: false });
+  assert.deepEqual(resultDial(0, false), { status: "fail", value: "0", reached: false });
+  assert.deepEqual(resultDial(null, true), { status: "incomplete", value: "–", reached: false });
+  assert.deepEqual(resultDial(80, true), { status: "incomplete", value: "–", reached: false });
+  assert.equal(resultDial(undefined, false).status, "incomplete");
 });
