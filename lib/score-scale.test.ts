@@ -63,3 +63,11 @@ test("reportOverall100: mean of the skills, same as the report page, with the ca
   assert.equal(reportOverall100(null), null);
   assert.equal(reportOverall100({ status: "OK", dimensions: { grammar: 59.4, vocabulary: 59.4, fluency: 59.4, pronunciation: 59.4, interaction: 59.4 } }), 59);
 });
+
+test("banner and ring agree: same cap applied to the same skill average", () => {
+  const dims = { grammar: 85, vocabulary: 80, fluency: 85, pronunciation: 80, interaction: 80 };
+  const avg = overallSummary(Object.values(dims).map((v) => ({ score100: v }))).value;
+  assert.equal(avg, 8.2);
+  assert.equal(applyScoreCap(avg, { to: 55 }), 5.5);
+  assert.equal(applyScoreCap(avg, null), 8.2);
+});
