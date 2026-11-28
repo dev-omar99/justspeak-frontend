@@ -15,7 +15,19 @@ const CSP_REPORT_ONLY = [
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
-    return [{ source: "/:path*", headers: [{ key: "Content-Security-Policy-Report-Only", value: CSP_REPORT_ONLY }] }];
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy-Report-Only", value: CSP_REPORT_ONLY },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // The app needs the microphone and camera on its own origin; everything else stays off.
+          { key: "Permissions-Policy", value: "microphone=(self), camera=(self), geolocation=(), payment=()" },
+        ],
+      },
+    ];
   },
 };
 
