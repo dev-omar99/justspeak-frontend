@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useI18n } from "../lib/i18n";
+import { pwaRouteAllowed, shouldOfferInstall } from "../lib/pwa-rules";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -36,13 +37,17 @@ export default function PwaInstallPrompt() {
       return;
     }
 
-    // 3. Check dismissal in localStorage (show again after 14 days)
-    const dismissedAt = localStorage.getItem("justspeak_pwa_dismissed");
-    if (dismissedAt) {
-      const daysPassed = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
-      if (daysPassed < 14) {
-        return;
-      }
+    // 3. Offer rules (lib/pwa-rules): not on the first visit, quiet for 14 days after "later".
+    // The first-visit time is stored once; the banner can only show on a later day.
+    const nowMs = Date.now();
+    let firstSeen = parseInt(localStorage.getItem("justspeak_first_seen") ?? "", 10);
+    if (!Number.isFinite(firstSeen)) {
+      firstSeen = nowMs;
+      localStorage.setItem("justspeak_first_seen", String(firstSeen));
+    }
+    const dismissedRaw = parseInt(localStorage.getItem("justspeak_pwa_dismissed") ?? "", 10);
+    if (!shouldOfferInstall({ now: nowMs, firstSeen, dismissedAt: Number.isFinite(dismissedRaw) ? dismissedRaw : null, pathname: "/" })) {
+      return;
     }
 
     // 4. Detect iOS Safari
@@ -94,9 +99,8 @@ export default function PwaInstallPrompt() {
     localStorage.setItem("justspeak_pwa_dismissed", Date.now().toString());
   };
 
-  const hiddenRoutes = ["/login", "/signup", "/onboarding", "/queue", "/room"];
-  const isHiddenRoute = hiddenRoutes.some((r) => pathname?.startsWith(r));
-  if (!isVisible || isHiddenRoute) return null;
+  // Never over a screen whose main action sits at the bottom (lesson, today, call, report...).
+  if (!isVisible || !pwaRouteAllowed(pathname)) return null;
 
   const isArabic = lang === "ar";
 

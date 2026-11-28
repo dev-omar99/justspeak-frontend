@@ -5,6 +5,7 @@ import HtmlAttrsSync from "../components/HtmlAttrsSync";
 import BottomNav from "../components/BottomNav";
 import AmbientBackground from "../components/AmbientBackground";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
+import BackBar from "../components/BackBar";
 
 export const viewport: Viewport = {
   themeColor: "#0B0F19",
@@ -164,6 +165,7 @@ export default function RootLayout({
           {/* Unified GPU-Accelerated Ambient Motion & Eagle Crest Watermark */}
           <AmbientBackground />
           <div className="relative z-10 min-h-screen flex flex-col">
+            <BackBar />
             {children}
           </div>
           <BottomNav />
