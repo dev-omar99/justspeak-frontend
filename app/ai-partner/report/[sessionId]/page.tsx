@@ -12,6 +12,7 @@ import { getToken } from "../../../../lib/auth";
 import {
   countFillersByWord,
   fetchAiPartnerReport,
+  fetchAiPartnerSession,
   PronunciationAssessment,
   SessionReportV2,
   setPracticeQuestion,
@@ -246,20 +247,21 @@ export default function AiPartnerReportPage() {
       .then((data) => {
         if (cancelled) return;
         const body = data?.report as SessionReportV2;
+        // Hide internal "[system]" cues the engine stores: they are not anyone's speech.
+        // The transcript is saved with the session, so show it on every poll, even before the report exists.
+        const turns = ((data?.session?.transcript as TranscriptTurn[]) ?? []).filter(
+          (t) => !(typeof t.text === "string" && t.text.startsWith("[system]")),
+        );
+        setTranscript(turns);
+        setLevel(data?.session?.level ?? "");
+        setMode(data?.session?.mode ?? "");
         if (!body && attempt < 20) {
           timer = setTimeout(() => void load(attempt + 1), 3000);
           return;
         }
         if (body) setReport(body);
-        else setError("The report is taking longer than usual. Reload this page in a minute and it will be here.");
-        // Hide internal "[system]" cues the engine stores: they are not anyone's speech.
-        const turns = ((data?.session?.transcript as TranscriptTurn[]) ?? []).filter(
-          (t) => !(typeof t.text === "string" && t.text.startsWith("[system]")),
-        );
-        setTranscript(turns);
+        else setError("The report is taking longer than usual. Your conversation is saved below. Reload this page in a minute for the analysis.");
         setGoal((data as { goal?: SessionGoal | null })?.goal ?? null);
-        setLevel(data?.session?.level ?? "");
-        setMode(data?.session?.mode ?? "");
         if (data?.pronunciation_assessment) {
           setPronunciation(data.pronunciation_assessment);
         }
@@ -267,9 +269,19 @@ export default function AiPartnerReportPage() {
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err.message || "Could not load the report.");
+        setError((err.message || "Could not load the report.") + " Your conversation is saved below.");
         setLoading(false);
       });
+    // Show the saved conversation right away: the report request can take a while or fail, the transcript is already stored.
+    fetchAiPartnerSession(token, sessionId)
+      .then((sess) => {
+        if (cancelled) return;
+        const turns = ((sess?.transcript as TranscriptTurn[]) ?? []).filter(
+          (t) => !(typeof t.text === "string" && t.text.startsWith("[system]")),
+        );
+        setTranscript((prev) => (prev.length ? prev : turns));
+      })
+      .catch(() => undefined);
     void load(0);
     return () => {
       cancelled = true;
@@ -293,6 +305,9 @@ export default function AiPartnerReportPage() {
   const studentText = transcript.filter((t) => t.role === "user").map((t) => t.text).join(" ");
   const firstTurnAt = transcript.find((t) => t.at !== undefined && t.at !== null)?.at;
   const fillers = countFillersByWord(studentText);
+  const heardSec = Math.round(Number(report?.metrics_echo?.student_speech_sec ?? 0)) || 0;
+  // Full split view only exists with a scored report; in every other state (loading, too short, failed) show the plain transcript.
+  const showStandaloneTranscript = transcript.length > 0 && (!report || insufficient);
 
   return (
     <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
@@ -344,13 +359,33 @@ export default function AiPartnerReportPage() {
           </p>
         )}
         {insufficient && (
-          <div className="bg-white border border-border rounded-2xl px-5 py-5">
-            <h2 className="font-black text-sm mb-1">Not enough speech to score</h2>
+          <div className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3">
+            <h2 className="font-black text-sm">Too short to score this time</h2>
             <p className="text-sm text-ink-soft">
-              {report?.next_focus ||
-                "This session had too little of your speech for a fair evaluation. Try again and speak freely — even mistakes help."}
+              {heardSec > 0 ? `We heard about ${heardSec}s of your speech. ` : "We did not hear enough of your speech. "}
+              A scored report needs at least 60s of you talking. Your conversation is saved below. Start a new session and
+              try fuller answers, even mistakes help.
             </p>
+            <Link
+              href="/ai-partner"
+              className="self-start btn-primary-crest text-white text-sm font-black rounded-xl px-5 py-3 min-h-[44px] inline-flex items-center"
+            >
+              New session
+            </Link>
           </div>
+        )}
+        {showStandaloneTranscript && (
+          <section className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3" aria-label="Transcript">
+            <h2 className="font-black text-sm">Your conversation</h2>
+            {transcript.map((turn, i) => (
+              <div key={i} className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
+                <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
+                  {turn.role === "user" ? "You" : "Coach"}
+                </span>
+                <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>{turn.text}</p>
+              </div>
+            ))}
+          </section>
         )}
 
         {report && !insufficient && (
