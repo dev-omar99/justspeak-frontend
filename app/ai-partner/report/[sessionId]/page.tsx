@@ -1,7 +1,8 @@
 "use client";
 
 import ScoreBanner from "../../../../components/ai-partner/report/ScoreBanner";
-import ChatTranscript from "../../../../components/ai-partner/report/ChatTranscript";
+import DimensionCards from "../../../../components/ai-partner/report/DimensionCards";
+import ChatTranscript, { TurnCheckTools, useTurnChecks } from "../../../../components/ai-partner/report/ChatTranscript";
 import TurnNotes from "../../../../components/ai-partner/report/TurnNotes";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
 import { overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
@@ -156,6 +157,7 @@ const DIMENSION_LABELS: { key: keyof SessionReportV2["dimensions"]; label: strin
   { key: "vocabulary", label: "Vocabulary" },
   { key: "grammar", label: "Grammar" },
   { key: "interaction", label: "Interaction" },
+  { key: "coherence", label: "Coherence" },
 ];
 
 // turn.at is epoch milliseconds on newer sessions, seconds on older ones.
@@ -303,6 +305,7 @@ export default function AiPartnerReportPage() {
   }
 
   const insufficient = report?.status === "INSUFFICIENT_DATA";
+  const turnChecks = useTurnChecks(getToken(), sessionId, transcript.filter((t) => t.role === "user").length);
   const studentText = transcript.filter((t) => t.role === "user").map((t) => t.text).join(" ");
   const firstTurnAt = transcript.find((t) => t.at !== undefined && t.at !== null)?.at;
   const fillers = countFillersByWord(studentText);
@@ -378,7 +381,7 @@ export default function AiPartnerReportPage() {
         {showStandaloneTranscript && (
           <section className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3" aria-label="Transcript">
             <h2 className="font-black text-sm">Your conversation</h2>
-            <ChatTranscript turns={transcript} token={getToken()} sessionId={sessionId} />
+            <ChatTranscript turns={transcript} checks={turnChecks.checks} state={turnChecks.state} />
           </section>
         )}
 
@@ -432,7 +435,7 @@ export default function AiPartnerReportPage() {
                       note={note ? { better: note.better, rule: note.rule } : null}
                     >
                       {(icons, panels) => (
-                        <div className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
+                        <div className={`text-sm flex flex-col gap-1 ${turn.role === "user" ? "items-end" : "items-start"}`}>
                           <div className="flex items-center gap-2">
                             {stamp && (
                               <span className="text-[10px] font-black text-crest-steel-deep tabular-nums">
@@ -444,9 +447,15 @@ export default function AiPartnerReportPage() {
                             </span>
                             <span className="ml-auto">{icons}</span>
                           </div>
-                          <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>
+                          <p
+                            dir="auto"
+                            className={`max-w-[88%] rounded-2xl px-4 py-2.5 leading-relaxed ${
+                              turn.role === "user" ? "bg-[#FDECEF] text-ink font-semibold" : "bg-[#EAF1FC] text-ink-soft"
+                            }`}
+                          >
                             {turn.role === "user" ? highlightFillers(turn.text) : turn.text}
                           </p>
+                          {turn.role === "user" && <TurnCheckTools check={turnChecks.checks[i]} state={turnChecks.state} />}
                           {panels}
                         </div>
                       )}
@@ -486,7 +495,7 @@ export default function AiPartnerReportPage() {
                       // Known skip = the learner said nothing at all (older reports store 0s with INSUFFICIENT_DATA).
                       const knownSkip = insufficient && Number(report.metrics_echo?.student_speech_sec ?? 0) === 0;
                       const summary = overallSummary(
-                        DIMENSION_LABELS.map(({ key }) => ({
+                        DIMENSION_LABELS.filter(({ key }) => key !== "coherence").map(({ key }) => ({
                           score100: insufficient ? null : report.dimensions[key],
                           skipped: knownSkip,
                         })),
@@ -525,30 +534,21 @@ export default function AiPartnerReportPage() {
                       <p className="text-[11px] text-ink-soft mb-4">
                         Out of 10. Green means you reached the required {PASS_MIN_10}/10, red means below it or not attempted.
                       </p>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
-                        {DIMENSION_LABELS.map(({ key, label }) => {
-                          const knownSkip = insufficient && Number(report.metrics_echo?.student_speech_sec ?? 0) === 0;
-                          const value = insufficient ? null : report.dimensions[key];
-                          const status = scoreStatus(value, true, knownSkip);
-                          const noNumber = value === null || status === "skipped";
-                          return (
-                            <div key={key} className="flex flex-col items-center gap-1.5">
-                              <RingGauge
-                                pct={value ?? 0}
-                                value={noNumber ? "–" : `${toTen(value)}`}
-                                unit={noNumber ? "" : "/10"}
-                                size={72}
-                                status={status}
-                                minPct={PASS_MIN_100}
-                              />
-                              <span className="text-[11px] font-black uppercase tracking-wide text-center">{label}</span>
-                              <span className={`text-[10px] font-bold ${status === "pass" ? "text-emerald-600" : status === "unavailable" ? "text-ink-soft" : "text-red-600"}`}>
-                                {status === "skipped" ? "Not attempted" : status === "unavailable" ? "Unavailable" : `min ${PASS_MIN_10}`}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <DimensionCards
+                        knownSkip={insufficient && Number(report.metrics_echo?.student_speech_sec ?? 0) === 0}
+                        insufficient={insufficient}
+                        rows={DIMENSION_LABELS
+                          // Coherence only exists on newer reports: older ones keep the original five rows.
+                          .filter(({ key }) => key !== "coherence" || report.dimensions.coherence !== undefined)
+                          .map(({ key, label }) => ({
+                            key,
+                            label,
+                            value: (report.dimensions[key] as number | null | undefined) ?? null,
+                            why: report.dimension_notes?.[key]?.why,
+                            quote: report.dimension_notes?.[key]?.quote,
+                            basis: report.dimension_basis?.[key],
+                          }))}
+                      />
                     </div>
 
                     {/* Coaching cards */}

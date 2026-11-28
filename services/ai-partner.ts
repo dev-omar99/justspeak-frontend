@@ -402,7 +402,9 @@ export interface SessionReportV2 {
   cefr_estimate: string;
   summary: string;
   /** null = could not be measured (not a zero). Older stored reports may hold 0 with INSUFFICIENT_DATA. */
-  dimensions: { grammar: number | null; vocabulary: number | null; fluency: number | null; pronunciation: number | null; interaction: number | null };
+  dimensions: { grammar: number | null; vocabulary: number | null; fluency: number | null; pronunciation: number | null; interaction: number | null; coherence?: number | null };
+  dimension_notes?: Partial<Record<string, { why: string; quote: string }>>;
+  dimension_basis?: Partial<Record<string, "measured" | "estimated">>;
   metrics_echo: {
     student_speech_sec: number;
     words_per_minute: number;
