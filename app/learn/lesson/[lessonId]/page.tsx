@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import EyeIcon from "../../../../components/EyeIcon";
 import Header from "../../../../components/Header";
 import PageTransition from "../../../../components/PageTransition";
 import { useI18n } from "../../../../lib/i18n";
@@ -606,7 +607,7 @@ export default function GuidedLessonPage() {
                   onClick={() => setShowTranscript((v) => !v)}
                   className="px-3.5 py-1.5 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
                 >
-                  {showTranscript ? "🙈 Hide Text (Train Ear)" : "👁️ Show Text"}
+                  <span className="inline-flex items-center gap-1.5"><EyeIcon off={showTranscript} size={16} />{showTranscript ? "Hide Text (Train Ear)" : "Show Text"}</span>
                 </button>
                 {showTranscript && (
                   <button

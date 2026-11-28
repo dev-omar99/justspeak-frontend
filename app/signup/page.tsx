@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import EyeIcon from "../../components/EyeIcon";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import BrandLogo from "../../components/BrandLogo";
@@ -15,7 +16,6 @@ export default function SignupPage() {
   const router = useRouter();
 
   // Form fields
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,12 +45,7 @@ export default function SignupPage() {
     setError(null);
     setSuccessMsg(null);
 
-    const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanName) {
-      setError("Please enter your name.");
-      return;
-    }
     if (!cleanEmail || !cleanEmail.includes("@")) {
       setError("Please enter a valid email address.");
       return;
@@ -96,7 +91,6 @@ export default function SignupPage() {
         identifier: email.trim().toLowerCase(),
         code: cleanCode,
         password,
-        name: name.trim(),
       });
 
       if (result.accessToken) saveToken(result.accessToken);
@@ -192,22 +186,6 @@ export default function SignupPage() {
                 <form onSubmit={handleRequestOtp} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-slate-200">
-                      Your Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={60}
-                      autoComplete="name"
-                      placeholder="e.g., Alex Johnson"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full h-12 text-sm text-white bg-[#0A1120] border border-slate-700 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-[#E11D48]/40 focus:border-[#E11D48] transition-all placeholder:text-slate-500"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-200">
                       Email Address
                     </label>
                     <input
@@ -243,7 +221,7 @@ export default function SignupPage() {
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         title={showPassword ? "Hide password" : "Show password"}
                       >
-                        {showPassword ? "🙈" : "👁️"}
+                        <EyeIcon off={showPassword} />
                       </button>
                     </div>
                   </div>

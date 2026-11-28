@@ -114,6 +114,7 @@ export default function OnboardingPage() {
   const [selectedLevel, setSelectedLevel] = useState("Intermediate");
   const [selectedTribe, setSelectedTribe] = useState(10); // default 9 PM
   const [loading, setLoading] = useState(false);
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     const u = getUser();
@@ -123,6 +124,7 @@ export default function OnboardingPage() {
       return;
     }
     setUser(u);
+    if (u.name) setDisplayName(u.name);
     const wanted = new URLSearchParams(window.location.search).get("goal");
     if (wanted && GOAL_OPTIONS.some((g) => g.id === wanted)) setSelectedGoal(wanted);
     if (u.englishLevel) setSelectedLevel(u.englishLevel);
@@ -136,8 +138,10 @@ export default function OnboardingPage() {
 
     try {
       // 1. Update English Level
+      const cleanName = displayName.trim();
       await updateProfile(token, {
         englishLevel: selectedLevel,
+        ...(cleanName ? { name: cleanName } : {}),
       });
 
       // 2. Assign Tribe Routine
@@ -147,6 +151,7 @@ export default function OnboardingPage() {
       const updated: User = {
         ...user,
         englishLevel: selectedLevel,
+        ...(displayName.trim() ? { name: displayName.trim() } : {}),
         tribeId: selectedTribe,
       };
       saveUser(updated);
@@ -193,6 +198,21 @@ export default function OnboardingPage() {
           {/* Step 1: Goal Selection */}
           {step === 1 && (
             <div className="w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-primary/5 border border-border/60 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+              {user && !user.name && (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="display-name" className="text-xs font-bold text-ink">What should we call you?</label>
+                  <input
+                    id="display-name"
+                    type="text"
+                    autoComplete="name"
+                    maxLength={60}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full h-12 text-sm text-ink bg-white border border-border rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-2.5" role="radiogroup" aria-label="Speaking goal">
                 {GOAL_OPTIONS.map((g) => {
                   const isSelected = selectedGoal === g.id;

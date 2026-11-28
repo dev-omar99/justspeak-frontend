@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useI18n } from "../../lib/i18n";
+import EyeIcon from "../../components/EyeIcon";
 import Header from "../../components/Header";
 import PageTransition from "../../components/PageTransition";
 import BrandLogo from "../../components/BrandLogo";
@@ -173,7 +174,7 @@ export default function LoginPage() {
                 {/* 1. Google 1-Click Login (Top & Frictionless) */}
                 <div className="flex flex-col gap-2">
                   <GoogleAuthButton
-                    label={isArabic ? "المتابعة بحساب Google" : "Continue with Google"}
+                    label={isArabic ? "تسجيل الدخول بحساب Google" : "Log in with Google"}
                     onSuccessRedirect="/"
                     onError={(err) => setError(err)}
                     className="w-full"
@@ -242,7 +243,7 @@ export default function LoginPage() {
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         title={showPassword ? "Hide password" : "Show password"}
                       >
-                        {showPassword ? "🙈" : "👁️"}
+                        <EyeIcon off={showPassword} />
                       </button>
                     </div>
                   </div>

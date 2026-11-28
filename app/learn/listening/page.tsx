@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import EyeIcon from "../../../components/EyeIcon";
 import Header from "../../../components/Header";
 import PageTransition from "../../../components/PageTransition";
 import NovelIllustration from "../../../components/academy/NovelIllustration";
@@ -245,7 +246,7 @@ export default function ListeningAudiobooksPage() {
                   onClick={() => setShowTranscript((v) => !v)}
                   className="px-3.5 py-2 rounded-xl bg-surface hover:bg-[#EAF1FC] border border-border text-xs font-bold text-ink cursor-pointer"
                 >
-                  {showTranscript ? "🙈 Hide Text" : "👁️ Show Text"}
+                  <span className="inline-flex items-center gap-1.5"><EyeIcon off={showTranscript} size={16} />{showTranscript ? "Hide Text" : "Show Text"}</span>
                 </button>
                 {showTranscript && (
                   <button
