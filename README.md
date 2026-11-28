@@ -102,3 +102,10 @@ Items intentionally deferred during active feature & screen development:
 - **Production SMTP Credentials**: Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in production environment variables.
 - **TURN Server for WebRTC**: Add TURN relay credentials (`RTCIceServer`) in [`app/room/[roomName]/page.tsx`](app/room/%5BroomName%5D/page.tsx) alongside the Google STUN servers for strict symmetric NATs.
 - **Multi-Instance Redis Adapter**: If scaling `justspeak_backend` beyond a single Node.js instance, back the matchmaking queue, throttler storage, and Socket.IO adapter with Redis.
+
+## Deploy, rollback and headers
+
+- Pushing `main` deploys to Vercel. Before each batch of changes, tag the commit `rollback-pre-<name>`; to roll back, redeploy that tag.
+- Before every push: `npx tsc --noEmit -p .`, `npm run test:scores`, `npm run build`.
+- `next.config.js` sets the security headers. The Content-Security-Policy is still report-only; enforce it only after checking that no page breaks.
+- Only two environment variables are public (see `.env.example`): `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. Secrets never go in this repo.
