@@ -1,7 +1,7 @@
 import { CefrLevel } from "./academy";
 
 // ============================================================================
-// 1. CEFR VOCABULARY VAULT (Oxford 3000 / 5000 & NGSL Aligned)
+// 1. CEFR VOCABULARY VAULT (JustSpeak original entries; CEFR levels as reference, not copied from any word list)
 // ============================================================================
 export interface VocabItem {
   id: string;
@@ -73,7 +73,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-a1-1",
     level: "A1",
     title: "A New Morning Habit",
-    sourceLabel: "CEFR A1 Graded Reader",
+    sourceLabel: "JustSpeak original text (A1) • CEFR level reference only",
     readingTimeMins: 2,
     targetWords: ["morning", "habit", "friendly", "listen", "travel"],
     paragraphs: [
@@ -90,7 +90,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-a2-1",
     level: "A2",
     title: "Exploring Cultures Through Conversation",
-    sourceLabel: "CEFR A2 Graded Reader",
+    sourceLabel: "JustSpeak original text (A2) • CEFR level reference only",
     readingTimeMins: 3,
     targetWords: ["improve", "culture", "confident", "describe", "schedule"],
     paragraphs: [
@@ -107,7 +107,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-b1-1",
     level: "B1",
     title: "How to Overcome Speaking Anxiety",
-    sourceLabel: "Oxford-Style B1 Article",
+    sourceLabel: "JustSpeak original text (B1) • CEFR level reference only",
     readingTimeMins: 4,
     targetWords: ["overcome", "fluent", "perspective", "encourage", "essential"],
     paragraphs: [
@@ -124,7 +124,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-b2-1",
     level: "B2",
     title: "The Science of Spontaneous Fluency",
-    sourceLabel: "Oxford-Style B2 Feature",
+    sourceLabel: "JustSpeak original text (B2) • CEFR level reference only",
     readingTimeMins: 4,
     targetWords: ["spontaneous", "articulate", "resilience", "persuasive", "nuance"],
     paragraphs: [
@@ -141,7 +141,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-c1-1",
     level: "C1",
     title: "Why English Became Ubiquitous in Modern Innovation",
-    sourceLabel: "CEFR C1 Academic Essay",
+    sourceLabel: "JustSpeak original text (C1) • CEFR level reference only",
     readingTimeMins: 5,
     targetWords: ["lucid", "eloquent", "pragmatic", "ubiquitous", "brevity", "candid"],
     paragraphs: [
@@ -156,7 +156,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     id: "r-c2-1",
     level: "C2",
     title: "The Quintessential Art of Candid Leadership",
-    sourceLabel: "CEFR C2 Executive Editorial",
+    sourceLabel: "JustSpeak original text (C2) • CEFR level reference only",
     readingTimeMins: 5,
     targetWords: ["quintessential", "candid", "brevity", "eloquent", "nuance"],
     paragraphs: [
@@ -332,7 +332,7 @@ export const SHADOWING_CLIPS: ShadowingClip[] = [
   {
     id: "sh-1",
     title: "The Pursuit of Happyness — Protect Your Dream",
-    source: "Classic Cinema Dialogue",
+    source: "Film quote (third-party copyright; excerpt for study, pending Omar review)",
     level: "B1",
     youtubeId: "UZb2NOHPA2A",
     description: "Iconic motivational dialogue — slow, emotional pacing ideal for natural rhythm and intonation shadowing.",
@@ -347,7 +347,7 @@ export const SHADOWING_CLIPS: ShadowingClip[] = [
   {
     id: "sh-2",
     title: "Steve Jobs — Stay Hungry, Stay Foolish (Stanford)",
-    source: "Stanford Official Commencement Speech",
+    source: "Speech excerpt (third-party copyright; excerpt for study, pending Omar review)",
     level: "B2",
     youtubeId: "UF8uR6Z6KLc",
     description: "Crystal-clear American pronunciation and executive pausing — gold standard for B2/C1 shadowing.",
@@ -360,7 +360,7 @@ export const SHADOWING_CLIPS: ShadowingClip[] = [
   {
     id: "sh-3",
     title: "Everyday Natural Coffee Shop & Travel Phrases",
-    source: "BBC Learning English Style",
+    source: "JustSpeak original dialogue (no external source)",
     level: "A2",
     youtubeId: "f1b3f0c2e6Q",
     description: "Short, practical everyday sentences with clear articulation — perfect for A1/A2 learners (also supports built-in native voice mode).",
@@ -401,7 +401,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-a1-1",
     title: "The Fisherman and the Golden Fish",
     author: "Classic Folk Tale (Graded A1)",
-    sourceLabel: "Public Domain Graded Audio",
+    sourceLabel: "Traditional folk tale (public domain), retold by JustSpeak",
     level: "A1",
     durationLabel: "2 min",
     coverEmoji: "🐟",
@@ -423,7 +423,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-a2-1",
     title: "Around the World in Eighty Days — A Bold Wager",
     author: "Jules Verne (Graded A2 Adaptation)",
-    sourceLabel: "Project Gutenberg Classic • A2",
+    sourceLabel: "Public-domain classic (Project Gutenberg), retold by JustSpeak • A2",
     level: "A2",
     durationLabel: "2 min",
     coverEmoji: "🌍",
@@ -444,7 +444,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-b1-1",
     title: "Alice's Adventures in Wonderland — Down the Rabbit-Hole",
     author: "Lewis Carroll (LibriVox / Gutenberg Adapted)",
-    sourceLabel: "Project Gutenberg Classic • B1",
+    sourceLabel: "Public-domain classic (Project Gutenberg), retold by JustSpeak • B1",
     level: "B1",
     durationLabel: "3 min",
     coverEmoji: "🐇",
@@ -466,7 +466,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-b2-1",
     title: "The Adventures of Sherlock Holmes — A Scandal in Bohemia",
     author: "Arthur Conan Doyle (Project Gutenberg)",
-    sourceLabel: "Project Gutenberg Classic • B2/C1",
+    sourceLabel: "Public-domain classic (Project Gutenberg), retold by JustSpeak • B2/C1",
     level: "B2",
     durationLabel: "3 min",
     coverEmoji: "🕵️‍♂️",
@@ -487,7 +487,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-c1-1",
     title: "The Great Gatsby — Echoes Across the Bay",
     author: "F. Scott Fitzgerald (Public Domain Classic)",
-    sourceLabel: "Project Gutenberg Classic • C1",
+    sourceLabel: "Public-domain classic (Project Gutenberg), retold by JustSpeak • C1",
     level: "C1",
     durationLabel: "3 min",
     coverEmoji: "✨",
@@ -507,7 +507,7 @@ export const LISTENING_STORIES: ListeningStory[] = [
     id: "l-c2-1",
     title: "Pride and Prejudice — First Impressions",
     author: "Jane Austen (Public Domain Classic)",
-    sourceLabel: "Project Gutenberg Classic • C2",
+    sourceLabel: "Public-domain classic (Project Gutenberg), retold by JustSpeak • C2",
     level: "C2",
     durationLabel: "3 min",
     coverEmoji: "📜",
