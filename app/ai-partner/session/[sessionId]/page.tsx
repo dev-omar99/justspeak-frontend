@@ -64,6 +64,9 @@ export default function AiPartnerSessionPage() {
   const [error, setError] = useState("");
   // Set when the coach's voice failed for a sentence: the text still shows, the audio does not.
   const [voiceIssue, setVoiceIssue] = useState<null | "quota" | "busy" | "other">(null);
+  // Text of each coach sentence, kept so the browser's own voice can read it if the server voice fails for it.
+  const replyTextsRef = useRef<Map<string, string>>(new Map());
+  const [browserVoiceUsed, setBrowserVoiceUsed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
@@ -203,6 +206,19 @@ export default function AiPartnerSessionPage() {
         // say so: the text keeps coming but the learner must know why it is silent.
         if (typeof payload.replyId === "number" && typeof payload.sentence === "number") {
           playerRef.current?.abandonSentence(payload.replyId, payload.sentence);
+          // Free fallback: read the sentence with the browser's built-in voice (lower quality, no cost, no server call).
+          const spoken = replyTextsRef.current.get(`${payload.replyId}:${payload.sentence}`);
+          if (spoken && typeof window !== "undefined" && "speechSynthesis" in window) {
+            try {
+              const u = new SpeechSynthesisUtterance(spoken);
+              u.lang = "en-US";
+              u.rate = 0.95;
+              window.speechSynthesis.speak(u);
+              setBrowserVoiceUsed(true);
+            } catch {
+              /* text stays on screen */
+            }
+          }
         }
         setVoiceIssue(payload.reason === "quota_or_plan" ? "quota" : payload.reason === "rate_limited" ? "busy" : "other");
         return;
@@ -248,7 +264,11 @@ export default function AiPartnerSessionPage() {
       upsertLine("user", payload.text, payload.isFinal);
     });
 
-    socket.on("reply-text", (payload: { sentence: number; text: string }) => {
+    socket.on("reply-text", (payload: { sentence: number; text: string; replyId?: number }) => {
+      if (typeof payload.replyId === "number") {
+        replyTextsRef.current.set(`${payload.replyId}:${payload.sentence}`, payload.text);
+        if (replyTextsRef.current.size > 200) replyTextsRef.current.clear();
+      }
       upsertLine("ai", payload.text, true);
     });
 
@@ -287,6 +307,7 @@ export default function AiPartnerSessionPage() {
     });
 
     socket.on("interrupt", () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
       player.interrupt();
     });
 
@@ -302,6 +323,7 @@ export default function AiPartnerSessionPage() {
     });
 
     return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
       endingRef.current = true;
       socket.emit("stop-session");
       socket.disconnect();
@@ -547,7 +569,9 @@ export default function AiPartnerSessionPage() {
         {voiceIssue && (
           <p className="text-xs font-semibold text-crest-navy bg-crest-mist border border-crest-line rounded-xl px-3 py-2">
             {voiceIssue === "quota"
-              ? "The coach's voice service is out of quota right now, so replies show as text only. The call itself is still running."
+              ? browserVoiceUsed
+                ? "The coach's studio voice is not available on the current voice plan, so your browser's built-in voice reads the replies. The call is still running."
+                : "The coach's studio voice is not available on the current voice plan, so replies show as text only. The call is still running."
               : voiceIssue === "busy"
                 ? "The voice service is busy, so some replies show as text only. Try again in a minute."
                 : "The coach's voice failed for some replies, so they show as text only."}
