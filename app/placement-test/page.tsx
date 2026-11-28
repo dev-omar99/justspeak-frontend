@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "../../components/Header";
@@ -10,10 +10,18 @@ import {
   CEFR_LEVELS,
   CEFR_ORDER,
   CefrLevel,
-  PLACEMENT_QUESTIONS,
-  evaluatePlacementAnswers,
   setAcademyLevel,
 } from "../../lib/academy";
+import { PLACEMENT_POOL } from "../../lib/placement-pool";
+import {
+  MAX_ITEMS,
+  adaptiveResult,
+  isFinished,
+  nextQuestion,
+  posterior,
+  type AdaptiveResult,
+  type PlacementAnswer,
+} from "../../lib/placement-adaptive";
 
 type TestStage = "intro" | "testing" | "result";
 
@@ -23,30 +31,48 @@ export default function PlacementTestPage() {
   const router = useRouter();
 
   const [stage, setStage] = useState<TestStage>("intro");
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [result, setResult] = useState<ReturnType<typeof evaluatePlacementAnswers> | null>(null);
+  // Adaptive test: the next question depends on how the learner answered so far (see lib/placement-adaptive.ts).
+  const [answers, setAnswers] = useState<PlacementAnswer[]>([]);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [result, setResult] = useState<AdaptiveResult | null>(null);
+  // After an answer the learner sees right/wrong and a short reason, then taps Next. Answers are locked while shown.
+  const [revealed, setRevealed] = useState(false);
 
-  const currentQuestion = PLACEMENT_QUESTIONS[currentIdx];
-  const progressPct = Math.round(((currentIdx + 1) / PLACEMENT_QUESTIONS.length) * 100);
+  const currentQuestion = useMemo(
+    () => (stage === "testing" ? nextQuestion(answers, PLACEMENT_POOL) : null),
+    [stage, answers],
+  );
+  const questionNo = answers.length + 1;
+  // Bar: whichever is further along, questions asked or confidence reached (the test ends at either limit).
+  const progressPct = Math.min(
+    100,
+    Math.round(Math.max((answers.length / MAX_ITEMS) * 100, Math.max(...posterior(answers, PLACEMENT_POOL)) * 100 * 0.9)),
+  );
 
   function handleSelectOption(optionIndex: number) {
-    const updated = { ...answers, [currentQuestion.id]: optionIndex };
-    setAnswers(updated);
+    if (revealed || !currentQuestion) return;
+    setPicked(optionIndex);
+    setRevealed(true);
+  }
 
-    if (currentIdx < PLACEMENT_QUESTIONS.length - 1) {
-      setTimeout(() => setCurrentIdx((i) => i + 1), 220);
-    } else {
-      const evaluated = evaluatePlacementAnswers(updated);
-      setAcademyLevel(evaluated.level, true, {
-        grammar: evaluated.grammarScore,
-        vocabulary: evaluated.vocabularyScore,
-        fluency: Math.round((evaluated.comprehensionScore + evaluated.vocabularyScore) / 2),
-        pronunciation: Math.round((evaluated.comprehensionScore + evaluated.grammarScore) / 2),
-      });
-      setResult(evaluated);
-      setStage("result");
-    }
+  function handleNext() {
+    if (!revealed || !currentQuestion || picked === null) return;
+    const updated = [...answers, { questionId: currentQuestion.id, correct: picked === currentQuestion.correctIndex }];
+    setAnswers(updated);
+    setPicked(null);
+    setRevealed(false);
+    if (!isFinished(updated, PLACEMENT_POOL)) return;
+    const evaluated = adaptiveResult(updated, PLACEMENT_POOL);
+    // The saved Academy bars keep a 30% floor so the lesson page does not show empty bars; the result screen shows the real numbers.
+    const floor = (v: number) => Math.max(30, v);
+    setAcademyLevel(evaluated.level, true, {
+      grammar: floor(evaluated.grammarScore),
+      vocabulary: floor(evaluated.vocabularyScore),
+      fluency: Math.round((floor(evaluated.comprehensionScore) + floor(evaluated.vocabularyScore)) / 2),
+      pronunciation: Math.round((floor(evaluated.comprehensionScore) + floor(evaluated.grammarScore)) / 2),
+    });
+    setResult(evaluated);
+    setStage("result");
   }
 
   function handleManualSelect(level: CefrLevel) {
@@ -75,20 +101,21 @@ export default function PlacementTestPage() {
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
                   {isArabic
-                    ? "اختبار سريع من 12 سؤالاً (يستغرق 3 دقائق) يحدد مستواك بدقة من A1 إلى C2 ويفتح لك مسار الدروس وهدف التحدث اليومي مع الشركاء."
-                    : "Take a quick 3-minute CEFR test (12 questions) to pinpoint your level (A1–C2) and unlock your structured lesson path."}
+                    ? "اختبار سريع يتكيف مع إجاباتك: من 8 إلى 18 سؤالاً (حوالي 3 إلى 5 دقائق) يعطيك تقديرًا لمستواك من A1 إلى C2 ويفتح لك مسار الدروس. هو تقدير أولي وليس شهادة، ويمكنك تغيير مستواك في أي وقت."
+                    : "Take a quick adaptive test (8 to 18 questions, about 3 to 5 minutes) for an estimate of your level (A1–C2) and to unlock your lesson path. It is a rough guide, not a certificate, and you can change your level any time."}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => {
-                      setCurrentIdx(0);
-                      setAnswers({});
+                      setAnswers([]);
+                      setPicked(null);
+                      setRevealed(false);
                       setStage("testing");
                     }}
                     className="px-7 py-3.5 rounded-2xl btn-primary-crest text-white font-black text-sm shadow-lg active:scale-95 transition-all cursor-pointer"
                   >
-                    🚀 {isArabic ? "ابدأ اختبار تحديد المستوى (3 دقائق)" : "Start 3-Min Placement Test →"}
+                    🚀 {isArabic ? "ابدأ تحديد المستوى" : "Start Level Check →"}
                   </button>
                   <Link
                     href="/learn"
@@ -161,8 +188,8 @@ export default function PlacementTestPage() {
                 <div className="flex items-center justify-between text-xs font-bold text-ink-soft">
                   <span>
                     {isArabic
-                      ? `السؤال ${currentIdx + 1} من ${PLACEMENT_QUESTIONS.length}`
-                      : `Question ${currentIdx + 1} of ${PLACEMENT_QUESTIONS.length}`}
+                      ? `السؤال ${questionNo} (حتى ${MAX_ITEMS} كحد أقصى)`
+                      : `Question ${questionNo} (up to ${MAX_ITEMS})`}
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FC] text-[#002868] border border-[#002868]/20 font-black text-[11px]">
                     CEFR {currentQuestion.level} • {currentQuestion.skill.toUpperCase()}
@@ -190,17 +217,22 @@ export default function PlacementTestPage() {
 
                 <div className="flex flex-col gap-3">
                   {currentQuestion.options.map((opt, idx) => {
-                    const selected = answers[currentQuestion.id] === idx;
+                    const selected = picked === idx;
+                    const isRight = idx === currentQuestion.correctIndex;
+                    const tone = !revealed
+                      ? "bg-surface border-border text-ink hover:border-[#002868]/50 hover:bg-white"
+                      : isRight
+                        ? "bg-emerald-50 border-emerald-500 text-emerald-800"
+                        : selected
+                          ? "bg-red-50 border-red-400 text-red-800"
+                          : "bg-surface border-border text-ink-soft opacity-70";
                     return (
                       <button
                         key={idx}
                         type="button"
+                        disabled={revealed}
                         onClick={() => handleSelectOption(idx)}
-                        className={`w-full text-left p-4 rounded-2xl border text-sm font-bold transition-all cursor-pointer flex items-center gap-3 ${
-                          selected
-                            ? "bg-[#EAF1FC] border-[#002868] text-[#002868] shadow-2xs"
-                            : "bg-surface border-border text-ink hover:border-[#002868]/50 hover:bg-white"
-                        }`}
+                        className={`w-full text-left p-4 min-h-[44px] rounded-2xl border text-sm font-bold transition-all cursor-pointer flex items-center gap-3 ${tone}`}
                       >
                         <span className="w-7 h-7 rounded-xl bg-white border border-border flex items-center justify-center text-xs font-black text-[#002868] shrink-0">
                           {String.fromCharCode(65 + idx)}
@@ -209,16 +241,37 @@ export default function PlacementTestPage() {
                       </button>
                     );
                   })}
+                  {!revealed && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectOption(-1)}
+                      className="w-full p-3 min-h-[44px] rounded-2xl border border-dashed border-border text-xs font-bold text-ink-soft hover:text-[#002868] cursor-pointer"
+                    >
+                      {isArabic ? "لا أعرف (أفضل من التخمين)" : "I don't know (better than guessing)"}
+                    </button>
+                  )}
                 </div>
 
-                {currentIdx > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
-                    className="self-start text-xs font-bold text-ink-soft hover:text-[#002868] transition-colors cursor-pointer"
-                  >
-                    ← {isArabic ? "السؤال السابق" : "Previous Question"}
-                  </button>
+                {revealed && (
+                  <div className="flex flex-col gap-3" role="status" aria-live="polite">
+                    <p className="text-sm text-ink font-semibold leading-relaxed bg-[#EAF1FC] border border-[#002868]/20 rounded-2xl p-4">
+                      <span className="font-black">
+                        {picked === currentQuestion.correctIndex
+                          ? isArabic ? "إجابة صحيحة. " : "Correct. "
+                          : picked === -1
+                            ? isArabic ? "لا مشكلة. " : "No problem. "
+                            : isArabic ? "ليست الإجابة الصحيحة. " : "Not quite. "}
+                      </span>
+                      {isArabic ? currentQuestion.explanationAr : currentQuestion.explanation}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="py-3.5 min-h-[44px] rounded-2xl btn-primary-crest text-white font-black text-sm cursor-pointer"
+                    >
+                      {isArabic ? "التالي ←" : "Next →"}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -234,7 +287,7 @@ export default function PlacementTestPage() {
                     <span className="text-4xl">🎉</span>
                     <div>
                       <span className="text-xs font-black uppercase tracking-widest text-[#D91023]">
-                        {isArabic ? "نتيجة اختبار تحديد المستوى" : "Your CEFR Assessment Result"}
+                        {isArabic ? "تقدير مستواك (أولي)" : "Your Level Estimate (rough)"}
                       </span>
                       <div className="mt-2 flex items-center justify-center gap-3 flex-wrap">
                         <span className="text-3xl sm:text-4xl font-black px-5 py-1.5 rounded-2xl bg-[#002868] text-white shadow-sm">
@@ -242,9 +295,11 @@ export default function PlacementTestPage() {
                         </span>
                       </div>
                       <p className="text-xs sm:text-sm font-bold text-ink-soft mt-2">
-                        {meta.titleAr} • IELTS Band Equivalent:{" "}
+                        {isArabic ? `${meta.titleAr} • تقدير IELTS تقريبي: ` : `${meta.titleAr} • IELTS rough guide: `}
                         <span className="text-[#D91023] font-black">{meta.ieltsBand}</span> •{" "}
-                        {result.correctCount}/{result.totalCount} Correct ({result.percentage}%)
+                        {isArabic
+                          ? `${result.correctCount}/${result.totalCount} صحيحة (${result.percentage}%) • الثقة ${result.confidenceLabel === "higher" ? "أعلى" : "متوسطة"}`
+                          : `${result.correctCount}/${result.totalCount} correct (${result.percentage}%) • confidence ${result.confidenceLabel === "higher" ? "higher" : "medium"}`}
                       </p>
                     </div>
 

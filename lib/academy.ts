@@ -178,6 +178,9 @@ export interface PlacementQuestion {
   options: string[];
   correctIndex: number;
   weight: number;
+  /** One short sentence shown after the answer, in our own wording. */
+  explanation: string;
+  explanationAr: string;
 }
 
 export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
@@ -189,6 +192,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["am", "is", "are", "be"],
     correctIndex: 1,
     weight: 1,
+    explanation: "With he, she or it we use \"is\". \"Am\" goes with I and \"are\" with you, we and they.",
+    explanationAr: "مع he وshe وit نستخدم is. و am مع I، و are مع you وwe وthey.",
   },
   {
     id: "q2",
@@ -198,6 +203,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["morning", "tomorrow", "yesterday", "clock"],
     correctIndex: 0,
     weight: 1,
+    explanation: "\"In the morning\" is the usual way to name the early part of the day.",
+    explanationAr: "نقول in the morning لنقصد بداية اليوم.",
   },
   {
     id: "q3",
@@ -207,6 +214,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["go", "going", "went", "gone"],
     correctIndex: 2,
     weight: 1.5,
+    explanation: "\"Last weekend\" is in the past, so the verb needs the past form: went.",
+    explanationAr: "كلمة last weekend تعني الماضي، فنحتاج الفعل في الماضي: went.",
   },
   {
     id: "q4",
@@ -222,6 +231,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     ],
     correctIndex: 2,
     weight: 1.5,
+    explanation: "The caf\u00e9 is closed only on Mondays and open every other day until 10 PM, so Friday at 9 AM works.",
+    explanationAr: "المقهى مغلق يوم الاثنين فقط ومفتوح باقي الأيام، فالجمعة 9 صباحًا مناسبة.",
   },
   {
     id: "q5",
@@ -231,6 +242,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["have", "had", "will have", "having"],
     correctIndex: 1,
     weight: 2,
+    explanation: "For an unreal or unlikely situation we use \"if\" plus the past form (had) and then \"would\".",
+    explanationAr: "للموقف غير الحقيقي نستخدم if مع الماضي (had) ثم would.",
   },
   {
     id: "q6",
@@ -240,6 +253,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["overcome", "overtake", "overlook", "overflow"],
     correctIndex: 0,
     weight: 2,
+    explanation: "\"Overcome a fear\" means to beat it. The other words do not fit with \"fear\".",
+    explanationAr: "overcome a fear تعني التغلب على الخوف، والكلمات الأخرى لا تناسب.",
   },
   {
     id: "q7",
@@ -254,6 +269,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     ],
     correctIndex: 1,
     weight: 2.5,
+    explanation: "\"By the time\" with a future moment asks for the future perfect: will have finished.",
+    explanationAr: "by the time مع وقت في المستقبل تحتاج المستقبل التام: will have finished.",
   },
   {
     id: "q8",
@@ -270,6 +287,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     ],
     correctIndex: 1,
     weight: 2.5,
+    explanation: "The text says 15 minutes of speaking a day beats 2 hours of passive study, so short regular practice wins.",
+    explanationAr: "النص يقول إن 15 دقيقة تحدث يوميًا أفضل من ساعتين دراسة سلبية.",
   },
   {
     id: "q9",
@@ -284,6 +303,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     ],
     correctIndex: 1,
     weight: 3,
+    explanation: "After \"Not only\" at the start, the helper verb comes before the subject: did she meet.",
+    explanationAr: "بعد Not only في بداية الجملة يأتي الفعل المساعد قبل الفاعل: did she meet.",
   },
   {
     id: "q10",
@@ -293,6 +314,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["ambiguous", "lucid", "redundant", "tedious"],
     correctIndex: 1,
     weight: 3,
+    explanation: "\"Lucid\" means clear and easy to understand, which matches \"felt effortless to grasp\".",
+    explanationAr: "lucid تعني واضح وسهل الفهم، وهذا يناسب الجملة.",
   },
   {
     id: "q11",
@@ -302,6 +325,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     options: ["brevity", "redundancy", "complacency", "ambiguity"],
     correctIndex: 0,
     weight: 3.5,
+    explanation: "\"Despite\" sets up a contrast: the remarks were short (brevity) but still valued.",
+    explanationAr: "despite تعني تعارضًا: الكلام كان قصيرًا (brevity) ومع ذلك قُدّر.",
   },
   {
     id: "q12",
@@ -316,6 +341,8 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
     ],
     correctIndex: 0,
     weight: 3.5,
+    explanation: "A formal inverted \"Were ... to\" replaces \"If ... had\": Were the company to have initiated.",
+    explanationAr: "صيغة Were ... to الرسمية تحل محل If ... had.",
   },
 ];
 
@@ -486,6 +513,7 @@ export function evaluatePlacementAnswers(answers: Record<string, number>): {
   for (const q of PLACEMENT_QUESTIONS) {
     totalWeight += q.weight;
     skillStats[q.skill].total += q.weight;
+    // -1 means "I don't know": counts as wrong, never as a lucky guess.
     if (answers[q.id] === q.correctIndex) {
       earnedWeight += q.weight;
       correctCount += 1;
@@ -502,18 +530,10 @@ export function evaluatePlacementAnswers(answers: Record<string, number>): {
   else if (percentage >= 22) level = "A2";
   else level = "A1";
 
-  const grammarScore = Math.max(
-    30,
-    Math.round((skillStats.grammar.earned / (skillStats.grammar.total || 1)) * 100)
-  );
-  const vocabularyScore = Math.max(
-    30,
-    Math.round((skillStats.vocabulary.earned / (skillStats.vocabulary.total || 1)) * 100)
-  );
-  const comprehensionScore = Math.max(
-    30,
-    Math.round((skillStats.comprehension.earned / (skillStats.comprehension.total || 1)) * 100)
-  );
+  // Real percentages of the weighted points earned per skill. No floor: zero correct shows 0%.
+  const grammarScore = Math.round((skillStats.grammar.earned / (skillStats.grammar.total || 1)) * 100);
+  const vocabularyScore = Math.round((skillStats.vocabulary.earned / (skillStats.vocabulary.total || 1)) * 100);
+  const comprehensionScore = Math.round((skillStats.comprehension.earned / (skillStats.comprehension.total || 1)) * 100);
 
   return {
     level,
