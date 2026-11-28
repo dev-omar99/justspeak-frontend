@@ -157,7 +157,7 @@ export default function LeaderboardPage() {
                       </span>
                     </div>
                     <p className="text-xs font-bold text-ink truncate max-w-[90px] text-center mt-1">
-                      {topThree[1].name}
+                      <bdi>{topThree[1].name}</bdi>
                     </p>
                     <p className="text-[11px] font-extrabold text-primary">
                       {activeTab === "speakers"
@@ -186,7 +186,7 @@ export default function LeaderboardPage() {
                       </span>
                     </div>
                     <p className="text-sm font-extrabold text-ink truncate max-w-[110px] text-center mt-2">
-                      {topThree[0].name}
+                      <bdi>{topThree[0].name}</bdi>
                     </p>
                     <p className="text-xs font-black text-amber-600">
                       {activeTab === "speakers"
@@ -215,7 +215,7 @@ export default function LeaderboardPage() {
                       </span>
                     </div>
                     <p className="text-xs font-bold text-ink truncate max-w-[90px] text-center mt-1">
-                      {topThree[2].name}
+                      <bdi>{topThree[2].name}</bdi>
                     </p>
                     <p className="text-[11px] font-extrabold text-primary">
                       {activeTab === "speakers"
@@ -283,7 +283,7 @@ export default function LeaderboardPage() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="text-base">{learner.countryFlag || "🌐"}</span>
-                              <p className="text-xs font-bold text-ink">{learner.name}</p>
+                              <p className="text-xs font-bold text-ink"><bdi>{learner.name}</bdi></p>
                               {isMe && (
                                 <span className="text-[10px] font-extrabold bg-primary text-white px-2 py-0.2 rounded-full">
                                   You
