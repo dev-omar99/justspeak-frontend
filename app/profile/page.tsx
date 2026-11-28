@@ -380,6 +380,14 @@ export default function ProfilePage() {
             </button>
           </div>
 
+          {/* One clear next action */}
+          <Link
+            href="/queue"
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-br from-[#E11D48] to-[#9F0A1C] text-white font-bold text-sm text-center shadow-sm"
+          >
+            Start a 7-minute call
+          </Link>
+
           {/* User Identity Row with Golden Shield Badge (Screenshot #11) */}
           <button
             type="button"
