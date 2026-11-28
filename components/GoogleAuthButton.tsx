@@ -30,6 +30,12 @@ export default function GoogleAuthButton({
   // show Google's own sign-in button, which opens the normal popup and always works after a tap.
   const [showFallback, setShowFallback] = useState(false);
   const fallbackRef = useRef<HTMLDivElement | null>(null);
+  // Google only accepts sign-in from origins listed in its console, and preview domains are not listed.
+  // Say so plainly instead of leaving two buttons that both do nothing.
+  const [previewHost, setPreviewHost] = useState(false);
+  useEffect(() => {
+    setPreviewHost(/\.vercel\.app$/.test(window.location.hostname) && window.location.hostname !== "justspeak-one.vercel.app");
+  }, []);
 
   const googleClientId =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -130,6 +136,7 @@ export default function GoogleAuthButton({
 
   return (
     <>
+    {!showFallback && (
     <button
       type="button"
       onClick={handleGoogleClick}
@@ -161,10 +168,16 @@ export default function GoogleAuthButton({
       )}
       <span>{loading ? "Connecting to Google..." : label}</span>
     </button>
+    )}
     {showFallback && (
       <div className="w-full flex flex-col items-center gap-1 mt-2">
         <p className="text-[11px] text-slate-400">Tap the Google button below to continue.</p>
         <div ref={fallbackRef} className="w-full flex justify-center min-h-[44px]" />
+        {previewHost && (
+          <p className="text-[11px] text-amber-300 text-center">
+            This is a test link, so Google sign-in is switched off here. Use your email and password, or open justspeak-one.vercel.app to sign in with Google.
+          </p>
+        )}
       </div>
     )}
     </>
