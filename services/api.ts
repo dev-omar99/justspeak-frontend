@@ -58,7 +58,39 @@ class ApiClient {
     this.baseUrl = baseUrl || "";
   }
 
-  private async request<T>(
+  /** GET requests currently on the wire, shared so two components asking for the same thing cost one call. */
+  private inflight = new Map<string, Promise<unknown>>();
+
+  /**
+   * GETs with the same URL and token that overlap in time share one network call
+   * (the dashboard was fetched twice on Home, Learn and My Page). GETs also stop
+   * waiting after 25 s with a message that says to retry. Writes are untouched.
+   */
+  private request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const method = (options.method || "GET").toUpperCase();
+    if (method !== "GET") return this.requestOnce<T>(endpoint, options);
+    const auth = (options.headers as Record<string, string> | undefined)?.Authorization || "";
+    const key = `${endpoint}|${auth}`;
+    const hit = this.inflight.get(key);
+    if (hit) return hit as Promise<T>;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 25000) : null;
+    const p = this.requestOnce<T>(endpoint, controller ? { ...options, signal: controller.signal } : options)
+      .catch((err: any) => {
+        if (err?.name === "AbortError") {
+          throw new Error("This is taking longer than usual. Check your connection and try again.");
+        }
+        throw err;
+      })
+      .finally(() => {
+        if (timer) clearTimeout(timer);
+        this.inflight.delete(key);
+      });
+    this.inflight.set(key, p);
+    return p;
+  }
+
+  private async requestOnce<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
