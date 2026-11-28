@@ -1,6 +1,7 @@
 "use client";
 
 import ScoreBanner from "../../../../components/ai-partner/report/ScoreBanner";
+import ChatTranscript from "../../../../components/ai-partner/report/ChatTranscript";
 import TurnNotes from "../../../../components/ai-partner/report/TurnNotes";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
 import { overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
@@ -377,14 +378,7 @@ export default function AiPartnerReportPage() {
         {showStandaloneTranscript && (
           <section className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3" aria-label="Transcript">
             <h2 className="font-black text-sm">Your conversation</h2>
-            {transcript.map((turn, i) => (
-              <div key={i} className="text-sm border-b border-border/60 last:border-0 pb-3 last:pb-0">
-                <span className="text-[10px] font-black text-ink-soft uppercase tracking-wide">
-                  {turn.role === "user" ? "You" : "Coach"}
-                </span>
-                <p className={turn.role === "user" ? "font-semibold" : "text-ink-soft"}>{turn.text}</p>
-              </div>
-            ))}
+            <ChatTranscript turns={transcript} token={getToken()} sessionId={sessionId} />
           </section>
         )}
 

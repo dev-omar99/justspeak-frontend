@@ -644,3 +644,25 @@ export async function fetchAiPartnerCatalog(token: string) {
     clearTimeout(timer);
   }
 }
+
+export interface TurnIssue {
+  kind: "grammar" | "vocabulary" | "unclear";
+  said: string;
+  why: string;
+}
+
+export interface TurnCheck {
+  index: number;
+  verdict: "correct" | "needs_fix";
+  issues: TurnIssue[];
+  refreshed?: string;
+}
+
+/** Per-sentence verdicts for the chat view. `enabled` is false for accounts without access yet. */
+export function fetchTurnChecks(token: string, sessionId: string) {
+  return request<{ enabled: boolean; checks: TurnCheck[] }>(
+    `/ai-partner/sessions/${sessionId}/turn-checks`,
+    token,
+    { method: "POST" },
+  );
+}
