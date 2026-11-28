@@ -375,6 +375,11 @@ export default function PlacementTestPage() {
                         🎙️ {isArabic ? "ابدأ أول مكالمة الآن" : "Start First Call"}
                       </Link>
                     </div>
+                    <Link href="/ai-partner" className="text-xs font-bold text-[#002868] underline underline-offset-4">
+                      {isArabic
+                        ? "اختياري: أكّد مستواك بجلسة تحدث قصيرة مع شريك الذكاء الاصطناعي"
+                        : "Optional: confirm your level with a short speaking session with the AI Partner"}
+                    </Link>
                   </div>
                 );
               })()}
