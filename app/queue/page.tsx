@@ -575,7 +575,7 @@ function QueueContent() {
                     ⏳ No partner matched in that wave yet
                   </p>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    You&apos;re still in line — we&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our AI Coach:
+                    You&apos;re still in line — we&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our Quick Coach:
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -583,7 +583,7 @@ function QueueContent() {
                     href="/ai-studio"
                     className="flex-1 text-center px-3.5 py-2.5 rounded-xl bg-[#D91023] hover:bg-[#BE123C] text-white text-xs font-black transition-all"
                   >
-                    🤖 Practice with AI Coach →
+                    🤖 Practice with Quick Coach →
                   </Link>
                   <Link
                     href="/learn/saved-words"

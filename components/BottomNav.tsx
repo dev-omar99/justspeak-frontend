@@ -44,7 +44,7 @@ export default function BottomNav() {
     },
     {
       href: "/ai-studio",
-      label: "AI Coach",
+      label: "Quick Coach",
       icon: "✨",
       match: (p: string) => p.startsWith("/ai-studio"),
     },

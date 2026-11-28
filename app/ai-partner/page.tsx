@@ -233,7 +233,8 @@ export default function AiPartnerPage() {
       if (practiceQ && mode === "free-talk") {
         sessionStorage.setItem("ai_partner_practice_q", practiceQ);
       }
-      router.push(`/ai-partner/session/${sessionId}`);
+      // replace: the setup screen is not worth returning to once the call has started.
+      router.replace(`/ai-partner/session/${sessionId}`);
     } catch (err: any) {
       setError(err.message || "Could not start the session.");
       setStarting(false);

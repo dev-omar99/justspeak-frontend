@@ -639,6 +639,10 @@ export default function AiStudioPage() {
                     <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                       Practice real-world scenarios by voice (interviews, travel, IELTS) and receive honest grammar fixes and phrasing upgrades.
                     </p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Quick Coach is short practice with token balance. For full lessons with a scored report, use{" "}
+                      <Link href="/ai-partner/learning" className="underline font-bold text-white">AI Partner</Link>.
+                    </p>
                   </div>
 
                   <Link

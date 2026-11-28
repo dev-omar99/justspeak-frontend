@@ -156,10 +156,10 @@ export default function OnboardingPage() {
       };
       saveUser(updated);
 
-      // 4. Redirect to home dashboard
-      router.push("/");
+      // 4. First step for a new learner: choose a field (AI Partner path), not an empty home
+      router.push("/ai-partner/learning");
     } catch {
-      router.push("/");
+      router.push("/ai-partner/learning");
     } finally {
       setLoading(false);
     }

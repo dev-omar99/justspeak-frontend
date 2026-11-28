@@ -84,7 +84,7 @@ const START_OPTIONS = [
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/ai-partner",
-    label: "Home",
+    label: "AI Partner home",
     icon: ICON.home,
     active: (p) => p === "/ai-partner" || p === "/ai-partner/",
   },

@@ -9,12 +9,14 @@ import { applyScoreCap, resultDial, reportOverall100, overallSummary, PASS_MIN_1
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { afterLesson, lessonHref } from "../../../../lib/catalog";
 import { highlightFillers } from "../../../../lib/filler-highlight";
 import { getToken } from "../../../../lib/auth";
 import {
   countFillersByWord,
   fetchAiPartnerReport,
   fetchAiPartnerSession,
+  fetchAiPartnerCatalog,
   PronunciationAssessment,
   SessionReportV2,
   setPracticeQuestion,
@@ -236,6 +238,8 @@ export default function AiPartnerReportPage() {
   const [tab, setTab] = useState<"coaching" | "analytics" | "transcript">("coaching");
   const [practicing, setPracticing] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  // Lesson this session belonged to (null for open practice): drives "Practise this lesson again" and "Next lesson".
+  const [lessonNext, setLessonNext] = useState<ReturnType<typeof afterLesson>>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -258,6 +262,12 @@ export default function AiPartnerReportPage() {
         );
         setTranscript(turns);
         setLevel(data?.session?.level ?? "");
+        const lid = (data?.session?.lessonId as string | null | undefined) ?? null;
+        if (lid && token) {
+          void fetchAiPartnerCatalog(token)
+            .then((c) => { if (!cancelled) setLessonNext(afterLesson(c.fields, lid)); })
+            .catch(() => undefined);
+        }
         setMode(data?.session?.mode ?? "");
         if (!body && attempt < 20) {
           timer = setTimeout(() => void load(attempt + 1), 3000);
@@ -299,7 +309,7 @@ export default function AiPartnerReportPage() {
     setPracticing(question);
     try {
       setPracticeQuestion(question);
-      router.push("/ai-partner");
+      router.push("/ai-partner?setup=1");
     } catch {
       setPracticing(null);
     }
@@ -399,10 +409,10 @@ export default function AiPartnerReportPage() {
               try fuller answers, even mistakes help.
             </p>
             <Link
-              href="/ai-partner"
+              href={lessonNext ? lessonHref(lessonNext.lesson.id) : "/ai-partner?setup=1"}
               className="self-start btn-primary-crest text-white text-sm font-black rounded-xl px-5 py-3 min-h-[44px] inline-flex items-center"
             >
-              New session
+              {lessonNext ? "Try this lesson again" : "New session"}
             </Link>
           </div>
         )}
@@ -876,13 +886,31 @@ export default function AiPartnerReportPage() {
           </>
         )}
 
-        <div className="flex gap-3">
-          <Link
-            href="/ai-partner"
-            className="btn-primary-crest text-white font-black rounded-2xl px-6 py-3.5 text-sm text-center"
-          >
-            New session
-          </Link>
+        <div className="flex gap-3 flex-wrap">
+          {lessonNext && (
+            <Link
+              href={lessonHref(lessonNext.lesson.id)}
+              className="btn-primary-crest text-white font-black rounded-2xl px-6 py-3.5 text-sm text-center"
+            >
+              Practise this lesson again
+            </Link>
+          )}
+          {lessonNext?.next && (
+            <Link
+              href={lessonHref(lessonNext.next.id)}
+              className="bg-emerald-600 text-white font-black rounded-2xl px-6 py-3.5 text-sm text-center"
+            >
+              Next lesson
+            </Link>
+          )}
+          {!lessonNext && (
+            <Link
+              href="/ai-partner?setup=1"
+              className="btn-primary-crest text-white font-black rounded-2xl px-6 py-3.5 text-sm text-center"
+            >
+              New session
+            </Link>
+          )}
           <Link
             href="/ai-partner/recordings"
             className="bg-white border border-border text-ink font-black rounded-2xl px-6 py-3.5 text-sm text-center"
