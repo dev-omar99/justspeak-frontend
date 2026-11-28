@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageTransition from "../../../components/PageTransition";
-import { reportOverall100 } from "../../../lib/score-scale";
+import { PASS_MIN_100, reportOverall100, toTen } from "../../../lib/score-scale";
 import { getToken } from "../../../lib/auth";
 import { AiSessionListItem, fetchAiPartnerSessions, fetchAiPartnerStatus, RoleplaySummary } from "../../../services/ai-partner";
 import {
@@ -259,10 +259,10 @@ function FragmentRow({
           {scored && score !== null ? (
             <span
               className={`text-base font-black tabular-nums ${
-                score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-red-600"
+                score >= PASS_MIN_100 ? "text-emerald-600" : "text-red-600"
               }`}
             >
-              {score}
+              {toTen(score)}/10
             </span>
           ) : (
             <span className="text-[11px] font-bold text-ink-soft">{session.report ? "No score" : "—"}</span>
