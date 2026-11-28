@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { backFallback, showBack } from "../lib/back-nav";
+import { hasInAppHistory, noteNavigation } from "../lib/nav-history";
 
 /**
  * Shared "Back" button: returns to the page the learner came from, or to the parent page when the
@@ -11,19 +12,16 @@ import { backFallback, showBack } from "../lib/back-nav";
 export default function BackBar() {
   const pathname = usePathname();
   const router = useRouter();
-  // Counts in-app page changes since this page was loaded. 0 = opened directly (link, refresh, new tab).
-  const seen = useRef<string | null>(null);
-  const moves = useRef(0);
+  // Counts in-app page changes so Back knows whether there is an earlier page to return to.
   useEffect(() => {
-    if (seen.current !== null && seen.current !== pathname) moves.current += 1;
-    seen.current = pathname;
+    noteNavigation(pathname);
   }, [pathname]);
   if (!showBack(pathname)) return null;
   // English on every page: the learner screens are English only, and the bar must not flip sides in Arabic mode.
   const label = "Back";
   function goBack() {
     // An earlier in-app page exists: go back to it. Otherwise go to the parent page, never out of the app.
-    if (moves.current > 0) router.back();
+    if (hasInAppHistory()) router.back();
     else router.push(backFallback(pathname));
   }
   return (
