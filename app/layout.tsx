@@ -144,6 +144,13 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr">
       <head>
+        {/* Fonts: connect early and load as a normal stylesheet link (not a CSS @import chain). */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+        />
         <meta name="google-site-verification" content="y4E7tL4EfWk6-d8afNg8Mnh5ZvjKrL5oSr9AIJW9b7U" />
         <meta name="google-site-verification" content="cgGNxHk2ikzr0qE8dAp875EbO-l-2xRLoopzgwFQeGs" />
         <script

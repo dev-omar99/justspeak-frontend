@@ -398,7 +398,7 @@ export default function ProfilePage() {
                 {avatarUrl ? (
                   <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                     {avatarUrl.startsWith("data:") || avatarUrl.startsWith("http") ? (
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={avatarUrl}
                         alt={displayName}
                         className="w-full h-full object-cover"
@@ -746,7 +746,7 @@ export default function ProfilePage() {
                     {avatarUrl ? (
                       avatarUrl.startsWith("data:") ||
                       avatarUrl.startsWith("http") ? (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={avatarUrl}
                           alt="Preview"
                           className="w-full h-full object-cover"

@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
                     <div className="relative">
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 border-2 border-slate-300 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
                         {topThree[1].avatarUrl ? (
-                          <img src={topThree[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={topThree[1].avatarUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <span>🥈</span>
                         )}
@@ -176,7 +176,7 @@ export default function LeaderboardPage() {
                     <div className="relative">
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-amber-50 border-4 border-amber-400 text-ink font-bold text-2xl flex items-center justify-center shadow-xl shadow-amber-400/20 overflow-hidden ring-4 ring-amber-400/30">
                         {topThree[0].avatarUrl ? (
-                          <img src={topThree[0].avatarUrl} alt="" className="w-full h-full object-cover rounded-3xl" />
+                          <img loading="lazy" decoding="async" src={topThree[0].avatarUrl} alt="" className="w-full h-full object-cover rounded-3xl" />
                         ) : (
                           <span>👑</span>
                         )}
@@ -205,7 +205,7 @@ export default function LeaderboardPage() {
                     <div className="relative">
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-50 border-2 border-amber-600/40 text-ink font-bold text-lg flex items-center justify-center shadow-md overflow-hidden">
                         {topThree[2].avatarUrl ? (
-                          <img src={topThree[2].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={topThree[2].avatarUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <span>🥉</span>
                         )}
@@ -267,7 +267,7 @@ export default function LeaderboardPage() {
 
                           <div className="w-10 h-10 rounded-xl bg-surface border border-border text-ink font-bold text-xs flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {learner.avatarUrl ? (
-                              <img src={learner.avatarUrl} alt="" className="w-full h-full object-cover" />
+                              <img loading="lazy" decoding="async" src={learner.avatarUrl} alt="" className="w-full h-full object-cover" />
                             ) : (
                               <span>{learner.name.charAt(0).toUpperCase()}</span>
                             )}
