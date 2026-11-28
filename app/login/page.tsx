@@ -221,7 +221,7 @@ export default function LoginPage() {
                           setError(null);
                           setSuccessMsg(null);
                         }}
-                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors min-h-[44px] inline-flex items-center px-1"
                       >
                         {isArabic ? "نسيت كلمة المرور؟" : "Forgot password?"}
                       </button>
@@ -239,9 +239,9 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 text-sm"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                        title={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 text-sm min-w-[44px] min-h-[44px] inline-flex items-center justify-center"
+                        aria-label={showPassword ? (isArabic ? "إخفاء كلمة المرور" : "Hide password") : (isArabic ? "إظهار كلمة المرور" : "Show password")}
+                        title={showPassword ? (isArabic ? "إخفاء كلمة المرور" : "Hide password") : (isArabic ? "إظهار كلمة المرور" : "Show password")}
                       >
                         <EyeIcon off={showPassword} />
                       </button>
@@ -259,7 +259,7 @@ export default function LoginPage() {
                     ) : (
                       <>
                         <span>{isArabic ? "تسجيل الدخول" : "Sign In"}</span>
-                        <span>→</span>
+                        <span aria-hidden="true">{isArabic ? "←" : "→"}</span>
                       </>
                     )}
                   </button>
@@ -351,10 +351,10 @@ export default function LoginPage() {
             {isArabic ? "ليس لديك حساب؟ " : "Don't have an account? "}
             <Link
               href="/signup"
-              className="text-blue-400 hover:text-blue-300 font-bold transition-colors inline-flex items-center gap-1"
+              className="text-blue-400 hover:text-blue-300 font-bold transition-colors inline-flex items-center gap-1 min-h-[44px] px-1"
             >
               <span>{isArabic ? "أنشئ حسابك مجاناً" : "Create one for free"}</span>
-              <span>→</span>
+              <span aria-hidden="true">{isArabic ? "←" : "→"}</span>
             </Link>
           </p>
 

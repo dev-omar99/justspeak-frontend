@@ -101,7 +101,7 @@ export function findLesson(fields: CatalogField[], lessonId: string): { lesson: 
 
 export function fieldSubtitle(f: CatalogField): string {
   if (f.totalLessons === 0) return "Coming soon";
-  if (f.passedLessons === 0) return `${f.totalLessons} lessons`;
+  if (f.passedLessons === 0) return f.totalLessons === 1 ? "1 lesson" : `${f.totalLessons} lessons`;
   return `${f.passedLessons} of ${f.totalLessons} passed`;
 }
 

@@ -12,7 +12,10 @@ export const metadata: Metadata = {
 export default function AiPartnerLayout({ children }: { children: React.ReactNode }) {
   return (
     <AiPartnerGate>
-      <AiPartnerShell>{children}</AiPartnerShell>
+      {/* AI Partner pages are English only: keep them left-to-right even when the site language is Arabic. */}
+      <div dir="ltr" lang="en">
+        <AiPartnerShell>{children}</AiPartnerShell>
+      </div>
     </AiPartnerGate>
   );
 }

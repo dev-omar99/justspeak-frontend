@@ -53,6 +53,7 @@ export default function PathPage() {
                     onClick={() => setPicked(l.level)}
                     disabled={l.totalLessons === 0}
                     title={l.totalLessons === 0 ? "Lessons coming soon" : undefined}
+                    aria-label={l.totalLessons === 0 ? `${l.level}, lessons coming soon` : l.level}
                     className={`rounded-full px-4 py-1.5 text-sm font-black border-[1.5px] ${
                       l.totalLessons === 0
                         ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed"
@@ -62,6 +63,7 @@ export default function PathPage() {
                     }`}
                   >
                     {l.level}
+                    {l.totalLessons === 0 && <span className="ml-1 text-[10px] font-bold uppercase">soon</span>}
                   </button>
                 ))}
               </div>

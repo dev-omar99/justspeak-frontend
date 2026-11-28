@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import PageTransition from "../../../../components/PageTransition";
 import Back from "../../../../components/ai-partner/catalog/Back";
 import LoadError from "../../../../components/ai-partner/programmes/LoadError";
@@ -12,6 +13,12 @@ export default function FieldPage() {
   const params = useParams<{ fieldId: string }>();
   const { fields, error, retry } = useCatalog();
   const field = fields?.find((f) => f.id === params.fieldId);
+  const router = useRouter();
+  // One programme means no choice to make: go straight to its levels and lessons.
+  const only = field && field.programmes.length === 1 ? field.programmes[0] : null;
+  useEffect(() => {
+    if (only) router.replace(`/ai-partner/path/${encodeURIComponent(only.id)}`);
+  }, [only, router]);
   return (
     <PageTransition>
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">

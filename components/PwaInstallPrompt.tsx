@@ -36,11 +36,11 @@ export default function PwaInstallPrompt() {
       return;
     }
 
-    // 3. Check dismissal in localStorage (show again after 3 days)
+    // 3. Check dismissal in localStorage (show again after 14 days)
     const dismissedAt = localStorage.getItem("justspeak_pwa_dismissed");
     if (dismissedAt) {
       const daysPassed = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
-      if (daysPassed < 3) {
+      if (daysPassed < 14) {
         return;
       }
     }
