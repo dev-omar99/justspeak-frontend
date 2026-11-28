@@ -404,6 +404,8 @@ export interface SessionReportV2 {
   /** null = could not be measured (not a zero). Older stored reports may hold 0 with INSUFFICIENT_DATA. */
   dimensions: { grammar: number | null; vocabulary: number | null; fluency: number | null; pronunciation: number | null; interaction: number | null; coherence?: number | null };
   dimension_notes?: Partial<Record<string, { why: string; quote: string }>>;
+  /** Lesson checklist points the conversation covered (absent on older reports). */
+  checklist?: { label: string; covered: boolean }[];
   dimension_basis?: Partial<Record<string, "measured" | "estimated">>;
   metrics_echo: {
     student_speech_sec: number;

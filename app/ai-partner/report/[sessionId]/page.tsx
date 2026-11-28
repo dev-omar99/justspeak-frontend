@@ -523,6 +523,20 @@ export default function AiPartnerReportPage() {
                               </span>
                             )}
                             <p className="text-sm text-ink-soft">{report.summary}</p>
+                            {report.checklist && report.checklist.length > 0 && (
+                              <div className="mt-2" aria-label="Lesson checklist">
+                                <p className="text-xs font-black">
+                                  Covered {report.checklist.filter((c) => c.covered).length} of {report.checklist.length} lesson points
+                                </p>
+                                <ul className="mt-1 space-y-0.5">
+                                  {report.checklist.map((c) => (
+                                    <li key={c.label} className={`text-xs ${c.covered ? "text-ink" : "text-ink-soft"}`}>
+                                      {c.covered ? "✓" : "○"} {c.label}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
