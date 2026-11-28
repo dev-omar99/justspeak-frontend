@@ -74,6 +74,7 @@ export default function ShadowingStudioPage() {
     if (typeof window === "undefined") return;
 
     function mountPlayer() {
+      if (selectedClip.noVideo) return;
       if (!window.YT || !window.YT.Player) return;
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
@@ -303,7 +304,13 @@ export default function ShadowingStudioPage() {
             {/* Video + Active Line Controls */}
             <div className="lg:col-span-3 flex flex-col gap-4">
               <div className="rounded-[24px] overflow-hidden bg-black border border-border shadow-md aspect-video relative">
-                <div id="justspeak-yt-player" className="w-full h-full" />
+                {selectedClip.noVideo ? (
+                  <div className="w-full h-full flex items-center justify-center text-center p-6 text-white text-sm font-bold bg-[#002868]">
+                    No video for this clip. Use the voice button to hear each line, then shadow it.
+                  </div>
+                ) : (
+                  <div id="justspeak-yt-player" className="w-full h-full" />
+                )}
                 {isPausedForUser && (
                   <div className="absolute bottom-3 left-3 right-3 bg-[#002868]/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl text-xs font-black flex items-center justify-between shadow-xl">
                     <span>⏸️ Auto-Paused! Your turn to shadow this line 🎙️</span>

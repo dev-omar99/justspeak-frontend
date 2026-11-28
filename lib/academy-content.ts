@@ -324,6 +324,8 @@ export interface ShadowingClip {
   source: string;
   level: CefrLevel;
   youtubeId: string;
+  /** True when there is no working video: the page hides the player and uses the built-in voice. */
+  noVideo?: boolean;
   description: string;
   lines: ShadowingLine[];
 }
@@ -363,6 +365,7 @@ export const SHADOWING_CLIPS: ShadowingClip[] = [
     source: "JustSpeak original dialogue (no external source)",
     level: "A2",
     youtubeId: "f1b3f0c2e6Q",
+    noVideo: true,
     description: "Short, practical everyday sentences with clear articulation — perfect for A1/A2 learners (also supports built-in native voice mode).",
     lines: [
       { id: "a1", start: 0, end: 4, speaker: "Barista", text: "Good morning! What can I get started for you today?", translationAr: "صباح الخير! ماذا تحب أن أجهز لك اليوم؟" },
