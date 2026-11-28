@@ -8,8 +8,9 @@ import Back from "../../../../components/ai-partner/catalog/Back";
 import LessonRow from "../../../../components/ai-partner/catalog/LessonRow";
 import LoadError from "../../../../components/ai-partner/programmes/LoadError";
 import { useCatalog } from "../../../../components/ai-partner/catalog/useCatalog";
-import { nextLessonOf, toUnits } from "../../../../lib/catalog";
-import { findTrackDef, resolveTrack, trackLevels } from "../../../../lib/tree";
+import { toUnits } from "../../../../lib/catalog";
+import { getAcademyProgress } from "../../../../lib/academy";
+import { findTrackDef, partLessons, resolveTrack, startLevel, trackLevels } from "../../../../lib/tree";
 import type { CatalogLevelId } from "../../../../services/ai-partner";
 
 /**
@@ -27,12 +28,14 @@ export default function TrackPage() {
   const [shownUnits, setShownUnits] = useState(1);
   useEffect(() => setShownUnits(1), [pickedLevel, part]);
 
-  const programme = track ? (part === "interview" ? track.interview : track.lessons) ?? track.lessons ?? track.interview : null;
-  const recommended = programme?.recommendedLevel;
-  const levelId: CatalogLevelId | null = pickedLevel && levels.includes(pickedLevel) ? pickedLevel : recommended && levels.includes(recommended) ? recommended : levels[0] ?? null;
-  const level = programme?.levels.find((l) => l.level === levelId);
-  const next = level ? nextLessonOf(level) : null;
-  const units = level ? toUnits(level.lessons) : [];
+  // Placement result (saved by the placement test) picks the starting level; the learner can always change it.
+  const placed = typeof window !== "undefined" && getAcademyProgress().placementCompleted ? getAcademyProgress().cefrLevel : null;
+  const levelId: CatalogLevelId | null = pickedLevel && levels.includes(pickedLevel) ? pickedLevel : startLevel(levels, placed);
+  const fromPlacement = !pickedLevel && !!placed && levelId !== null && startLevel(levels, placed) === (placed === "C2" ? "C1" : placed);
+  const lessons = track && levelId ? partLessons(track, part === "interview" && track.interview ? "interview" : "lessons", levelId) : [];
+  const next = lessons.find((l) => l.status !== "passed") ?? null;
+  const passed = lessons.filter((l) => l.status === "passed").length;
+  const units = toUnits(lessons);
   const hasTwoParts = !!track?.lessons && !!track?.interview;
 
   return (
@@ -46,7 +49,7 @@ export default function TrackPage() {
           {fields && (!def || !track || (!track.lessons && !track.interview)) && (
             <p className="text-sm text-ink-soft">This track is not available yet. <Link href="/ai-partner/learning" className="font-bold text-crimson">Back to tracks</Link></p>
           )}
-          {track && levelId && programme && (
+          {track && levelId && (
             <>
               <p className="text-sm font-black pt-1">1. Your level</p>
               <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Level">
@@ -82,8 +85,8 @@ export default function TrackPage() {
               )}
               <p className="text-sm font-black pt-2">2. Your lessons</p>
               <p className="text-xs text-ink-soft">
-                {level && level.totalLessons > 0
-                  ? `${levelId} · ${level.passedLessons} of ${level.totalLessons} passed · pass mark 6/10`
+                {lessons.length > 0
+                  ? `${levelId} · ${passed} of ${lessons.length} passed · pass mark 6/10${fromPlacement ? " · from your placement test" : ""}`
                   : `No ${levelId} lessons in this part yet. Try the other part or another level.`}
               </p>
               {units.slice(0, shownUnits).map((unit, ui) => (

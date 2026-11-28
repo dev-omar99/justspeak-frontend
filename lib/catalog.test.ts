@@ -84,3 +84,20 @@ test("tree: resolves tracks from the catalog and lists levels with lessons", asy
   assert.deepEqual(trackLevels(r), ["A1", "A2", "B1"]);
   assert.equal(treeAvailable([] as never), false);
 });
+
+test("tree: legacy lessons merge first without duplicates, placement picks the start level", async () => {
+  const { resolveTrack, findTrackDef, partLessons, startLevel, trackLessonCount } = await import("./tree.ts");
+  const les = (id: string) => ({ id, status: "not_started" }) as never;
+  const prog = (id: string, byLevel: Record<string, string[]>) =>
+    ({ id, totalLessons: Object.values(byLevel).flat().length, passedLessons: 0, levels: Object.entries(byLevel).map(([level, ids]) => ({ level, totalLessons: ids.length, passedLessons: 0, lessons: ids.map(les) })) }) as never;
+  const fields = [
+    { id: "travel", title: "Travel", programmes: [prog("travel-english", { A2: ["old-1", "dup"] }), prog("travel-conversations", { A2: ["dup", "new-1"], B1: ["new-2"] })] },
+  ] as never;
+  const r = resolveTrack(fields, findTrackDef("travel")!);
+  assert.deepEqual(partLessons(r, "lessons", "A2").map((l) => l.id), ["old-1", "dup", "new-1"]);
+  assert.equal(trackLessonCount(r), 5);
+  assert.equal(startLevel(["A1", "A2", "B1"], "B1"), "B1");
+  assert.equal(startLevel(["A1", "C1"], "C2"), "C1");
+  assert.equal(startLevel(["A1", "A2"], "B2"), "A1");
+  assert.equal(startLevel(["A2"], null), "A2");
+});

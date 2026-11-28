@@ -5,7 +5,7 @@ import PageTransition from "../../../components/PageTransition";
 import LoadError from "../../../components/ai-partner/programmes/LoadError";
 import { useCatalog } from "../../../components/ai-partner/catalog/useCatalog";
 import { SECTIONS, resolveTrack, trackLessonCount, trackLevels, trackPassedCount, treeAvailable } from "../../../lib/tree";
-import { lastPracticeOf, lessonHref, levelsWithLessons, programmeState, shortDate, trackGroups } from "../../../lib/catalog";
+import { fieldSubtitle, lastPracticeOf, lessonHref, programmeState, shortDate } from "../../../lib/catalog";
 
 /** Short mark shown in the navy tile of each field card (our own, no artwork). */
 const MARK: Record<string, string> = { work: "W", travel: "T", academic: "A", interviews: "I", "daily-life": "D" };
@@ -87,31 +87,21 @@ export default function LearningPage() {
               ))}
             </>
           )}
-          {fields && !treeAvailable(fields) && (<>
-          <h1 className="text-2xl font-black pt-1">Choose a track</h1>
-          {fields && trackGroups(fields).map(({ field, tracks }) => (
-            <section key={field.id} className="flex flex-col gap-2">
-              <h2 className="text-[11px] font-black tracking-wider text-ink-soft uppercase pt-2">{field.title}</h2>
-              {tracks.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/ai-partner/path/${encodeURIComponent(p.id)}`}
-                  className="bg-white border-[1.5px] border-border rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-crimson transition-colors"
-                >
-                  <span className="w-10 h-10 rounded-xl bg-crest-navy text-white grid place-items-center font-black shrink-0">{MARK[field.id] ?? field.title[0]}</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-black text-base">{p.title}</span>
-                    <span className="block text-xs text-ink-soft mt-0.5">
-                      {p.totalLessons} lessons · {levelsWithLessons(p).map((l) => l.level).join(" ")}
-                      {p.passedLessons > 0 ? ` · ${p.passedLessons} passed` : ""}
-                    </span>
-                  </span>
-                  <span className="text-ink-soft font-black">›</span>
-                </Link>
-              ))}
-            </section>
+          <h1 className="text-2xl font-black pt-1">Choose a field</h1>
+          {fields?.map((f) => (
+            <Link
+              key={f.id}
+              href={`/ai-partner/field/${encodeURIComponent(f.id)}`}
+              className="bg-white border-[1.5px] border-border rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-crimson transition-colors"
+            >
+              <span className="w-10 h-10 rounded-xl bg-crest-navy text-white grid place-items-center font-black shrink-0">{MARK[f.id] ?? f.title[0]}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-black text-base">{f.title}</span>
+                <span className="block text-xs text-ink-soft mt-0.5">{fieldSubtitle(f)}</span>
+              </span>
+              <span className="text-ink-soft font-black">›</span>
+            </Link>
           ))}
-          </>)}
           <div className="flex justify-center gap-5 pt-3 text-sm font-bold text-ink-soft">
             <Link href="/ai-partner?setup=1" className="hover:text-ink">Free practice ›</Link>
             <Link href="/ai-partner/learning/programmes" className="hover:text-ink">Earlier programmes ›</Link>
