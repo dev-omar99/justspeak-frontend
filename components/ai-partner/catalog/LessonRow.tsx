@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { attemptDeltas, chipFor, lessonHref, shortDate, trendOf } from "../../../lib/catalog";
+import { attemptDeltas, bestChip, chipFor, lessonHref, shortDate, trendOf } from "../../../lib/catalog";
 import type { CatalogLesson } from "../../../services/ai-partner";
 import ScoreChip from "./ScoreChip";
 import Trend from "./Trend";
@@ -25,6 +25,7 @@ export default function LessonRow({
 }) {
   const [open, setOpen] = useState(false);
   const chips = lesson.attempts.map(chipFor);
+  const best = bestChip(chips);
   const deltas = attemptDeltas(lesson.attempts);
   const passed = lesson.status === "passed";
   // Tried at least once and not passed: shown red. Never guessed for untried lessons.
@@ -74,9 +75,10 @@ export default function LessonRow({
             <span className="text-[11px] text-slate-500">{isNext ? "Not tried · next" : "Not tried"}</span>
           ) : (
             <>
-              {chips.map((c) => (
-                <ScoreChip key={c.sessionId} chip={c} />
-              ))}
+              {best && <ScoreChip chip={best} />}
+              <span className="text-[11px] text-slate-500">
+                {chips.length === 1 ? "Best · 1 try" : `Best · ${chips.length} tries`}
+              </span>
               <span className="ml-auto">
                 <Trend delta={trendOf(lesson.attempts)} />
               </span>

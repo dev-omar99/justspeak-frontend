@@ -31,6 +31,19 @@ export function chipFor(a: CatalogAttempt): ChipView {
 }
 
 /**
+ * The chip with the highest measured score (the earliest one wins a tie).
+ * Falls back to the latest chip when none is measured; null for an empty list.
+ */
+export function bestChip(chips: ChipView[]): ChipView | null {
+  if (chips.length === 0) return null;
+  let best: ChipView | null = null;
+  for (const c of chips) {
+    if (c.value !== null && (best === null || c.value > (best.value as number))) best = c;
+  }
+  return best ?? chips[chips.length - 1];
+}
+
+/**
  * Change in points out of 10 between the last two attempts that have a measured score.
  * Returns null when fewer than two measured attempts exist (no arrow is shown then).
  */

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { attemptDeltas, chipFor, lastPracticeOf, programmeState, stepsToGo, toUnits, trendOf, trendText } from "./catalog.ts";
+import { attemptDeltas, bestChip, chipFor, lastPracticeOf, programmeState, stepsToGo, toUnits, trendOf, trendText } from "./catalog.ts";
 
 const a = (score: number | null, id = "s") => ({ sessionId: id, at: "2026-11-27T10:00:00.000Z", score });
 
@@ -50,4 +50,11 @@ test("programme helpers: last practice, steps to go, state", () => {
   assert.equal(programmeState(prog(0, 5, [])), "not_started");
   assert.equal(programmeState(prog(1, 5, ["2026-11-24T10:00:00Z"])), "in_progress");
   assert.equal(programmeState(prog(5, 5, ["2026-11-24T10:00:00Z"])), "completed");
+});
+
+test("bestChip: highest measured score, ties keep the earliest, unmeasured never beats measured", () => {
+  assert.equal(bestChip([]), null);
+  const chips = [chipFor(a(50, "x")), chipFor(a(80, "y")), chipFor(a(80, "z")), chipFor(a(null, "n"))];
+  assert.equal(bestChip(chips)?.sessionId, "y");
+  assert.equal(bestChip([chipFor(a(null, "p")), chipFor(a(null, "q"))])?.sessionId, "q");
 });
