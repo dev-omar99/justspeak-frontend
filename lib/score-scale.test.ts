@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { overallSummary, PASS_MIN_10, scoreStatus, toTen } from "./score-scale.ts";
+import { applyScoreCap, overallSummary, PASS_MIN_10, reportOverall100, scoreStatus, toTen } from "./score-scale.ts";
 
 test("0-100 converts to a 0-10 rating with one decimal and clamps", () => {
   assert.equal(toTen(74), 7.4);
@@ -43,4 +43,23 @@ test("overall is null (Incomplete) when nothing is measurable; all-skipped is 0"
   assert.equal(overallSummary([{ score100: null }, { score100: undefined }]).value, null);
   assert.equal(overallSummary([]).value, null);
   assert.equal(overallSummary([{ score100: null, skipped: true }]).value, 0);
+});
+
+test("cap: a capped overall never goes above 5.5 and never raises a lower score", () => {
+  assert.equal(applyScoreCap(8.2, { to: 55 }), 5.5);
+  assert.equal(applyScoreCap(3, { to: 55 }), 3);
+  assert.equal(applyScoreCap(null, { to: 55 }), null);
+  assert.equal(applyScoreCap(7, undefined), 7);
+  assert.equal(scoreStatus((applyScoreCap(8.2, { to: 55 }) as number) * 10, true), "fail");
+});
+
+test("reportOverall100: mean of the skills, same as the report page, with the cap", () => {
+  const dims = { grammar: 80, vocabulary: 60, fluency: null, pronunciation: 70, interaction: 50 };
+  assert.equal(reportOverall100({ status: "OK", dimensions: dims }), 65);
+  assert.equal(reportOverall100({ status: "OK", dimensions: dims, score_cap: { to: 55 } }), 55);
+  assert.equal(reportOverall100({ status: "OK", dimensions: { ...dims, grammar: 30 }, score_cap: { to: 55 } }), 53);
+  assert.equal(reportOverall100({ status: "INSUFFICIENT_DATA", dimensions: dims }), null);
+  assert.equal(reportOverall100({ status: "OK", dimensions: {} }), null);
+  assert.equal(reportOverall100(null), null);
+  assert.equal(reportOverall100({ status: "OK", dimensions: { grammar: 59.4, vocabulary: 59.4, fluency: 59.4, pronunciation: 59.4, interaction: 59.4 } }), 59);
 });

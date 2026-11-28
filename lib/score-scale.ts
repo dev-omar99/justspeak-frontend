@@ -69,3 +69,35 @@ export function overallSummary(inputs: OverallInput[]): { value: number | null; 
   }
   return { value: counted === 0 ? null : toTen(sum / counted), counted, total: inputs.length };
 }
+
+/** The overall was lowered in the backend because the lesson goal was not met. Set by the server only. */
+export interface ScoreCap {
+  from: number;
+  to: number;
+  reason: string;
+}
+
+/** The five skills that make the overall (coherence is shown but not counted). */
+export const OVERALL_SKILLS = ["pronunciation", "fluency", "vocabulary", "grammar", "interaction"] as const;
+
+/** Overall rating (0-10) after the server's cap: never above the capped value. Null stays null. */
+export function applyScoreCap(overall10: number | null, cap?: { to: number } | null): number | null {
+  if (overall10 === null) return null;
+  if (!cap || typeof cap.to !== "number" || !Number.isFinite(cap.to)) return overall10;
+  return Math.min(overall10, toTen(cap.to));
+}
+
+/**
+ * Overall (0-100, whole number) of a stored report, the same number as the report page and the server:
+ * mean of the measured skills, lowered to the cap when the lesson goal was not met. Null when the report
+ * is not a scored one or has no measured skill. Never the model's own overall_score.
+ */
+export function reportOverall100(
+  report: { status?: string; dimensions?: Partial<Record<string, number | null | undefined>>; score_cap?: { to: number } | null } | null | undefined,
+): number | null {
+  if (!report || report.status !== "OK") return null;
+  const mean = overallSummary(OVERALL_SKILLS.map((k) => ({ score100: report.dimensions?.[k] })));
+  if (mean.value === null) return null;
+  const rounded = Math.round(mean.value * 10);
+  return report.score_cap && Number.isFinite(report.score_cap.to) ? Math.min(rounded, report.score_cap.to) : rounded;
+}

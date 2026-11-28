@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageTransition from "../../../components/PageTransition";
+import { reportOverall100 } from "../../../lib/score-scale";
 import { getToken } from "../../../lib/auth";
 import { AiSessionListItem, fetchAiPartnerSessions, fetchAiPartnerStatus, RoleplaySummary } from "../../../services/ai-partner";
 import {
@@ -191,7 +192,7 @@ export default function AiPartnerRecordingsPage() {
                         icon={session.roleplayId ? "🎭" : meta.icon}
                         title={sessionTitle(session, idx, sessions.length)}
                         scored={!!scored}
-                        score={report?.overall_score ?? null}
+                        score={reportOverall100(report)}
                         corrections={scored ? report!.corrections.length : 0}
                         open={open}
                         token={token}

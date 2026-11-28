@@ -5,7 +5,7 @@ import DimensionCards from "../../../../components/ai-partner/report/DimensionCa
 import ChatTranscript, { TurnCheckTools, useTurnChecks } from "../../../../components/ai-partner/report/ChatTranscript";
 import TurnNotes from "../../../../components/ai-partner/report/TurnNotes";
 import RingGauge from "../../../../components/ai-partner/RingGauge";
-import { overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
+import { applyScoreCap, overallSummary, PASS_MIN_10, PASS_MIN_100, scoreStatus, toTen } from "../../../../lib/score-scale";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -500,7 +500,8 @@ export default function AiPartnerReportPage() {
                           skipped: knownSkip,
                         })),
                       );
-                      const overall = summary.value;
+                      const overall = applyScoreCap(summary.value, report.score_cap);
+                      const capped = overall !== null && summary.value !== null && overall < summary.value;
                       const overallStatus = scoreStatus(overall === null ? null : overall * 10, true);
                       return (
                         <div className="bg-white border border-border rounded-2xl px-5 py-5 flex items-center gap-5">
@@ -521,6 +522,11 @@ export default function AiPartnerReportPage() {
                               <span className="inline-block text-xs font-black bg-crimson text-white rounded-lg px-2.5 py-1 mb-1.5">
                                 {report.cefr_estimate}
                               </span>
+                            )}
+                            {capped && (
+                              <p className="text-xs font-bold text-red-600 mb-1">
+                                Score capped at {overall}/10: the lesson goal was not met, so the skill average ({summary.value}/10) is not used.
+                              </p>
                             )}
                             <p className="text-sm text-ink-soft">{report.summary}</p>
                             {report.checklist && report.checklist.length > 0 && (
