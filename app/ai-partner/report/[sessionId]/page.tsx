@@ -238,11 +238,20 @@ export default function AiPartnerReportPage() {
       router.replace("/login");
       return;
     }
-    fetchAiPartnerReport(token, sessionId)
+    // The report can still be generating when the session ends: keep checking every 3 seconds for up to
+    // about a minute while the loading card stays on screen, instead of failing on the first empty answer.
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = (attempt: number) => fetchAiPartnerReport(token, sessionId)
       .then((data) => {
+        if (cancelled) return;
         const body = data?.report as SessionReportV2;
+        if (!body && attempt < 20) {
+          timer = setTimeout(() => void load(attempt + 1), 3000);
+          return;
+        }
         if (body) setReport(body);
-        else setError("The report is not ready yet.");
+        else setError("The report is taking longer than usual. Reload this page in a minute and it will be here.");
         // Hide internal "[system]" cues the engine stores: they are not anyone's speech.
         const turns = ((data?.session?.transcript as TranscriptTurn[]) ?? []).filter(
           (t) => !(typeof t.text === "string" && t.text.startsWith("[system]")),
@@ -254,9 +263,18 @@ export default function AiPartnerReportPage() {
         if (data?.pronunciation_assessment) {
           setPronunciation(data.pronunciation_assessment);
         }
+        setLoading(false);
       })
-      .catch((err) => setError(err.message || "Could not load the report."))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message || "Could not load the report.");
+        setLoading(false);
+      });
+    void load(0);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [router, sessionId]);
 
   async function practiceQuestion(question: string) {
@@ -312,7 +330,13 @@ export default function AiPartnerReportPage() {
         )}
 
         {loading && (
-          <p className="text-sm text-ink-soft">Generating your report — this takes a few seconds…</p>
+          <div className="bg-white border border-border rounded-2xl px-5 py-6 flex items-center gap-4" role="status" aria-live="polite">
+            <span className="h-8 w-8 shrink-0 rounded-full border-4 border-slate-200 border-t-crimson animate-spin" aria-hidden="true" />
+            <span>
+              <span className="block font-black text-sm">Analysing your session…</span>
+              <span className="block text-xs text-ink-soft mt-0.5">Your coaching report appears here by itself. This usually takes a few seconds.</span>
+            </span>
+          </div>
         )}
         {error && (
           <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
