@@ -364,19 +364,28 @@ export default function AcademyHubPage() {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: isArabic ? "الطلاقة (Fluency)" : "Fluency", val: progress.scores.fluency, bar: "bg-[#D91023]" },
-                { label: isArabic ? "النطق (Pronunciation)" : "Pronunciation", val: progress.scores.pronunciation, bar: "bg-[#002868]" },
+                { label: isArabic ? "الطلاقة (Fluency)" : "Fluency", val: progress.scores.fluency, bar: "bg-[#D91023]", unmeasured: true },
+                { label: isArabic ? "النطق (Pronunciation)" : "Pronunciation", val: progress.scores.pronunciation, bar: "bg-[#002868]", unmeasured: true },
                 { label: isArabic ? "المفردات (Vocabulary)" : "Vocabulary", val: progress.scores.vocabulary, bar: "bg-[#10B981]" },
                 { label: isArabic ? "القواعد (Grammar)" : "Grammar", val: progress.scores.grammar, bar: "bg-[#1D4ED8]" },
               ].map((s) => (
                 <div key={s.label} className="bg-surface border border-border rounded-2xl p-3.5 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-ink-soft">{s.label}</span>
-                    <span className="text-ink font-black">{s.val}%</span>
+                    {s.unmeasured ? (
+                      <span className="text-ink-soft font-bold">{isArabic ? "غير مقاس بعد" : "Not measured yet"}</span>
+                    ) : (
+                      <span className="text-ink font-black">{s.val}% <span className="font-semibold text-ink-soft">{isArabic ? "(تقدير)" : "(estimate)"}</span></span>
+                    )}
                   </div>
                   <div className="w-full h-1.5 bg-[#DCE5F2] rounded-full overflow-hidden">
-                    <div className={`h-full ${s.bar} rounded-full`} style={{ width: `${s.val}%` }} />
+                    {!s.unmeasured && <div className={`h-full ${s.bar} rounded-full`} style={{ width: `${s.val}%` }} />}
                   </div>
+                  {s.unmeasured && (
+                    <p className="text-[11px] leading-snug text-ink-soft">
+                      {isArabic ? "يظهر بعد جلسات تحدث حقيقية مع شريك." : "Shown after real speaking sessions with a partner."}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
