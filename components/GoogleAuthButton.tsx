@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { googleLogin } from "../services/api";
 import { saveToken, saveUser } from "../lib/auth";
@@ -26,6 +26,10 @@ export default function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // One Tap (prompt) often shows nothing on iPhone Safari or after it was dismissed once. When that happens we
+  // show Google's own sign-in button, which opens the normal popup and always works after a tap.
+  const [showFallback, setShowFallback] = useState(false);
+  const fallbackRef = useRef<HTMLDivElement | null>(null);
 
   const googleClientId =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -94,7 +98,19 @@ export default function GoogleAuthButton({
     }
 
     if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) setShowFallback(true);
+      }, 1500);
+      window.google.accounts.id.prompt((n: any) => {
+        settled = true;
+        clearTimeout(timer);
+        try {
+          if (n?.isNotDisplayed?.() || n?.isSkippedMoment?.()) setShowFallback(true);
+        } catch {
+          setShowFallback(true);
+        }
+      });
     } else {
       if (onError) {
         onError("Google Sign-In is initializing. Please try again in a moment.");
@@ -102,7 +118,18 @@ export default function GoogleAuthButton({
     }
   }
 
+  useEffect(() => {
+    if (!showFallback || !fallbackRef.current || !window.google?.accounts?.id) return;
+    window.google.accounts.id.renderButton(fallbackRef.current, {
+      theme: "outline",
+      size: "large",
+      text: "continue_with",
+      width: Math.min(320, Math.max(200, fallbackRef.current.offsetWidth || 280)),
+    });
+  }, [showFallback]);
+
   return (
+    <>
     <button
       type="button"
       onClick={handleGoogleClick}
@@ -134,5 +161,12 @@ export default function GoogleAuthButton({
       )}
       <span>{loading ? "Connecting to Google..." : label}</span>
     </button>
+    {showFallback && (
+      <div className="w-full flex flex-col items-center gap-1 mt-2">
+        <p className="text-[11px] text-slate-400">Tap the Google button below to continue.</p>
+        <div ref={fallbackRef} className="w-full flex justify-center min-h-[44px]" />
+      </div>
+    )}
+    </>
   );
 }
