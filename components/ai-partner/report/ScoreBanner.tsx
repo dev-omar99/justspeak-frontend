@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { attemptDeltas, startLessonHref } from "../../../lib/catalog";
 import { getToken } from "../../../lib/auth";
-import { overallSummary } from "../../../lib/score-scale";
+import { applyScoreCap, overallSummary } from "../../../lib/score-scale";
 import { fetchAiPartnerCatalog, type CatalogLesson } from "../../../services/ai-partner";
 
 const KEYS = ["pronunciation", "fluency", "vocabulary", "grammar", "interaction"] as const;
@@ -20,7 +20,7 @@ export default function ScoreBanner({
   sessionId,
   feedbackText,
 }: {
-  report: { dimensions: Record<string, number | null | undefined> };
+  report: { dimensions: Record<string, number | null | undefined>; score_cap?: { to: number } | null };
   sessionId: string;
   feedbackText: string;
 }) {
@@ -42,7 +42,8 @@ export default function ScoreBanner({
       .catch(() => undefined);
   }, [sessionId]);
 
-  const overall = overallSummary(KEYS.map((k) => ({ score100: report.dimensions[k] }))).value;
+  // Same number as the ring below and the server: the skill average, lowered to the cap when the lesson goal was not met.
+  const overall = applyScoreCap(overallSummary(KEYS.map((k) => ({ score100: report.dimensions[k] }))).value, report.score_cap);
   let delta: number | null = null;
   if (lesson) {
     const idx = lesson.attempts.findIndex((a) => a.sessionId === sessionId);
