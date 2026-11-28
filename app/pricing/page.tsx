@@ -75,7 +75,13 @@ export default function PricingPage() {
         if (res && typeof res.aiTokensBalance === "number") {
           newTokens = res.aiTokensBalance;
         }
-      } catch {}
+      } catch {
+        // The server refuses paid plans until payment is live: do not pretend it worked.
+        setActivatingPlan(false);
+        setCheckoutPlan(null);
+        setSelectedNotice("Paid plans are not open yet. Payment is required to upgrade.");
+        return;
+      }
     }
 
     saveUserSubscription(user?.id, checkoutPlan.id, newTokens);
