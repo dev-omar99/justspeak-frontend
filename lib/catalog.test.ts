@@ -101,3 +101,12 @@ test("tree: legacy lessons merge first without duplicates, placement picks the s
   assert.equal(startLevel(["A1", "A2"], "B2"), "A1");
   assert.equal(startLevel(["A2"], null), "A2");
 });
+
+test("incomplete try: red 'did not reach target', no number, never beats a measured score or moves the trend", () => {
+  const inc = { sessionId: "i", at: "2026-11-27T10:00:00.000Z", score: null, incomplete: true };
+  const c = chipFor(inc);
+  assert.deepEqual([c.value, c.tone, c.incomplete], [null, "fail", true]);
+  assert.equal(bestChip([chipFor(a(40, "m")), c])?.sessionId, "m");
+  assert.equal(trendOf([a(50), inc, a(70)]), 2);
+  assert.equal(chipFor(a(null)).incomplete, undefined);
+});

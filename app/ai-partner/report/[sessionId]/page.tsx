@@ -235,6 +235,7 @@ export default function AiPartnerReportPage() {
   const [goal, setGoal] = useState<SessionGoal | null>(null);
   const [tab, setTab] = useState<"coaching" | "analytics" | "transcript">("coaching");
   const [practicing, setPracticing] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     const token = getToken();
@@ -290,7 +291,7 @@ export default function AiPartnerReportPage() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [router, sessionId]);
+  }, [router, sessionId, retryKey]);
 
   async function practiceQuestion(question: string) {
     const token = getToken();
@@ -362,7 +363,23 @@ export default function AiPartnerReportPage() {
             {error}
           </p>
         )}
-        {insufficient && (
+        {insufficient && report?.incomplete && (
+          <div className="bg-white border border-red-300 rounded-2xl px-5 py-5 flex flex-col gap-3">
+            <h2 className="font-black text-sm">Score incomplete</h2>
+            <p className="text-sm text-ink-soft">
+              We could not measure your skills from this session, so there is no score. This try is saved on the lesson as
+              &quot;did not reach the target score&quot; (required {PASS_MIN_10}/10). Your conversation is saved below.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setReport(null); setError(""); setLoading(true); setRetryKey((k) => k + 1); }}
+              className="self-start btn-primary-crest text-white text-sm font-black rounded-xl px-5 py-3 min-h-[44px] inline-flex items-center cursor-pointer"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+        {insufficient && !report?.incomplete && (
           <div className="bg-white border border-border rounded-2xl px-5 py-5 flex flex-col gap-3">
             <h2 className="font-black text-sm">Too short to score this time</h2>
             <p className="text-sm text-ink-soft">

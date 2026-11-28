@@ -23,9 +23,12 @@ export interface ChipView {
   /** Score out of 10, or null when unmeasured (shown grey with a dash, never as 0). */
   value: number | null;
   tone: "pass" | "fail" | "none";
+  /** Tried, but no score could be measured: red "did not reach the target", no number. */
+  incomplete?: boolean;
 }
 
 export function chipFor(a: CatalogAttempt): ChipView {
+  if (a.score === null && a.incomplete) return { sessionId: a.sessionId, at: a.at, value: null, tone: "fail", incomplete: true };
   if (a.score === null) return { sessionId: a.sessionId, at: a.at, value: null, tone: "none" };
   return { sessionId: a.sessionId, at: a.at, value: toTen(a.score), tone: a.score >= PASS_MIN_100 ? "pass" : "fail" };
 }

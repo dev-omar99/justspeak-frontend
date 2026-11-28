@@ -15,9 +15,9 @@ export default function ScoreChip({ chip }: { chip: ChipView }) {
   return (
     <span
       className={`inline-flex items-center justify-center min-w-[2.5rem] rounded-lg px-2 py-1 text-xs font-black tabular-nums ${tone}`}
-      aria-label={chip.value === null ? "No measured score" : `Score ${chip.value} out of 10`}
+      aria-label={chip.incomplete ? "Score incomplete, did not reach the target score" : chip.value === null ? "No measured score" : `Score ${chip.value} out of 10`}
     >
-      {chip.value === null ? "–" : chip.value}
+      {chip.incomplete ? "Below target" : chip.value === null ? "–" : chip.value}
     </span>
   );
 }

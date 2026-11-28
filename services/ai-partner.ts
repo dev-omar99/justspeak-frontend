@@ -398,6 +398,8 @@ export interface ReportCorrection {
 
 export interface SessionReportV2 {
   status: "OK" | "INSUFFICIENT_DATA";
+  /** Model answered but nothing could be measured: "Score incomplete" with a Try again option. */
+  incomplete?: boolean;
   overall_score: number;
   cefr_estimate: string;
   summary: string;
@@ -588,6 +590,8 @@ export interface CatalogAttempt {
   at: string;
   /** Overall score 0-100, or null when the report has no measured score. */
   score: number | null;
+  /** The try ended with an incomplete report: shown as "did not reach the target score", never as a number. */
+  incomplete?: boolean;
 }
 
 export interface CatalogLesson {
