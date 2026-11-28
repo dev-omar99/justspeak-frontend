@@ -4,6 +4,7 @@ import Link from "next/link";
 import PageTransition from "../../../components/PageTransition";
 import LoadError from "../../../components/ai-partner/programmes/LoadError";
 import { useCatalog } from "../../../components/ai-partner/catalog/useCatalog";
+import { SECTIONS, resolveTrack, trackLessonCount, trackLevels, trackPassedCount, treeAvailable } from "../../../lib/tree";
 import { lastPracticeOf, lessonHref, levelsWithLessons, programmeState, shortDate, trackGroups } from "../../../lib/catalog";
 
 /** Short mark shown in the navy tile of each field card (our own, no artwork). */
@@ -51,6 +52,42 @@ export default function LearningPage() {
               })}
             </>
           )}
+          {fields && treeAvailable(fields) && (
+            <>
+              <h1 className="text-2xl font-black pt-1">Choose a track</h1>
+              {SECTIONS.map((section) => (
+                <section key={section.id} className="flex flex-col gap-2">
+                  <div className="pt-2">
+                    <h2 className="text-lg font-black">{section.title}</h2>
+                    <p className="text-xs text-ink-soft">{section.subtitle}</p>
+                  </div>
+                  {section.tracks.map((def) => {
+                    const r = resolveTrack(fields, def);
+                    const total = trackLessonCount(r);
+                    const card = (
+                      <>
+                        <span className="w-10 h-10 rounded-xl bg-crest-navy text-white grid place-items-center font-black shrink-0">{def.title[0]}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block font-black text-base">{def.title}</span>
+                          <span className="block text-xs text-ink-soft mt-0.5">{def.blurb}</span>
+                          <span className="block text-xs text-ink-soft mt-0.5">
+                            {total > 0 ? `${total} lessons · ${trackLevels(r).join(" ")}${trackPassedCount(r) ? ` · ${trackPassedCount(r)} passed` : ""}` : "Coming soon"}
+                          </span>
+                        </span>
+                        {total > 0 && <span className="text-ink-soft font-black">›</span>}
+                      </>
+                    );
+                    return total > 0 ? (
+                      <Link key={def.id} href={`/ai-partner/track/${encodeURIComponent(def.id)}`} className="bg-white border-[1.5px] border-border rounded-2xl px-4 py-4 flex items-center gap-3 hover:border-crimson transition-colors">{card}</Link>
+                    ) : (
+                      <div key={def.id} className="bg-white/60 border-[1.5px] border-dashed border-border rounded-2xl px-4 py-4 flex items-center gap-3 opacity-70">{card}</div>
+                    );
+                  })}
+                </section>
+              ))}
+            </>
+          )}
+          {fields && !treeAvailable(fields) && (<>
           <h1 className="text-2xl font-black pt-1">Choose a track</h1>
           {fields && trackGroups(fields).map(({ field, tracks }) => (
             <section key={field.id} className="flex flex-col gap-2">
@@ -74,6 +111,7 @@ export default function LearningPage() {
               ))}
             </section>
           ))}
+          </>)}
           <div className="flex justify-center gap-5 pt-3 text-sm font-bold text-ink-soft">
             <Link href="/ai-partner?setup=1" className="hover:text-ink">Free practice ›</Link>
             <Link href="/ai-partner/learning/programmes" className="hover:text-ink">Earlier programmes ›</Link>

@@ -72,3 +72,15 @@ test("trackGroups hides the base programme when dedicated tracks exist, keeps it
   assert.deepEqual(g.map((x) => x.tracks.map((t) => t.id)), [["everyday-life"], ["travel-english"]]);
   assert.deepEqual(levelsWithLessons(g[1].tracks[0]).map((l) => l.level), ["A2", "B1"]);
 });
+
+test("tree: resolves tracks from the catalog and lists levels with lessons", async () => {
+  const { resolveTrack, findTrackDef, treeAvailable, trackLevels, trackLessonCount } = await import("./tree.ts");
+  const prog = (id: string, lv: number[]) =>
+    ({ id, totalLessons: lv.reduce((a, b) => a + b, 0), passedLessons: 0, levels: lv.map((n, i) => ({ level: ["A1", "A2", "B1", "B2", "C1"][i], totalLessons: n, passedLessons: 0, lessons: [] })) }) as never;
+  const fields = [{ id: "work", title: "Work", programmes: [prog("work-sales", [2, 0, 3, 0, 0]), prog("interviews-sales-interview-english", [0, 4, 0, 0, 0])] }] as never;
+  const r = resolveTrack(fields, findTrackDef("sales")!);
+  assert.equal(treeAvailable(fields), true);
+  assert.equal(trackLessonCount(r), 9);
+  assert.deepEqual(trackLevels(r), ["A1", "A2", "B1"]);
+  assert.equal(treeAvailable([] as never), false);
+});
