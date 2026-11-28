@@ -329,7 +329,7 @@ export default function AchievementsPage() {
                   <div className="w-56 h-12 rounded-xl bg-slate-400/50 blur-[3px] flex items-center justify-end pr-5">
                     <div className="w-6 h-6 bg-white rounded-full" />
                   </div>
-                  <p className="absolute text-sm sm:text-base font-semibold text-slate-900 text-center">
+                  <p dir="ltr" className="absolute text-sm sm:text-base font-semibold text-slate-900 text-center">
                     30 sessions are required to view
                   </p>
                 </div>

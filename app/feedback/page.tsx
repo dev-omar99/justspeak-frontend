@@ -190,7 +190,7 @@ function FeedbackContent() {
     const displayedPartners: RecentPartner[] = nicePartners.slice(0, 6);
 
     return (
-      <main className="min-h-screen flex flex-col justify-between bg-white relative overflow-hidden">
+      <main dir="ltr" className="min-h-screen flex flex-col justify-between bg-white relative overflow-hidden">
         <BrandWatermark opacity={0.038} size="lg" />
         <Confetti duration={3500} />
 
@@ -402,7 +402,7 @@ function FeedbackContent() {
   // VIEW: 2-Question Post-Conversation Survey Form (Episoden Standard)
   // =========================================================================
   return (
-    <main className="min-h-screen flex flex-col bg-[#F4F5F7] justify-center py-8 px-4 relative overflow-hidden">
+    <main dir="ltr" className="min-h-screen flex flex-col bg-[#F4F5F7] justify-center py-8 px-4 relative overflow-hidden">
       <BrandWatermark opacity={0.04} size="lg" />
       <PageTransition>
         <section className="max-w-xl mx-auto w-full">
