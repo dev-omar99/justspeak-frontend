@@ -629,7 +629,7 @@ export default function AiStudioPage() {
               <section className="rounded-2xl bg-[#061533] text-white shadow-[0_10px_28px_rgba(6,21,51,0.14)] border border-slate-800 overflow-hidden">
                 <div className="h-1 w-full bg-[#D91023]" />
                 <div className="p-6 sm:p-9 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  <div className="flex flex-col gap-2.5 max-w-2xl">
+                  <div dir="ltr" className="flex flex-col gap-2.5 max-w-2xl">
                     <span className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/15 text-slate-200 text-xs font-semibold px-3 py-1 rounded-full w-fit">
                       Interactive Voice AI Coach · Grammar &amp; Phrasing Feedback
                     </span>
@@ -676,7 +676,7 @@ export default function AiStudioPage() {
               </div>
 
               {/* Clean, Spacious Editorial Scenarios Grid */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <section dir="ltr" className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {filteredTopics.map((topic) => (
                   <div
                     key={topic.id}
