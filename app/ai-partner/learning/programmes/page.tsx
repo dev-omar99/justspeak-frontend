@@ -45,7 +45,7 @@ export default function LearningPage() {
             <p className="text-sm text-ink-soft mt-1">Programmes</p>
           </div>
           {error && <LoadError message={error} onRetry={() => setAttempt((n) => n + 1)} />}
-          {!programmes && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!programmes && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {programmes?.map((p) => {
             const status = programmeStatus(p);
             const task = nextTask(p);
