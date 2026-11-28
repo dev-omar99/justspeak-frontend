@@ -413,7 +413,8 @@ export default function AiPartnerSessionPage() {
     setOpeningReport(true);
     setTimeout(() => {
       socket?.disconnect();
-      router.push(`/ai-partner/report/${sessionId}${auto ? "?auto=1" : ""}`);
+      // replace, not push: Back from the report must not return to a call that already ended.
+      router.replace(`/ai-partner/report/${sessionId}${auto ? "?auto=1" : ""}`);
     }, 800);
   }
 

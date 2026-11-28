@@ -489,7 +489,7 @@ export default function HomePage() {
               </div>
 
               <div className="pt-3 border-t border-[#D8E2F0]/80 flex items-center justify-between text-xs font-bold text-[#D91023] group-hover:text-[#002868] transition-colors">
-                <span>{isArabic ? "ابدأ التدريب الصوتي" : "Open AI Coach"}</span>
+                <span>{isArabic ? "ابدأ التدريب الصوتي" : "Open Quick Coach"}</span>
                 <span>{isArabic ? "←" : "→"}</span>
               </div>
             </Link>
@@ -818,7 +818,7 @@ export default function HomePage() {
                 🎙️ Fluency Vault
               </Link>
               <Link href="/ai-studio" className="hover:text-primary">
-                ✨ AI Coach
+                ✨ Quick Coach
               </Link>
               <Link href="/leaderboard" className="hover:text-primary">
                 🏆 Leaderboard

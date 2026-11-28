@@ -172,3 +172,20 @@ export function trackGroups(fields: CatalogField[]): TrackGroup[] {
 export function levelsWithLessons(p: CatalogProgramme): CatalogLevel[] {
   return p.levels.filter((l) => l.totalLessons > 0);
 }
+
+/**
+ * Where a learner goes after a lesson session: the lesson itself (to practise again) and, once it is passed,
+ * the next lesson in the same programme (levels and lessons in catalogue order). Null when the session was not a lesson.
+ */
+export function afterLesson(
+  fields: CatalogField[],
+  lessonId: string | null | undefined,
+): { lesson: CatalogLesson; next: CatalogLesson | null } | null {
+  if (!lessonId) return null;
+  const found = findLesson(fields, lessonId);
+  if (!found) return null;
+  const ordered = found.programme.levels.flatMap((lv) => lv.lessons);
+  const idx = ordered.findIndex((l) => l.id === lessonId);
+  const next = found.lesson.status === "passed" && idx >= 0 ? ordered[idx + 1] ?? null : null;
+  return { lesson: found.lesson, next };
+}

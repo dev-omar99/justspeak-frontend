@@ -110,3 +110,16 @@ test("incomplete try: red 'did not reach target', no number, never beats a measu
   assert.equal(trendOf([a(50), inc, a(70)]), 2);
   assert.equal(chipFor(a(null)).incomplete, undefined);
 });
+
+import { afterLesson } from "./catalog.ts";
+
+test("afterLesson: next lesson only after a pass, none at the end, null for open practice", () => {
+  const L = (id: string, status: string) => ({ id, status });
+  const mk = (s1: string) =>
+    [{ programmes: [{ levels: [{ lessons: [L("a", s1), L("b", "not_started")] }, { lessons: [L("c", "not_started")] }] }] }] as never;
+  assert.equal(afterLesson(mk("passed"), "a")?.next?.id, "b");
+  assert.equal(afterLesson(mk("failed"), "a")?.next, null);
+  assert.equal(afterLesson(mk("passed"), "c")?.next, null);
+  assert.equal(afterLesson(mk("passed"), null), null);
+  assert.equal(afterLesson(mk("passed"), "zzz"), null);
+});
