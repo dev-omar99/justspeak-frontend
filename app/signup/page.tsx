@@ -19,6 +19,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
 
   // OTP Verification Step
   const [step, setStep] = useState<"details" | "verify">("details");
@@ -175,6 +176,16 @@ export default function SignupPage() {
                   className="w-full"
                 />
 
+                {!showEmailForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailForm(true)}
+                    className="w-full h-12 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800/60 text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Use email instead
+                  </button>
+                )}
+                {showEmailForm && (
                 <div className="flex items-center gap-3 my-0.5">
                   <div className="h-px bg-slate-700/80 flex-1" />
                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -182,8 +193,9 @@ export default function SignupPage() {
                   </span>
                   <div className="h-px bg-slate-700/80 flex-1" />
                 </div>
+                )}
 
-                <form onSubmit={handleRequestOtp} className="flex flex-col gap-4">
+                <form onSubmit={handleRequestOtp} className={showEmailForm ? "flex flex-col gap-4" : "hidden"}>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-slate-200">
                       Email Address
