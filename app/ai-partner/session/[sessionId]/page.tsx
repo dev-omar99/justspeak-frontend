@@ -57,6 +57,8 @@ export default function AiPartnerSessionPage() {
   const sessionId = params.sessionId;
 
   const [callState, setCallState] = useState<CallState>("connecting");
+  // True from the moment we leave for the report page, so the screen never looks frozen.
+  const [openingReport, setOpeningReport] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState("");
@@ -380,6 +382,7 @@ export default function AiPartnerSessionPage() {
     } else if (sessionRecorder) {
       void sessionRecorder.stop().catch(() => undefined);
     }
+    setOpeningReport(true);
     setTimeout(() => {
       socket?.disconnect();
       router.push(`/ai-partner/report/${sessionId}${auto ? "?auto=1" : ""}`);
@@ -488,6 +491,12 @@ export default function AiPartnerSessionPage() {
 
   return (
     <main className="min-h-screen flex flex-col bg-crest-mist text-ink">
+      {openingReport && (
+        <div className="fixed inset-0 z-50 bg-crest-mist/95 flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+          <span className="h-10 w-10 rounded-full border-4 border-slate-200 border-t-crimson animate-spin" aria-hidden="true" />
+          <p className="font-black text-sm text-crest-navy">Call ended. Opening your report…</p>
+        </div>
+      )}
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-5 flex flex-col gap-4 flex-1 min-h-0">
         {/* Top bar: session title + recording state */}
         <div className="flex items-center justify-between gap-3">

@@ -87,6 +87,12 @@ export default function AiPartnerPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [starting, setStarting] = useState(false);
+  // One-tap lesson start (?go=1): show a small focused card instead of the full setup page while we start.
+  const [goMode, setGoMode] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setGoMode(q.get("go") === "1" && q.get("start") === "roleplay");
+  }, []);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [practiceQ, setPracticeQ] = useState<string | null>(null);
@@ -181,15 +187,17 @@ export default function AiPartnerPage() {
     }
   }
 
-  async function requestMic() {
+  async function requestMic(): Promise<boolean> {
     setMicState("requesting");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
       setMicState("granted");
       await refreshMics();
+      return true;
     } catch {
       setMicState("denied");
+      return false;
     }
   }
 
@@ -278,6 +286,40 @@ export default function AiPartnerPage() {
   const coachPersonaId = mode === "roleplay" && selectedRoleplay ? selectedRoleplay.persona : personaId;
   const coachPersona = status?.personas.find((p) => p.id === coachPersonaId);
   const coachRole = mode === "roleplay" && selectedRoleplay ? selectedRoleplay.personaRole : null;
+
+  /** Mic prompt and start in one tap (the browser prompt needs this tap on iPhone). Falls back to the full setup page if the mic is refused. */
+  async function allowMicAndStart() {
+    const ok = micReady ? true : await requestMic();
+    if (ok) await handleStart();
+    else setGoMode(false);
+  }
+
+  if (goMode && status && quota && selectedRoleplay && quotaLeft && !error) {
+    return (
+      <PageTransition>
+        <main className="min-h-screen flex flex-col items-center justify-center px-6 pb-24 text-ink">
+          <div className="w-full max-w-sm bg-white border border-border rounded-3xl p-6 flex flex-col items-center gap-4 text-center" role="status" aria-live="polite">
+            <p className="text-[11px] font-black tracking-[0.2em] text-crest-steel-deep">YOUR LESSON</p>
+            <h1 className="text-xl font-black text-crest-navy leading-tight">{selectedRoleplay.title}</h1>
+            {starting || micState === "requesting" ? (
+              <>
+                <span className="h-8 w-8 rounded-full border-4 border-slate-200 border-t-crimson animate-spin" aria-hidden="true" />
+                <p className="text-sm text-ink-soft">{starting ? "Starting your lesson…" : "Waiting for microphone permission…"}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-ink-soft">JustSpeak needs your microphone to talk with your coach.</p>
+                <button type="button" onClick={() => void allowMicAndStart()} className="btn-primary-crest text-white font-black text-base rounded-full px-8 py-3 w-full">
+                  Allow microphone and start
+                </button>
+                <button type="button" onClick={() => setGoMode(false)} className="text-xs font-bold text-ink-soft min-h-[44px]">Show full setup</button>
+              </>
+            )}
+          </div>
+        </main>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

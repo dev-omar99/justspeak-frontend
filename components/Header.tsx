@@ -123,7 +123,7 @@ export default function Header({
               <Link
                 href="/"
                 aria-label={t("nav.backHome")}
-                className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 flex items-center justify-center rounded-xl bg-surface-subtle hover:bg-border/60 text-primary transition-all active:scale-95"
+                className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl bg-surface-subtle hover:bg-border/60 text-primary transition-all active:scale-95"
               >
                 <svg
                   width="20"
@@ -156,7 +156,7 @@ export default function Header({
               type="button"
               onClick={() => setLang(isArabic ? "en" : "ar")}
               aria-label={isArabic ? "Switch to English" : "التبديل إلى العربية"}
-              className="px-2.5 py-1.5 rounded-xl border border-border bg-surface-subtle hover:bg-white text-[11px] font-bold text-[#002868] transition-colors cursor-pointer"
+              className="px-3 min-h-[44px] min-w-[44px] rounded-xl border border-border bg-surface-subtle hover:bg-white text-[11px] font-bold text-[#002868] transition-colors cursor-pointer"
             >
               {isArabic ? "EN" : "عربي"}
             </button>
