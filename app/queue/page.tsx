@@ -578,7 +578,7 @@ function QueueContent() {
                     {isAr ? "⏳ لم يتوافق معك أحد في هذه الجولة بعد" : "⏳ No partner matched in that wave yet"}
                   </p>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    {isAr ? "ما زلت في الانتظار، وسنُنبّهك فور انضمام متحدث آخر. أو ابدأ التحدث فوراً مع Quick Coach:" : "You&apos;re still in line. We&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our Quick Coach:"}
+                    {isAr ? "ما زلت في الانتظار، وسنُنبّهك فور انضمام متحدث آخر. أو ابدأ التحدث فوراً مع Quick Coach:" : "You're still in line. We'll chime as soon as another speaker joins. Or start speaking immediately with our Quick Coach:"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
