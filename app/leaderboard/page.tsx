@@ -240,6 +240,13 @@ export default function LeaderboardPage() {
                     No ranks yet. Finish a 7-minute call to join the board.
                   </p>
                 )}
+                {currentList.length === 0 && (
+                  <div className="flex justify-center pb-4">
+                    <Link href="/queue" className="py-3 px-6 rounded-2xl bg-[#D91023] hover:bg-[#B00D1C] text-white font-bold text-sm transition-all">
+                      Start a 7-minute call
+                    </Link>
+                  </div>
+                )}
                 <div className="divide-y divide-border/50">
                   {currentList.map((learner, idx) => {
                     const isMe = learner.id === user?.id;
