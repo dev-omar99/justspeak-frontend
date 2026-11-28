@@ -9,6 +9,7 @@ import { getToken, getUser } from "../../lib/auth";
 import { getSecondsUntilNextWave } from "../../lib/memos";
 import { RoomDetails } from "../../types";
 import BrandWatermark from "../../components/BrandWatermark";
+import { useI18n } from "../../lib/i18n";
 
 type QueueStage = "welcome" | "survey_wait" | "waiting_room" | "matched" | "leaving";
 
@@ -33,6 +34,8 @@ function resolveInitialStage(fromFeedback: boolean, stepParam: string | null): Q
 }
 
 function QueueContent() {
+  const { lang } = useI18n();
+  const isAr = lang === "ar";
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromFeedback = searchParams.get("from") === "feedback";
@@ -572,10 +575,10 @@ function QueueContent() {
               <div className="w-full max-w-md bg-white/8 border border-white/15 rounded-2xl p-4 text-left flex flex-col gap-3 mt-1">
                 <div>
                   <p className="text-xs font-extrabold text-amber-300">
-                    ⏳ No partner matched in that wave yet
+                    {isAr ? "⏳ لم يتوافق معك أحد في هذه الجولة بعد" : "⏳ No partner matched in that wave yet"}
                   </p>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    You&apos;re still in line — we&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our Quick Coach:
+                    {isAr ? "ما زلت في الانتظار، وسنُنبّهك فور انضمام متحدث آخر. أو ابدأ التحدث فوراً مع Quick Coach:" : "You&apos;re still in line. We&apos;ll chime as soon as another speaker joins. Or start speaking immediately with our Quick Coach:"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -583,13 +586,13 @@ function QueueContent() {
                     href="/ai-studio"
                     className="flex-1 text-center px-3.5 py-2.5 rounded-xl bg-[#D91023] hover:bg-[#BE123C] text-white text-xs font-black transition-all"
                   >
-                    🤖 Practice with Quick Coach →
+                    🤖 {isAr ? "تدرّب مع Quick Coach ←" : "Practice with Quick Coach →"}
                   </Link>
                   <Link
                     href="/learn/saved-words"
                     className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
                   >
-                    ✅ Saved Words
+                    ✅ {isAr ? "الكلمات المحفوظة" : "Saved Words"}
                   </Link>
                 </div>
               </div>
