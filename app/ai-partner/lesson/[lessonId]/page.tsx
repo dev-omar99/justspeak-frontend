@@ -26,7 +26,7 @@ export default function LessonPage() {
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
           <Back href={programme ? `/ai-partner/path/${encodeURIComponent(programme.id)}` : "/ai-partner/learning"} label={programme?.title ?? "Programme"} />
           {error && <LoadError message={error} onRetry={retry} />}
-          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!fields && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {fields && !lesson && <p className="text-sm text-ink-soft">This lesson does not exist. <Link href="/ai-partner/learning" className="font-bold text-crimson">Back to fields</Link></p>}
           {lesson && (
             <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:items-start">

@@ -23,7 +23,7 @@ export default function LearningPage() {
       <main className="min-h-screen flex flex-col pb-24 lg:pb-16 text-ink">
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-7 flex flex-col gap-3">
           {error && <LoadError message={error} onRetry={retry} />}
-          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!fields && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {started.length > 0 && (
             <>
               <h2 className="text-lg font-black">Your programmes</h2>

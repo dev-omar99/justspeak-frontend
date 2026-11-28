@@ -63,7 +63,7 @@ export default function LoginPage() {
         router.push("/");
       }, 400);
     } catch (err: any) {
-      setError(err.message || (isArabic ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : "Invalid email or password. Please try again."));
+      setError(isArabic && /invalid credentials/i.test(err.message || "") ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : err.message || (isArabic ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : "Invalid email or password. Please try again."));
     } finally {
       setLoading(false);
     }

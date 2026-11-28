@@ -45,7 +45,7 @@ export default function TrackPage() {
           <Back href="/ai-partner/learning" label="Tracks" />
           <h1 className="text-2xl font-black">{def?.title ?? "Track"}</h1>
           {error && <LoadError message={error} onRetry={retry} />}
-          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!fields && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {fields && (!def || !track || (!track.lessons && !track.interview)) && (
             <p className="text-sm text-ink-soft">This track is not available yet. <Link href="/ai-partner/learning" className="font-bold text-crimson">Back to tracks</Link></p>
           )}

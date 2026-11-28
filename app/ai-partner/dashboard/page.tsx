@@ -43,7 +43,7 @@ export default function AiPartnerDashboardPage() {
               {error}
             </p>
           )}
-          {!data && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!data && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
 
           {data && (
             <>

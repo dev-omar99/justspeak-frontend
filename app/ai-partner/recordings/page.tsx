@@ -150,7 +150,7 @@ export default function AiPartnerRecordingsPage() {
               {error}
             </p>
           )}
-          {!sessions && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!sessions && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
 
           {sessions && sessions.length === 0 && (
             <div className="bg-white border border-border rounded-2xl px-5 py-8 text-center">

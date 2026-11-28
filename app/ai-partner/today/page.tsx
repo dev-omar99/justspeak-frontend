@@ -54,7 +54,7 @@ export default function TodayPage() {
             Hi{firstName ? ` ${firstName}` : ""}, take a look at your tasks for today:
           </h1>
           {error && <LoadError message={error} onRetry={retry} />}
-          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!fields && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {fields && items.length === 0 && (
             <p className="text-sm text-ink-soft bg-white border border-border rounded-2xl px-5 py-6">
               Nothing left to do right now. See <Link href="/ai-partner/learning" className="font-bold text-crimson">My Learning</Link>.

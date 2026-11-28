@@ -6,6 +6,7 @@ import PageTransition from "../../components/PageTransition";
 import BrandWatermark from "../../components/BrandWatermark";
 import { getUser, getToken } from "../../lib/auth";
 import { User } from "../../types";
+import { useI18n } from "../../lib/i18n";
 
 interface InvitationRecord {
   id: string;
@@ -16,6 +17,8 @@ interface InvitationRecord {
 
 export default function InvitePage() {
   const router = useRouter();
+  const { lang } = useI18n();
+  const isAr = lang === "ar";
   const [user, setUser] = useState<User | null>(null);
   const [invitationsLeft, setInvitationsLeft] = useState(2);
   const [pendingLinks, setPendingLinks] = useState<InvitationRecord[]>([]);
@@ -151,7 +154,7 @@ export default function InvitePage() {
                   router.push("/");
                 }
               }}
-              aria-label="Go back"
+              aria-label={isAr ? "رجوع" : "Go back"}
               className="w-11 h-11 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -161,13 +164,13 @@ export default function InvitePage() {
 
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Invite your friend
+                {isAr ? "ادعُ صديقك" : "Invite your friend"}
               </h1>
               <button
                 type="button"
                 onClick={() => setShowHelpModal(true)}
                 className="w-7 h-7 rounded-full border-2 border-[#0F295A] text-[#0F295A] font-extrabold text-sm flex items-center justify-center hover:bg-blue-50 transition-colors"
-                title="How invitations work"
+                title={isAr ? "كيف تعمل الدعوات" : "How invitations work"}
               >
                 ?
               </button>
@@ -212,15 +215,15 @@ export default function InvitePage() {
             </div>
 
             <h2 className="text-2xl font-extrabold text-slate-900">
-              Catch a gift!
+              {isAr ? "احصل على هدية!" : "Catch a gift!"}
             </h2>
 
             <div className="text-left w-full max-w-md px-2">
               <p className="text-sm text-slate-700 leading-relaxed">
-                If you share invitation cards to your friend, you will get
+                {isAr ? "إذا شاركت بطاقات الدعوة مع صديقك، ستحصل على" : "If you share invitation cards to your friend, you will get"}
               </p>
               <p className="text-sm font-extrabold text-[#0F295A] mt-0.5">
-                a 10-day Prime membership!
+                {isAr ? "عضوية Prime لمدة 10 أيام!" : "a 10-day Prime membership!"}
               </p>
             </div>
           </div>
@@ -244,7 +247,7 @@ export default function InvitePage() {
                     <span className="w-2.5 h-2.5 bg-white border-t-2 border-l-2 border-dashed border-[#0F295A]/60 absolute -bottom-0.5 -right-0.5" />
                     {isFilled && (
                       <span className="text-xs font-extrabold text-[#0F295A]">
-                        🎟️ Ready
+                        🎟️ {isAr ? "جاهزة" : "Ready"}
                       </span>
                     )}
                   </div>
@@ -253,11 +256,11 @@ export default function InvitePage() {
             </div>
 
             <p className="text-sm font-semibold text-slate-700">
-              You Have{" "}
+              {isAr ? "لديك " : "You Have "}
               <span className="font-extrabold text-[#0F295A]">
-                {invitationsLeft} invitations
-              </span>{" "}
-              to send
+                {isAr ? `${invitationsLeft} دعوات` : `${invitationsLeft} invitations`}
+              </span>
+              {isAr ? " لإرسالها" : " to send"}
             </p>
 
             <button
@@ -269,7 +272,7 @@ export default function InvitePage() {
                   : "bg-[#B6C2D2] hover:bg-[#9fb0c6] text-white"
               }`}
             >
-              {invitationsLeft > 0 ? "Send invitation" : "Send invitation"}
+              {isAr ? "أرسل دعوة" : "Send invitation"}
             </button>
 
             <div className="w-full flex justify-end">
@@ -278,7 +281,7 @@ export default function InvitePage() {
                 onClick={() => setShowHistoryModal(true)}
                 className="text-xs font-medium text-slate-400 underline hover:text-slate-600 transition-colors"
               >
-                Invitation history
+                {isAr ? "سجل الدعوات" : "Invitation history"}
               </button>
             </div>
           </div>
@@ -287,10 +290,10 @@ export default function InvitePage() {
           <div className="flex flex-col gap-3 pt-2">
             <div>
               <h3 className="text-base font-extrabold text-slate-900">
-                Pending invitations
+                {isAr ? "الدعوات المعلّقة" : "Pending invitations"}
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Copy and send links here to your friends!
+                {isAr ? "انسخ الروابط هنا وأرسلها لأصدقائك!" : "Copy and send links here to your friends!"}
               </p>
             </div>
 
@@ -306,15 +309,15 @@ export default function InvitePage() {
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
                       {copiedId === inv.id
-                        ? "✓ Link copied to clipboard!"
-                        : `You opened ${inv.createdAt}`}
+                        ? (isAr ? "✓ تم نسخ الرابط!" : "✓ Link copied to clipboard!")
+                        : (isAr ? `تم الإنشاء ${inv.createdAt}` : `You opened ${inv.createdAt}`)}
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleShareOrCopy(inv)}
-                    aria-label="Share or copy invitation link"
+                    aria-label={isAr ? "مشاركة رابط الدعوة أو نسخه" : "Share or copy invitation link"}
                     className="w-10 h-10 rounded-full bg-[#0F295A] hover:bg-[#163773] text-white flex items-center justify-center flex-shrink-0 shadow-sm active:scale-95 transition-all"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -341,18 +344,18 @@ export default function InvitePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-extrabold text-slate-900">
-              How Friend Invitations Work
+              {isAr ? "كيف تعمل دعوات الأصدقاء" : "How Friend Invitations Work"}
             </h3>
             <ul className="text-xs text-slate-600 space-y-2.5 leading-relaxed list-disc pl-4">
               <li>
-                You earn new invitation cards when you complete 7-minute English conversations and receive positive partner feedback.
+                {isAr ? "تحصل على بطاقات دعوة جديدة عند إكمال محادثات إنجليزية مدتها 7 دقائق وتلقي تقييم إيجابي من شريكك." : "You earn new invitation cards when you complete 7-minute English conversations and receive positive partner feedback."}
               </li>
               <li>
-                When your friend signs up via your link and completes their first conversation, both of you unlock a{" "}
-                <strong className="text-[#0F295A]">10-day Prime membership</strong> with unlimited daily passes!
+                {isAr ? "عندما يسجّل صديقك عبر رابطك ويكمل أول محادثة، تحصلان معاً على " : "When your friend signs up via your link and completes their first conversation, both of you unlock a "}
+                <strong className="text-[#0F295A]">{isAr ? "عضوية Prime لمدة 10 أيام" : "10-day Prime membership"}</strong>{isAr ? " مع تذاكر يومية غير محدودة!" : " with unlimited daily passes!"}
               </li>
               <li>
-                Tap the blue share button next to any pending link below to copy or share it directly.
+                {isAr ? "اضغط على زر المشاركة الأزرق بجانب أي رابط معلّق بالأسفل لنسخه أو مشاركته مباشرة." : "Tap the blue share button next to any pending link below to copy or share it directly."}
               </li>
             </ul>
             <button
@@ -360,7 +363,7 @@ export default function InvitePage() {
               onClick={() => setShowHelpModal(false)}
               className="w-full py-3 rounded-2xl bg-[#0F295A] text-white font-bold text-xs"
             >
-              Got it
+              {isAr ? "فهمت" : "Got it"}
             </button>
           </div>
         </div>
@@ -378,7 +381,7 @@ export default function InvitePage() {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-slate-900">
-                Invitation history
+                {isAr ? "سجل الدعوات" : "Invitation history"}
               </h3>
               <button
                 type="button"
@@ -393,10 +396,10 @@ export default function InvitePage() {
                 <div key={item.id} className="py-3 flex items-center justify-between text-xs">
                   <div>
                     <p className="font-bold text-slate-800">{item.url}</p>
-                    <p className="text-slate-400 mt-0.5">Created {item.createdAt}</p>
+                    <p className="text-slate-400 mt-0.5">{isAr ? "تاريخ الإنشاء" : "Created"} {item.createdAt}</p>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px]">
-                    {item.status}
+                    {isAr ? (item.status === "Accepted" ? "تم القبول" : "معلّقة") : item.status}
                   </span>
                 </div>
               ))}
@@ -406,7 +409,7 @@ export default function InvitePage() {
               onClick={() => setShowHistoryModal(false)}
               className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
             >
-              Close
+              {isAr ? "إغلاق" : "Close"}
             </button>
           </div>
         </div>

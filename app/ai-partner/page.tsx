@@ -354,7 +354,7 @@ export default function AiPartnerPage() {
             </div>
           </div>
 
-          {loading && <p className="text-sm text-ink-soft">Loading…</p>}
+          {loading && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {error && (
             <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
               {error}

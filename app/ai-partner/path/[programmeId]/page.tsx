@@ -39,7 +39,7 @@ export default function PathPage() {
           <Back href={programme ? `/ai-partner/field/${encodeURIComponent(programme.fieldId)}` : "/ai-partner/learning"} label="Programmes" />
           <h1 className="text-2xl font-black">{programme?.title ?? "Programme"}</h1>
           {error && <LoadError message={error} onRetry={retry} />}
-          {!fields && !error && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!fields && !error && <div className="h-24 rounded-2xl bg-slate-100 animate-pulse" role="status" aria-label="Loading" />}
           {fields && !programme && <p className="text-sm text-ink-soft">This programme does not exist. <Link href="/ai-partner/learning" className="font-bold text-crimson">Back to fields</Link></p>}
           {programme && level && (
             <>
